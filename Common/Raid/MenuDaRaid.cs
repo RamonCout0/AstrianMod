@@ -48,7 +48,7 @@ namespace AscensaoAstral.Common.Raid
             },
         };
 
-        public string Titulo => JaVencida() ? "Memória de " + Nome : Nome;
+        public string Titulo => JaVencida() ? "Memória: " + Nome : Nome;
         public string FalaMostrada => JaVencida() ? "Isso não é ele. É só o que sobrou na memória da Astrânia." : Fala;
         public string QuemFalaMostrado => JaVencida() ? Dialogo.NomeEco : QuemFala;
 
@@ -163,9 +163,12 @@ namespace AscensaoAstral.Common.Raid
             return g;
         }
 
+        // O Bot de Teste está sempre pronto (ele não tem como clicar)
+        private static bool EstaPronto(Player p) => p.whoAmI == BotDeTeste.Indice || Prontos[p.whoAmI];
+
         private static bool TodosProntos()
         {
-            foreach (Player p in Grupo()) if (!Prontos[p.whoAmI]) return false;
+            foreach (Player p in Grupo()) if (!EstaPronto(p)) return false;
             return true;
         }
 
@@ -235,7 +238,7 @@ namespace AscensaoAstral.Common.Raid
             Utils.DrawBorderString(sb, $"Grupo ({grupo.Count})  -  recomendado 1 a 4", new Vector2(x, y), info.Cor, 0.85f); y += 24;
             foreach (Player g in grupo)
             {
-                bool pronto = Prontos[g.whoAmI];
+                bool pronto = EstaPronto(g);
                 Utils.DrawBorderString(sb, (pronto ? "[pronto]  " : "[...]  ") + g.name, new Vector2(x + 6, y), pronto ? new Color(130, 240, 170) : new Color(190, 190, 200), 0.75f);
                 y += 20;
                 if (y > p.Bottom - 90) break;
