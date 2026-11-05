@@ -192,7 +192,7 @@ namespace AscensaoAstral.Content.Projectiles
                 return false;
             }
             float largura = 70f * Utils.GetLerpValue(0, 8, Idade - Aviso, true) * Utils.GetLerpValue(0, 10, Projectile.timeLeft, true);
-            Desenho.Faixa(Projectile.Center, Fim, largura, c, Color.White, 1f + Utils.GetLerpValue(6, 0, Idade - Aviso, true), 0.35f);
+            Desenho.Golpe(Desenho.Estilo.Eter, Projectile.Center, Fim, largura, c, 1f + Utils.GetLerpValue(6, 0, Idade - Aviso, true));
             Desenho.Brilho(Projectile.Center, c, 1.6f);
             Desenho.Clarao(Projectile.Center, c, 0.9f, Main.GlobalTimeWrappedHourly * 2f);
             return false;

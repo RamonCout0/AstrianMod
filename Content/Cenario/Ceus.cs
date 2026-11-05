@@ -212,12 +212,18 @@ namespace AscensaoAstral.Content.Cenario
         public static float BaseDoCeu()
         {
             int h = Main.screenHeight;
-            if (Common.Raid.RaidBoss.Ativo is Common.Raid.RaidBoss chefe)
-            {
-                float chao = chefe.RetanguloArena.Bottom - Main.screenPosition.Y + 24f;
-                return MathHelper.Clamp(chao, h * 0.62f, h);
-            }
-            return h;
+            if (Common.Raid.RaidBoss.Ativo is not Common.Raid.RaidBoss chefe)
+                return h;
+            // PARALLAX: o céu fica bem longe, então anda só 25% do que a câmera anda (contínuo, sem trava).
+            // Com você no chão, a base das nuvens fica logo abaixo da linha do chão.
+            float chaoNaTela = chefe.RetanguloArena.Bottom - Main.screenPosition.Y;   // onde o chão está na tela
+            float referencia = h * 0.78f;                                                // onde o chão fica com você em pé
+            float base_ = referencia + 30f + (chaoNaTela - referencia) * 0.25f;
+            // limite macio: perto das pontas a base desacelera em vez de parar de uma vez
+            float min = h * 0.5f, max = h * 1.35f;
+            if (base_ < min + 80f) base_ = min + 80f * MathF.Exp((base_ - min - 80f) / 80f);
+            if (base_ > max - 120f) base_ = max - 120f * MathF.Exp(-(base_ - max + 120f) / 120f);
+            return base_;
         }
 
         /// <summary>1 ao meio-dia, 0 à noite.</summary>

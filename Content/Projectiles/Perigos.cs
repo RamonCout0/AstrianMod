@@ -56,6 +56,79 @@ namespace AscensaoAstral.Content.Projectiles
             return p;
         }
 
+        // ═══ OS ESTILOS: cada família de ataque tem o seu shader ═══
+        public enum Estilo { Energia, Corte, Gelo, Solar, Eter }
+
+        public static Estilo DoTipo(TipoPerigo t) => t switch
+        {
+            TipoPerigo.Gelo => Estilo.Gelo,
+            TipoPerigo.Solar => Estilo.Solar,
+            TipoPerigo.Atordoar or TipoPerigo.Eter => Estilo.Eter,
+            _ => Estilo.Corte
+        };
+
+        private static ManagedShader Estilo_(Estilo e, Color cor, float intensidade, float opacidade)
+        {
+            string nome = e switch { Estilo.Corte => "CorteShader", Estilo.Gelo => "GeloShader", Estilo.Solar => "SolarShader", Estilo.Eter => "EterShader", _ => null };
+            if (nome is null || !ShaderManager.TryGetShader("AscensaoAstral." + nome, out ManagedShader sh)) return null;
+            sh.TrySetParameter("cor", cor.ToVector3());
+            sh.TrySetParameter("intensidade", intensidade);
+            sh.TrySetParameter("opacidade", opacidade);
+            Texture2D r1 = e == Estilo.Gelo ? MiscTexturesRegistry.DendriticNoise.Value : MiscTexturesRegistry.TurbulentNoise.Value;
+            Texture2D r2 = e is Estilo.Corte or Estilo.Eter ? MiscTexturesRegistry.DendriticNoise.Value : MiscTexturesRegistry.WavyBlotchNoise.Value;
+            sh.SetTexture(r1, 1, SamplerState.LinearWrap);
+            sh.SetTexture(r2, 2, SamplerState.LinearWrap);
+            return sh;
+        }
+
+        /// <summary>
+        /// Golpe reto no estilo pedido. <paramref name="largura"/> é a largura do GOLPE; a faixa desenhada tem o dobro,
+        /// e o shader usa a sobra para o brilho (que some suave — sem "barra" em volta).
+        /// </summary>
+        public static void Golpe(Estilo estilo, Vector2 a, Vector2 b, float largura, Color cor, float intensidade = 1f, float opacidade = 1f)
+        {
+            if (largura < 0.5f || a == b) return;
+            ManagedShader sh = Estilo_(estilo, cor, intensidade, opacidade);
+            if (sh is null) { Faixa(a, b, largura, cor, Color.White, intensidade); return; }
+            Vector2[] pts = Pontos(a, b, 16);
+            PrimitiveRenderer.RenderTrail(pts, new PrimitiveSettings(_ => largura * 2f, _ => Color.White, Smoothen: false, Shader: sh), 16);
+        }
+
+        /// <summary>Lança com forma (cabo → guarda → lâmina → ponta) pelo LancaShader. <paramref name="largura"/> = largura da lâmina.</summary>
+        public static void Lanca(Vector2 cabo, Vector2 ponta, float largura, Color cor, float intensidade = 1f, float opacidade = 1f)
+        {
+            if (cabo == ponta) return;
+            if (!ShaderManager.TryGetShader("AscensaoAstral.LancaShader", out ManagedShader sh)) { Ponta(cabo, ponta, largura, cor, Color.White, intensidade); return; }
+            sh.TrySetParameter("cor", cor.ToVector3());
+            sh.TrySetParameter("intensidade", intensidade);
+            sh.TrySetParameter("opacidade", opacidade);
+            sh.SetTexture(MiscTexturesRegistry.TurbulentNoise.Value, 1, SamplerState.LinearWrap);
+            sh.SetTexture(MiscTexturesRegistry.WavyBlotchNoise.Value, 2, SamplerState.LinearWrap);
+            Vector2[] pts = Pontos(cabo, ponta, 16);
+            PrimitiveRenderer.RenderTrail(pts, new PrimitiveSettings(_ => largura / 0.48f, _ => Color.White, Smoothen: false, Shader: sh), 16);
+            Brilho(ponta, cor, 0.25f * opacidade);
+        }
+
+        /// <summary>Raios de luz caindo (god rays) num retângulo do mundo, com uma faixa de sombra sem luz.</summary>
+        public static void Raios(Rectangle area, Color cor, float carga, float sombraEsq, float sombraDir)
+        {
+            if (carga <= 0.01f || !ShaderManager.TryGetShader("AscensaoAstral.RaiosShader", out ManagedShader sh)) return;
+            SpriteBatch sb = Main.spriteBatch;
+            sb.End();
+            sb.Begin(SpriteSortMode.Immediate, BlendState.AlphaBlend, SamplerState.LinearClamp, DepthStencilState.None, RasterizerState.CullNone, null, Main.GameViewMatrix.TransformationMatrix);
+            sh.TrySetParameter("cor", cor.ToVector3());
+            sh.TrySetParameter("carga", carga);
+            sh.TrySetParameter("sombraEsq", (sombraEsq - area.X) / area.Width);
+            sh.TrySetParameter("sombraDir", (sombraDir - area.X) / area.Width);
+            sh.TrySetParameter("proporcao", area.Width / (float)area.Height);
+            sh.SetTexture(MiscTexturesRegistry.TurbulentNoise.Value, 1, SamplerState.LinearWrap);
+            sh.Apply();
+            sb.Draw(ModContent.Request<Texture2D>("AscensaoAstral/Assets/Branco").Value, new Rectangle(area.X - (int)Main.screenPosition.X, area.Y - (int)Main.screenPosition.Y, area.Width, area.Height), Color.White);
+            sb.End();
+            sb.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.LinearClamp, DepthStencilState.None, RasterizerState.CullNone, null, Main.GameViewMatrix.TransformationMatrix);
+        }
+
+        /// <summary>Faixa reta de energia genérica (o estilo "neutro").</summary>
         /// <summary>
         /// Golpe reto de energia (cortes, feixes, pilares). Três camadas: halo largo e suave → corpo com o
         /// EnergiaShader (filamentos correndo, borda irregular, pontas afiladas) → clarão nas pontas.
@@ -65,8 +138,6 @@ namespace AscensaoAstral.Content.Projectiles
         {
             if (largura < 0.5f || a == b) return;
             Vector2[] pts = Pontos(a, b, 12);
-            // halo (aditivo)
-            PrimitiveRenderer.RenderTrail(pts, new PrimitiveSettings(t => largura * 2.2f * Afinar(t, afilar), _ => (cor with { A = 0 }) * 0.28f, Smoothen: false), 12);
             // corpo
             PrimitiveRenderer.RenderTrail(pts, new PrimitiveSettings(_ => largura, _ => Color.White, Smoothen: false, Shader: Energia(cor, nucleo, intensidade, afilar)), 12);
             // pontas
@@ -78,12 +149,14 @@ namespace AscensaoAstral.Content.Projectiles
         private static float Afinar(float t, float afilar) => MathHelper.Lerp(1f, MathF.Pow(MathF.Sin(MathHelper.Pi * t), 0.5f), afilar);
 
         /// <summary>Ponta: larga na base, afiada na ponta (espinhos, cristais, lâminas, penas).</summary>
-        public static void Ponta(Vector2 baseDaPonta, Vector2 ponta, float largura, Color cor, Color nucleo, float intensidade = 1f)
+        public static void Ponta(Vector2 baseDaPonta, Vector2 ponta, float largura, Color cor, Color nucleo, float intensidade = 1f, Estilo estilo = Estilo.Energia)
         {
             if (largura < 0.5f || baseDaPonta == ponta) return;
             Vector2[] pts = Pontos(baseDaPonta, ponta, 10);
-            PrimitiveRenderer.RenderTrail(pts, new PrimitiveSettings(t => largura * 1.9f * (1f - t), _ => (cor with { A = 0 }) * 0.3f, Smoothen: false), 10);
-            PrimitiveRenderer.RenderTrail(pts, new PrimitiveSettings(t => largura * MathF.Pow(1f - t, 0.85f), _ => Color.White, Smoothen: false, Shader: Energia(cor, nucleo, intensidade, 0f)), 10);
+            if (estilo != Estilo.Energia && Estilo_(estilo, cor, intensidade, 1f) is ManagedShader sh)
+                PrimitiveRenderer.RenderTrail(pts, new PrimitiveSettings(t => largura * 2f * MathF.Pow(1f - t, 0.85f), _ => Color.White, Smoothen: false, Shader: sh), 10);
+            else
+                PrimitiveRenderer.RenderTrail(pts, new PrimitiveSettings(t => largura * MathF.Pow(1f - t, 0.85f), _ => Color.White, Smoothen: false, Shader: Energia(cor, nucleo, intensidade, 0f)), 10);
             Brilho(ponta, Color.White, 0.12f + largura / 260f);
         }
 
@@ -270,22 +343,12 @@ namespace AscensaoAstral.Content.Projectiles
             float curto = horizontal ? r.Height : r.Width;
             Vector2 lado = horizontal ? Vector2.UnitY : Vector2.UnitX;
 
-            // 1) o clarão do golpe: um retângulo branco estourado que encolhe até o tamanho certo
-            if (bate > 0f)
-            {
-                Rectangle estouro = r; estouro.Inflate((int)(bate * 14f), (int)(bate * 14f));
-                Main.spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(estouro.X - (int)Main.screenPosition.X, estouro.Y - (int)Main.screenPosition.Y, estouro.Width, estouro.Height),
-                    new Rectangle(0, 0, 1, 1), (Color.Lerp(cor, Color.White, 0.7f) with { A = 0 }) * 0.55f * bate);
-            }
-
-            // 2) o corpo de energia (pontas retas: o retângulo é a área exata)
-            float largura = curto * (1.05f + 0.35f * bate) * some;
-            Desenho.Faixa(a, b, largura, cor, Color.White, 1f + bate * 0.8f, Tipo == TipoPerigo.Corte ? 0.25f : 0f);
-
-            // 3) bordas acesas: deixam claro ONDE acaba o perigo
-            Vector2 meia = lado * curto / 2f;
-            Desenho.Risco(a - meia, b - meia, 10f * some, cor * 0.9f);
-            Desenho.Risco(a + meia, b + meia, 10f * some, cor * 0.9f);
+            // o corpo: o shader do tipo (corte = rasgo, gelo = cristal, solar = fogo, éter = vazio).
+            // O golpe estoura para o branco no instante em que bate e afina quando some.
+            float largura = curto * (1f + 0.15f * bate) * MathHelper.Lerp(0.6f, 1f, some);
+            Vector2 de = a, ate = b;
+            if (Tipo == TipoPerigo.Solar && !horizontal) { de = b; ate = a; } // o fogo sobe do chão
+            Desenho.Golpe(Desenho.DoTipo(Tipo), de, ate, largura, cor, 1f + bate * 1.2f, some);
 
             // 4) o detalhe de cada tipo
             ulong semente = (ulong)Projectile.identity * 7919UL + 13UL;
@@ -294,18 +357,8 @@ namespace AscensaoAstral.Content.Projectiles
             switch (Tipo)
             {
                 case TipoPerigo.Corte:
-                    // riscos diagonais de lâmina que cruzam o golpe no início
-                    if (idade < 12)
-                    {
-                        float k = idade / 12f;
-                        for (int i = 0; i < 4; i++)
-                        {
-                            float pos = Utils.RandomFloat(ref semente) * comprimento;
-                            Vector2 c = a + ao * pos;
-                            Vector2 diag = (ao * 0.8f + lado * (i % 2 == 0 ? 1f : -1f)).SafeNormalize(lado) * curto * 0.9f;
-                            Desenho.Risco(c - diag, c + diag, 18f * (1f - k), Color.White);
-                        }
-                    }
+                    // o clarão do fio nas duas pontas, no instante do corte
+                    if (bate > 0f) { Desenho.Clarao(a, cor, 0.6f * bate); Desenho.Clarao(b, cor, 0.6f * bate); }
                     break;
                 case TipoPerigo.Gelo:
                     // cristais saindo das bordas
@@ -315,12 +368,11 @@ namespace AscensaoAstral.Content.Projectiles
                         float alt = (18f + Utils.RandomFloat(ref semente) * 26f) * some * (1f - bate * 0.5f);
                         int s1 = i % 2 == 0 ? 1 : -1;
                         Vector2 baseC = a + ao * pos + lado * s1 * curto / 2f;
-                        Desenho.Ponta(baseC, baseC + (lado * s1).RotatedBy((Utils.RandomFloat(ref semente) - 0.5f) * 0.8f) * alt, 9f, cor, Color.White);
+                        Desenho.Ponta(baseC, baseC + (lado * s1).RotatedBy((Utils.RandomFloat(ref semente) - 0.5f) * 0.8f) * alt, 9f, cor, Color.White, 1f, Desenho.Estilo.Gelo);
                     }
                     break;
                 case TipoPerigo.Solar:
-                    // calor: coluna clara no centro e um brilho forte onde bate
-                    Desenho.Brilho(b, new Color(255, 170, 70), curto / 50f * some);
+                    Desenho.Brilho(de, new Color(255, 170, 70), curto / 70f * some);
                     break;
                 default:
                     // éter / atordoar: centelhas piscando dentro

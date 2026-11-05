@@ -314,7 +314,7 @@ namespace AscensaoAstral.Common
             else
             {
                 float f = 1f - (T - Ruptura) / (float)(Fim - Ruptura);
-                Desenho.Faixa(Inicio, Final, 130f * f * f, vermelho, Color.White);
+                Desenho.Golpe(Desenho.Estilo.Corte, Inicio, Final, 110f * f, vermelho, 1f + f, f);
                 for (int i = 0; i <= 6; i++)
                     Desenho.Brilho(Vector2.Lerp(Inicio, Final, i / 6f), vermelho, 0.9f * f);
             }
@@ -607,8 +607,7 @@ namespace AscensaoAstral.Common
             float a = Math.Min(1f, Projectile.timeLeft / 14f);
             float abre = Math.Min(1f, t / 5f);
             float largura = 70f * a * (abre < 1f ? 1.6f - 0.6f * abre : 1f) * (1f + 0.07f * MathF.Sin(t * 1.3f));
-            Desenho.Faixa(Projectile.Center, fim, largura * 1.7f, ouro * 0.5f, ouro); // halo
-            Desenho.Faixa(Projectile.Center, fim, largura, ouro, Color.White);
+            Desenho.Golpe(Desenho.Estilo.Solar, Projectile.Center, fim, largura, ouro, abre < 1f ? 2f : 1.1f);
             Desenho.Brilho(Projectile.Center, ouro, 1.5f * a);
             Desenho.Brilho(Projectile.Center, Color.White, 0.6f * a);
             return false;

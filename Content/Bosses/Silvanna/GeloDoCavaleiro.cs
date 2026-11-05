@@ -125,9 +125,9 @@ namespace AscensaoAstral.Content.Bosses.Silvanna
             // espinho: faixa que afina no topo + brilho na ponta
             // espinho de cristal: ponta principal + duas lascas menores do lado
             Vector2 baseE = Projectile.Center;
-            Desenho.Ponta(baseE, baseE - new Vector2(0f, h), 30f, c, Color.White);
-            Desenho.Ponta(baseE + new Vector2(-10f, 0f), baseE + new Vector2(-22f, -h * 0.45f), 14f, c, Color.White);
-            Desenho.Ponta(baseE + new Vector2(10f, 0f), baseE + new Vector2(24f, -h * 0.35f), 12f, c, Color.White);
+            Desenho.Ponta(baseE, baseE - new Vector2(0f, h), 30f, c, Color.White, 1f, Desenho.Estilo.Gelo);
+            Desenho.Ponta(baseE + new Vector2(-10f, 0f), baseE + new Vector2(-22f, -h * 0.45f), 14f, c, Color.White, 1f, Desenho.Estilo.Gelo);
+            Desenho.Ponta(baseE + new Vector2(10f, 0f), baseE + new Vector2(24f, -h * 0.35f), 12f, c, Color.White, 1f, Desenho.Estilo.Gelo);
             Desenho.Brilho(baseE, c, 0.5f);
             return false;
         }
@@ -241,7 +241,7 @@ namespace AscensaoAstral.Content.Bosses.Silvanna
             for (int i = 0; i < 6; i++)
             {
                 float ang = i / 6f * MathHelper.TwoPi + MathHelper.PiOver2;
-                Desenho.Ponta(Projectile.Center, Projectile.Center + ang.ToRotationVector2() * Raio * (1.1f + 0.15f * (i % 2)), 26f * s, c, Color.White);
+                Desenho.Ponta(Projectile.Center, Projectile.Center + ang.ToRotationVector2() * Raio * (1.1f + 0.15f * (i % 2)), 26f * s, c, Color.White, 1f, Desenho.Estilo.Gelo);
             }
             Desenho.Brilho(Projectile.Center, Color.White * s, 1.2f);
             return false;
@@ -345,7 +345,7 @@ namespace AscensaoAstral.Content.Bosses.Silvanna
         public override bool PreDraw(ref Color lightColor)
         {
             float a = Math.Min(1f, Projectile.timeLeft / 40f);
-            Desenho.Faixa(new Vector2(Projectile.position.X, Projectile.Center.Y), new Vector2(Projectile.position.X + Projectile.width, Projectile.Center.Y), 14f * a, new Color(150, 220, 255) * 0.6f, new Color(230, 250, 255));
+            Desenho.Golpe(Desenho.Estilo.Gelo, new Vector2(Projectile.position.X, Projectile.Center.Y), new Vector2(Projectile.position.X + Projectile.width, Projectile.Center.Y), 16f, new Color(150, 220, 255), 1f, a);
             return false;
         }
     }

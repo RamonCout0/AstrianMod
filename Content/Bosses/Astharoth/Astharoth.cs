@@ -1057,15 +1057,7 @@ namespace AscensaoAstral.Content.Bosses.Astharoth
 
                 // Luz dourada caindo em tudo que NÃO é a sombra
                 if (carga > 0f)
-                    for (int i = 0; i < 14; i++)
-                    {
-                        float x = MathHelper.Lerp(ArenaEsq, ArenaDir, (i + 0.5f) / 14f);
-                        if (Math.Abs(x - sombraX) < 200f) continue;
-                        float tremor = 0.8f + 0.2f * MathF.Sin(t * 9f + i);
-                        Desenho.Brilho(new Vector2(x, ArenaTopo + altura * 0.5f), new Color(255, 210, 120) * carga * 0.55f * tremor, 1f);
-                        sb.Draw(nevoa, new Vector2(x, ArenaTopo + altura * 0.5f) - Main.screenPosition, null, new Color(255, 230, 160, 0) * carga * 0.35f,
-                            0f, nevoa.Size() / 2f, new Vector2(0.55f, altura / 220f), 0, 0f);
-                    }
+                    Desenho.Raios(RetanguloArena, new Color(255, 215, 130), carga, Sombra.Left, Sombra.Right);
 
                 // A sombra: uma coluna escura de bordas suaves, com fiapos subindo
                 Vector2 meio = new(sombraX, ArenaTopo + altura * 0.5f);

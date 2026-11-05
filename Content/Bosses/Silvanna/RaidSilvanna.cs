@@ -1148,7 +1148,7 @@ namespace AscensaoAstral.Content.Bosses.Silvanna
                 Desenho.RetanguloAviso(new Rectangle((int)ArenaEsq, (int)(NPC.Center.Y - 60f), (int)(ArenaDir - ArenaEsq), 120), new Color(200, 240, 255), pulso);
 
             if (Estado == LANCA && (int)(Timer - 1) % 60 < 35)
-                Desenho.Faixa(NPC.Center, NPC.Center + NPC.DirectionTo(Alvo.Center) * 1400f, 4f, new Color(150, 230, 255) * 0.5f, Color.White * 0.5f);
+                Desenho.Risco(NPC.Center, NPC.Center + NPC.DirectionTo(Alvo.Center) * 1400f, 10f, new Color(150, 230, 255) * 0.55f);
 
             if (Estado == SALTO)
                 Desenho.RetanguloAviso(new Rectangle((int)(alvoSalto.X - 150f), (int)(alvoSalto.Y - 25f), 300, 90), new Color(255, 80, 80), pulso);
@@ -1196,7 +1196,7 @@ namespace AscensaoAstral.Content.Bosses.Silvanna
             if (Fase >= 3)
             {
                 int dir = Alvo.Center.X > NPC.Center.X ? 1 : -1;
-                Desenho.Faixa(NPC.Center + new Vector2(-dir * 20f, 10f), NPC.Center + new Vector2(dir * 110f, -30f), 7f, new Color(150, 220, 255), Color.White);
+                Desenho.Lanca(NPC.Center + new Vector2(-dir * 40f, 18f), NPC.Center + new Vector2(dir * 120f, -34f), 22f, new Color(150, 220, 255));
                 Desenho.Brilho(NPC.Center + new Vector2(dir * 30f, 20f), new Color(120, 200, 255), 0.9f);
             }
         }
@@ -1276,7 +1276,7 @@ namespace AscensaoAstral.Content.Bosses.Silvanna
                 {
                     Desenho.Brilho(p, new Color(150, 220, 255), 0.9f + brilho * 1.4f);
                     if (fase < AvisoCavaleiro) // a lança sendo erguida
-                        Desenho.Faixa(p + new Vector2(14f, 10f), p + new Vector2(14f, -60f - brilho * 30f), 5f + brilho * 4f, new Color(140, 210, 255), Color.White);
+                        Desenho.Lanca(p + new Vector2(14f, 14f), p + new Vector2(14f, -60f - brilho * 30f), 14f + brilho * 6f, new Color(140, 210, 255), 1f + brilho * 0.5f);
                 }
                 Color cor = Color.Lerp(new Color(110, 150, 210) * 0.45f, new Color(225, 245, 255), brilho);
                 sb.Draw(tex, p - screenPos, null, cor, 0f, tex.Size() / 2f, 0.6f, Fase >= 3 && i % 2 == 1 ? SpriteEffects.FlipHorizontally : SpriteEffects.None, 0f);
@@ -1337,7 +1337,7 @@ namespace AscensaoAstral.Content.Bosses.Silvanna
         {
             Rectangle r = Area;
             if (r.Width < 4) return false;
-            Desenho.Faixa(new Vector2(r.Left, r.Center.Y), new Vector2(r.Right, r.Center.Y), Altura * 1.5f, new Color(110, 200, 255), Color.White);
+            Desenho.Golpe(Desenho.Estilo.Gelo, new Vector2(r.Left, r.Center.Y), new Vector2(r.Right, r.Center.Y), Altura * 1.1f, new Color(110, 200, 255));
             return false;
         }
     }
@@ -1366,7 +1366,7 @@ namespace AscensaoAstral.Content.Bosses.Silvanna
         public override bool PreDraw(ref Color lightColor)
         {
             Vector2 dir = Projectile.velocity.SafeNormalize(Vector2.UnitX);
-            Desenho.Faixa(Projectile.Center - dir * 70f, Projectile.Center + dir * 30f, 9f, new Color(150, 220, 255), Color.White);
+            Desenho.Lanca(Projectile.Center - dir * 90f, Projectile.Center + dir * 40f, 24f, new Color(150, 220, 255));
             Desenho.Brilho(Projectile.Center + dir * 30f, new Color(200, 240, 255), 0.5f);
             return false;
         }
@@ -1432,7 +1432,7 @@ namespace AscensaoAstral.Content.Bosses.Silvanna
             Color c = new(150, 220, 255);
             if (Idade < Subindo)
             {
-                Desenho.Faixa(Projectile.Center + new Vector2(0f, 40f), Projectile.Center - new Vector2(0f, 30f), 8f, c, Color.White);
+                Desenho.Lanca(Projectile.Center + new Vector2(0f, 50f), Projectile.Center - new Vector2(0f, 40f), 20f, c);
                 return false;
             }
             if (!Caindo)
@@ -1444,7 +1444,7 @@ namespace AscensaoAstral.Content.Bosses.Silvanna
                 Desenho.Brilho(new Vector2(Projectile.ai[0], Projectile.ai[2] - 6f), c, 0.6f + k * 0.6f);
                 return false;
             }
-            Desenho.Faixa(Projectile.Center - new Vector2(0f, 110f), Projectile.Center + new Vector2(0f, 20f), 12f, c, Color.White);
+            Desenho.Lanca(Projectile.Center - new Vector2(0f, 130f), Projectile.Center + new Vector2(0f, 30f), 28f, c, 1.3f);
             Desenho.Brilho(Projectile.Center, Color.White, 0.35f);
             return false;
         }

@@ -55,7 +55,7 @@ namespace AscensaoAstral.Content.Bosses.Astharoth
             float a = Utils.GetLerpValue(Ativo + Projectile.ai[2], Projectile.ai[2] + Ativo - 6, Idade, true) * Utils.GetLerpValue(Projectile.ai[2], Projectile.ai[2] + 3, Idade, true);
             float bate = Utils.GetLerpValue(Projectile.ai[2] + 6, Projectile.ai[2], Idade, true);
             Vector2 topo = new(Projectile.Center.X, Projectile.ai[0]), chao = new(Projectile.Center.X, Projectile.ai[1]);
-            Desenho.Faixa(topo, chao, Largura * (1.1f + 0.5f * bate) * a, c, Color.White, 1f + bate, 0f);
+            Desenho.Golpe(Desenho.Estilo.Solar, chao, topo, Largura * (1.1f + 0.4f * bate), c, 1f + bate, a);
             // onde bate no chão: anel de luz achatado + clarão
             Desenho.Brilho(chao, c, 2.5f * a);
             Desenho.Clarao(chao, c, (0.8f + bate) * a);
@@ -89,7 +89,7 @@ namespace AscensaoAstral.Content.Bosses.Astharoth
             PrimitiveRenderer.RenderTrail(pts, new PrimitiveSettings(t => 14f * (1f - t), t => (Color.Lerp(Color.White, new Color(255, 200, 100), t) with { A = 0 }) * (1f - t)), 12);
             // a pena: ponta de luz para a frente
             Vector2 frente = Projectile.velocity.SafeNormalize(Vector2.UnitX);
-            Desenho.Ponta(Projectile.Center - frente * 6f, Projectile.Center + frente * 26f, 12f, new Color(255, 210, 120), Color.White);
+            Desenho.Ponta(Projectile.Center - frente * 6f, Projectile.Center + frente * 26f, 12f, new Color(255, 210, 120), Color.White, 1f, Desenho.Estilo.Solar);
             Desenho.Brilho(Projectile.Center, new Color(255, 220, 140), 0.3f);
             return false;
         }
@@ -139,7 +139,7 @@ namespace AscensaoAstral.Content.Bosses.Astharoth
             }
             float a = Utils.GetLerpValue(Projectile.ai[2] + Ativo, Projectile.ai[2] + Ativo - 8, Idade, true);
             float bateu = Utils.GetLerpValue(Projectile.ai[2] + 6, Projectile.ai[2], Idade, true);
-            Desenho.Faixa(Projectile.Center, Fim, 80f * a * (1f + 0.4f * bateu), c, Color.White, 1f + bateu, 0.8f);
+            Desenho.Golpe(Desenho.Estilo.Solar, Projectile.Center, Fim, 80f * (1f + 0.4f * bateu), c, 1f + bateu, a);
             Desenho.Clarao((Projectile.Center + Fim) / 2f, c, 1.2f * a * (0.5f + bateu));
             return false;
         }
