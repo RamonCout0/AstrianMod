@@ -1,0 +1,5 @@
+displayName = Ascensão Astral
+author = Ramon
+version = 0.1.0
+modReferences = Luminance, SubworldLibrary
+buildIgnore = Ferramentas/*, *.md, .gitignore, .git/*

@@ -1,0 +1,628 @@
+<title>Bancada de Shaders</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;700&family=Figtree:wght@400;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: bancada de oficina — à esquerda o código (.fx), à direita a "tela do jogo" com os parâmetros embaixo. */
+:root {
+  --bg: #0e0c16;          /* fundo de noite do Éter */
+  --painel: #171425;
+  --painel-2: #201b33;
+  --linha: #2f2847;
+  --fg: #e7e2f5;
+  --fg-2: #a69dc4;
+  --acento: #ffcf7a;      /* luz dourada do Arcanjo */
+  --acento-2: #9b7bff;    /* roxo do Éter */
+  --erro: #ff7a8a;
+  --ok: #7ae0b0;
+  --f-titulo: "Chakra Petch", "Trebuchet MS", sans-serif;
+  --f-corpo: "Figtree", "Segoe UI", system-ui, sans-serif;
+  --f-codigo: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) {
+  --bg: #f3f1f8; --painel: #ffffff; --painel-2: #ebe7f5; --linha: #d6cfe8;
+  --fg: #1d1830; --fg-2: #5d547a; --acento: #a8650a; --acento-2: #5b3fd1; --erro: #c0263d; --ok: #1d8a5a; color-scheme: light; } }
+:root[data-theme="light"] {
+  --bg: #f3f1f8; --painel: #ffffff; --painel-2: #ebe7f5; --linha: #d6cfe8;
+  --fg: #1d1830; --fg-2: #5d547a; --acento: #a8650a; --acento-2: #5b3fd1; --erro: #c0263d; --ok: #1d8a5a; color-scheme: light; }
+
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--f-corpo); font-size: 14px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 16px 32px; }
+header { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; margin-bottom: 14px; }
+h1 { font-family: var(--f-titulo); font-weight: 700; font-size: 22px; letter-spacing: 0.02em; margin: 0; }
+h1 span { color: var(--acento); }
+.sub { color: var(--fg-2); font-size: 13px; }
+.barra { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-left: auto; }
+select, button, input[type=number], input[type=text] { font: inherit; color: var(--fg); background: var(--painel-2); border: 1px solid var(--linha); border-radius: 6px; padding: 6px 10px; }
+button { cursor: pointer; }
+button.principal { background: var(--acento); color: #1a1206; border-color: transparent; font-weight: 600; }
+button:focus-visible, select:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--acento-2); outline-offset: 1px; }
+label { color: var(--fg-2); font-size: 12px; letter-spacing: 0.04em; text-transform: uppercase; }
+
+.grade { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); gap: 16px; align-items: start; }
+@media (max-width: 900px) { .grade { grid-template-columns: minmax(0, 1fr); } }
+.painel { background: var(--painel); border: 1px solid var(--linha); border-radius: 10px; padding: 12px; min-width: 0; }
+.painel h2 { font-family: var(--f-titulo); font-size: 13px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--fg-2); margin: 0 0 8px; display: flex; justify-content: space-between; gap: 8px; }
+textarea { width: 100%; min-height: 460px; resize: vertical; font-family: var(--f-codigo); font-size: 12.5px; line-height: 1.5; tab-size: 4;
+  color: var(--fg); background: var(--bg); border: 1px solid var(--linha); border-radius: 6px; padding: 10px; white-space: pre; overflow: auto; }
+#log { font-family: var(--f-codigo); font-size: 12px; white-space: pre-wrap; margin: 8px 0 0; padding: 8px 10px; border-radius: 6px; background: var(--bg); border: 1px solid var(--linha); max-height: 160px; overflow: auto; }
+#log.ok { color: var(--ok); } #log.erro { color: var(--erro); }
+details { margin-top: 8px; } summary { cursor: pointer; color: var(--fg-2); font-size: 12px; }
+#glsl { font-family: var(--f-codigo); font-size: 11.5px; white-space: pre; overflow: auto; max-height: 260px; background: var(--bg); padding: 8px; border-radius: 6px; border: 1px solid var(--linha); }
+
+.tela { position: relative; width: 100%; aspect-ratio: 16 / 9; max-width: 100%; border-radius: 8px; overflow: hidden; background: #000; border: 1px solid var(--linha); }
+.tela canvas { width: 100%; height: 100%; display: block; cursor: crosshair; }
+.tela .dica { position: absolute; left: 10px; bottom: 8px; font-size: 11px; color: #fff; opacity: 0.7; text-shadow: 0 1px 2px #000; pointer-events: none; }
+.controles { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; margin-top: 10px; }
+.controles .grupo { display: flex; gap: 6px; align-items: center; }
+#tempo { font-family: var(--f-codigo); font-variant-numeric: tabular-nums; color: var(--acento); min-width: 70px; }
+.params { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 8px 14px; margin-top: 12px; }
+.param { display: grid; grid-template-columns: 1fr; gap: 3px; min-width: 0; }
+.param .nome { font-family: var(--f-codigo); font-size: 12px; color: var(--fg); display: flex; justify-content: space-between; gap: 6px; }
+.param .nome small { color: var(--fg-2); font-size: 11px; }
+.param .linha { display: flex; gap: 6px; align-items: center; min-width: 0; }
+.param input[type=range] { flex: 1; min-width: 0; accent-color: var(--acento); }
+.param input[type=number] { width: 78px; padding: 3px 6px; font-family: var(--f-codigo); font-size: 12px; }
+.param input[type=color] { width: 40px; height: 26px; padding: 0; border: 1px solid var(--linha); border-radius: 4px; background: none; }
+.auto { font-size: 11px; color: var(--acento-2); }
+.texturas { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
+.texturas .slot { display: grid; gap: 3px; }
+.nota { color: var(--fg-2); font-size: 12.5px; line-height: 1.5; max-width: 70ch; margin-top: 14px; }
+.nota code { font-family: var(--f-codigo); font-size: 12px; color: var(--acento); }
+</style>
+
+<header>
+  <div>
+    <h1>Bancada de <span>Shaders</span></h1>
+    <div class="sub">Ascensão Astral · testa um .fx da Luminance antes de abrir o Terraria</div>
+  </div>
+  <div class="barra">
+    <label for="escolha">Shader</label>
+    <select id="escolha"></select>
+    <label for="modo">Modo</label>
+    <select id="modo">
+      <option value="sprite">Sprite / céu (retângulo)</option>
+      <option value="filtro">Filtro de tela</option>
+    </select>
+    <button id="tema" type="button" title="Alternar claro/escuro">◐</button>
+  </div>
+</header>
+
+<div class="grade">
+  <section class="painel">
+    <h2><span>Código HLSL (.fx)</span><span class="auto" id="entrada"></span></h2>
+    <textarea id="codigo" spellcheck="false" aria-label="Código do shader"></textarea>
+    <div class="controles">
+      <button class="principal" id="compilar" type="button">Compilar (Ctrl+Enter)</button>
+      <button id="copiar" type="button">Copiar código</button>
+      <label><input type="checkbox" id="auto" checked> recompilar ao digitar</label>
+    </div>
+    <div id="log">—</div>
+    <details>
+      <summary>Ver o GLSL traduzido (para depurar)</summary>
+      <pre id="glsl"></pre>
+    </details>
+  </section>
+
+  <section class="painel">
+    <h2><span>Tela</span><span id="res"></span></h2>
+    <div class="tela"><canvas id="tela" width="960" height="540"></canvas><div class="dica">clique na tela: move focusPosition / luzPos</div></div>
+    <div class="controles">
+      <div class="grupo"><button id="play" type="button">⏸ Pausar</button><span id="tempo">0.00 s</span></div>
+      <div class="grupo"><label for="vel">Velocidade</label><input id="vel" type="range" min="0" max="3" step="0.05" value="1"></div>
+      <div class="grupo"><label for="fundo">Fundo</label>
+        <select id="fundo">
+          <option value="cena">Cena de exemplo</option>
+          <option value="noite">Céu de noite</option>
+          <option value="xadrez">Xadrez (transparência)</option>
+          <option value="preto">Preto</option>
+          <option value="imagem">Minha imagem…</option>
+        </select>
+        <input type="file" id="arquivo" accept="image/*" hidden>
+      </div>
+      <div class="grupo"><label for="area">Retângulo</label>
+        <select id="area"><option value="tudo">Tela toda</option><option value="baixo">Metade de baixo</option><option value="cima">Metade de cima</option><option value="centro">Quadrado no meio</option></select>
+      </div>
+      <div class="grupo"><label for="resol">Resolução</label>
+        <select id="resol"><option value="960x540">960×540</option><option value="1280x720">1280×720</option><option value="1920x1080">1920×1080</option></select>
+      </div>
+    </div>
+    <div class="texturas" id="texturas"></div>
+    <div class="params" id="params"></div>
+    <p class="nota">
+      Como na Luminance: <code>globalTime</code>, <code>opacity</code>, <code>screenSize</code>, <code>screenPosition</code>, <code>focusPosition</code>
+      e <code>uWorldViewProjection</code> são preenchidos sozinhos. No modo <b>Sprite</b> o shader pinta o retângulo inteiro
+      (coordenadas 0–1, como o <code>Branco.png</code> esticado no céu) e o resultado é misturado como pré-multiplicado.
+      No modo <b>Filtro</b>, <code>s0</code> é a "tela do jogo" (o fundo escolhido).
+      A tradução HLSL → GLSL cobre o que os shaders da Luminance costumam usar; se algo não traduzir, o erro aparece acima com a linha.
+    </p>
+  </section>
+</div>
+
+<script>
+const RUIDOS = /*RUIDOS*/{};
+const SHADERS = /*SHADERS*/{};
+
+// ═══════════════ TRADUTOR HLSL → GLSL (WebGL2) ═══════════════
+const SEMANTICAS = /:\s*(SV_POSITION|SV_Position|SV_TARGET|SV_Target|POSITION|COLOR|TEXCOORD|NORMAL|TANGENT|BINORMAL|VPOS|DEPTH)\d*\b/g;
+
+function tirarComentarios(s) {
+  return s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/[^\n]*/g, '');
+}
+
+function acharBloco(s, inicio) { // índice do '}' que fecha o '{' em s[inicio]
+  let d = 0;
+  for (let i = inicio; i < s.length; i++) {
+    if (s[i] === '{') d++;
+    else if (s[i] === '}') { d--; if (d === 0) return i; }
+  }
+  return s.length - 1;
+}
+
+function traduzir(hlsl) {
+  const avisos = [];
+  let s = tirarComentarios(hlsl);
+  s = s.replace(/^\s*#include[^\n]*$/gm, m => { avisos.push('ignorado: ' + m.trim()); return ''; });
+
+  // técnica → nome da função de pixel
+  let entrada = null;
+  const mt = s.match(/PixelShader\s*=\s*compile\s+\w+\s+(\w+)\s*\(\s*\)/);
+  if (mt) entrada = mt[1];
+  const ti = s.search(/\btechnique\w*\s+\w*\s*\{/);
+  if (ti >= 0) { const a = s.indexOf('{', ti); s = s.slice(0, ti) + s.slice(acharBloco(s, a) + 1); }
+  if (!entrada) throw new Error('Não achei "PixelShader = compile ps_x_x Funcao();" na technique.');
+
+  // samplers
+  const samplers = [];
+  let proxUnidade = 0;
+  s = s.replace(/\bsampler(?:2D)?\s+(\w+)\s*(?::\s*register\(\s*s(\d+)\s*\))?\s*(?:=\s*sampler_state\s*\{[^}]*\})?\s*;/g, (m, nome, reg) => {
+    const u = reg !== undefined ? parseInt(reg) : proxUnidade;
+    proxUnidade = Math.max(proxUnidade, u + 1);
+    samplers.push({ nome, unidade: u });
+    return `uniform sampler2D ${nome};`;
+  });
+  s = s.replace(/^\s*texture\w*\s+\w+\s*;/gm, '');
+
+  // assinatura da função de entrada (antes de tirar as semânticas)
+  const ms = s.match(new RegExp('(\\w+)\\s+' + entrada + '\\s*\\(([^)]*)\\)'));
+  if (!ms) throw new Error('Não achei a função "' + entrada + '".');
+  const params = ms[2].split(',').map(p => p.trim()).filter(Boolean).map(p => {
+    const sem = (p.match(/:\s*(\w+)/) || [])[1] || '';
+    const semSem = p.replace(/:\s*\w+/, '').replace(/\b(in|uniform)\b/g, '').trim().split(/\s+/);
+    return { tipo: semSem[0], nome: semSem[1], sem: sem.toUpperCase() };
+  });
+
+  // structs: guardar campos com semântica
+  const structs = {};
+  s.replace(/struct\s+(\w+)\s*\{([^}]*)\}/g, (m, nome, corpo) => {
+    structs[nome] = corpo.split(';').map(c => c.trim()).filter(Boolean).map(c => {
+      const sem = (c.match(/:\s*(\w+)/) || [])[1] || '';
+      const p = c.replace(/:\s*\w+/, '').trim().split(/\s+/);
+      return { tipo: p[0], nome: p[1], sem: sem.toUpperCase() };
+    });
+    return m;
+  });
+
+  // remover vertex shaders (não usados aqui): qualquer função que retorne um struct usado como VertexShader
+  const mv = hlsl.match(/VertexShader\s*=\s*compile\s+\w+\s+(\w+)\s*\(\s*\)/);
+  if (mv) {
+    const r = new RegExp('\\w+\\s+' + mv[1] + '\\s*\\([^)]*\\)\\s*(?::\\s*\\w+)?\\s*\\{');
+    const m = r.exec(s);
+    if (m) { const a = s.indexOf('{', m.index); s = s.slice(0, m.index) + s.slice(acharBloco(s, a) + 1); }
+  }
+
+  s = s.replace(SEMANTICAS, '');
+  // palavras reservadas do GLSL que são nomes comuns em HLSL
+  s = s.replace(/\b(input|output|sample|filter|active|common|partition|smooth|flat|noperspective|texture)\b(?!\s*\()/g, '$1_');
+
+  // tipos
+  const tipos = [[/\bfloat4x4\b|\bmatrix\b/g, 'mat4'], [/\bfloat3x3\b/g, 'mat3'], [/\bfloat2x2\b/g, 'mat2'],
+    [/\bhalf4\b|\bfloat4\b/g, 'vec4'], [/\bhalf3\b|\bfloat3\b/g, 'vec3'], [/\bhalf2\b|\bfloat2\b/g, 'vec2'], [/\bhalf\b/g, 'float'],
+    [/\bint4\b/g, 'ivec4'], [/\bint3\b/g, 'ivec3'], [/\bint2\b/g, 'ivec2'], [/\bbool2\b/g, 'bvec2'], [/\bbool3\b/g, 'bvec3'], [/\bbool4\b/g, 'bvec4']];
+  for (const [r, t] of tipos) s = s.replace(r, t);
+  const tipoGLSL = t => ({ float4: 'vec4', float3: 'vec3', float2: 'vec2', half4: 'vec4', half3: 'vec3', half2: 'vec2', matrix: 'mat4', float4x4: 'mat4' }[t] || t);
+
+  // funções
+  s = s.replace(/\btex2D\s*\(/g, 'texture(').replace(/\blerp\s*\(/g, 'mix(').replace(/\bfrac\s*\(/g, 'fract(')
+    .replace(/\bfmod\s*\(/g, 'mod(').replace(/\batan2\s*\(/g, 'atan(').replace(/\bddx\s*\(/g, 'dFdx(').replace(/\bddy\s*\(/g, 'dFdy(')
+    .replace(/\brsqrt\s*\(/g, 'inversesqrt(').replace(/\bstatic\s+const\b/g, 'const').replace(/\bstatic\b/g, '').replace(/\binline\b/g, '');
+
+  // variáveis globais (profundidade 0) → uniform
+  const uniforms = [];
+  let saida = '', d = 0, i = 0;
+  const linhas = s.split(/(?<=;)|(?=\{)|(?<=\{)|(?=\})|(?<=\})/);
+  for (const pedaco of linhas) {
+    if (pedaco === '{') { d++; saida += pedaco; continue; }
+    if (pedaco === '}') { d--; saida += pedaco; continue; }
+    if (d === 0) {
+      const m = pedaco.match(/^(\s*)(float|vec2|vec3|vec4|int|bool|mat4|mat3|mat2)\s+(\w+)\s*(\[\s*\d+\s*\])?\s*(=\s*[^;]+)?;\s*$/);
+      if (m && !/\bconst\b|\buniform\b/.test(pedaco)) {
+        uniforms.push({ tipo: m[2], nome: m[3], array: m[4] || '', padrao: m[5] ? m[5].replace(/^=\s*/, '') : null });
+        saida += `${m[1]}uniform ${m[2]} ${m[3]}${m[4] || ''};`;
+        continue;
+      }
+    }
+    saida += pedaco;
+  }
+  s = saida;
+
+  // inteiros → float (GLSL ES não converte sozinho), menos em índices, for(...) e declarações int
+  s = inteirosParaFloat(s);
+
+  // main()
+  const args = params.map(p => {
+    if (structs[p.tipo]) return 'entradaVS_';
+    if (p.sem.startsWith('COLOR')) return 'vec4(1.0)';
+    if (p.sem.startsWith('TEXCOORD')) return tipoGLSL(p.tipo) === 'vec3' ? 'vec3(vUV, 0.0)' : 'vUV';
+    if (p.sem.includes('POSITION') || p.sem === 'VPOS') return 'vec4(gl_FragCoord.xy, 0.0, 1.0)';
+    return 'vUV';
+  });
+  let montaStruct = '';
+  const ps = params.find(p => structs[p.tipo]);
+  if (ps) {
+    montaStruct = `  ${ps.tipo} entradaVS_;\n`;
+    for (const c of structs[ps.tipo]) {
+      const t = tipoGLSL(c.tipo);
+      let v = 'vec4(0.0)';
+      if (c.sem.startsWith('COLOR')) v = 'vec4(1.0)';
+      else if (c.sem.startsWith('TEXCOORD')) v = t === 'vec3' ? 'vec3(vUV, 0.0)' : t === 'vec4' ? 'vec4(vUV, 0.0, 0.0)' : 'vUV';
+      else if (c.sem.includes('POSITION')) v = 'vec4(gl_FragCoord.xy, 0.0, 1.0)';
+      montaStruct += `  entradaVS_.${c.nome} = ${v};\n`;
+    }
+  }
+
+  const ajudantes = `
+float saturate(float x){return clamp(x,0.0,1.0);} vec2 saturate(vec2 x){return clamp(x,0.0,1.0);}
+vec3 saturate(vec3 x){return clamp(x,0.0,1.0);} vec4 saturate(vec4 x){return clamp(x,0.0,1.0);}
+vec4 mul(vec4 v, mat4 m){return v*m;} vec4 mul(mat4 m, vec4 v){return m*v;} vec3 mul(vec3 v, mat3 m){return v*m;} vec3 mul(mat3 m, vec3 v){return m*v;}
+vec2 mul(vec2 v, mat2 m){return v*m;} vec2 mul(mat2 m, vec2 v){return m*v;}
+void clip(float x){if(x<0.0)discard;} void clip(vec4 x){if(any(lessThan(x,vec4(0.0))))discard;}
+float log10(float x){return log(x)/2.302585;}
+vec4 tex2Dlod(sampler2D t, vec4 c){return textureLod(t,c.xy,c.w);}
+void sincos(float x, out float s, out float c){s=sin(x);c=cos(x);}
+`;
+  const glsl = `#version 300 es
+precision highp float; precision highp int;
+in vec2 vUV;
+out vec4 saidaFinal_;
+${ajudantes}
+${s}
+void main(){
+${montaStruct}  saidaFinal_ = ${entrada}(${args.join(', ')});
+}`;
+  return { glsl, entrada, samplers, uniforms, avisos };
+}
+
+function inteirosParaFloat(s) {
+  let r = '', i = 0, colchete = 0, emFor = false, parenFor = 0, decInt = false;
+  const ehId = c => /[A-Za-z0-9_.]/.test(c);
+  while (i < s.length) {
+    const c = s[i];
+    // palavras
+    if (/[A-Za-z_]/.test(c)) {
+      let j = i; while (j < s.length && /[A-Za-z0-9_]/.test(s[j])) j++;
+      const w = s.slice(i, j);
+      if (w === 'for') { emFor = true; parenFor = 0; }
+      if (/^(int|uint|ivec[234]|uvec[234])$/.test(w)) decInt = true;
+      r += w; i = j; continue;
+    }
+    if (c === '(' && emFor) parenFor++;
+    if (c === ')' && emFor) { parenFor--; if (parenFor === 0) emFor = false; }
+    if (c === '[') colchete++;
+    if (c === ']') colchete--;
+    if (c === ';' || c === '{' || c === '}') decInt = false;
+    if (/[0-9]/.test(c) && !ehId(s[i - 1] || ' ')) {
+      let j = i; while (j < s.length && /[0-9]/.test(s[j])) j++;
+      const prox = s[j] || '';
+      if (prox === '.' || prox === 'e' || prox === 'E' || prox === 'x' || /[A-Za-z_]/.test(prox)) {
+        // já é float (ou hex/sufixo) — copia tudo até o fim do número
+        let k = j; if (prox === '.') { k++; while (k < s.length && /[0-9]/.test(s[k])) k++; }
+        if (/[eE]/.test(s[k] || '')) { k++; if (/[+-]/.test(s[k])) k++; while (/[0-9]/.test(s[k] || '')) k++; }
+        if (/[fFhH]/.test(s[k] || '')) { r += s.slice(i, k); i = k + 1; continue; }
+        r += s.slice(i, k); i = k; continue;
+      }
+      const n = s.slice(i, j);
+      r += (colchete > 0 || emFor || decInt) ? n : n + '.0';
+      i = j; continue;
+    }
+    // "1.5f" → "1.5"
+    r += c; i++;
+  }
+  return r.replace(/(\d\.\d*)[fF]\b/g, '$1');
+}
+
+// ═══════════════ WEBGL ═══════════════
+const tela = document.getElementById('tela');
+const gl = tela.getContext('webgl2', { premultipliedAlpha: true, preserveDrawingBuffer: true, alpha: false });
+const VERT = `#version 300 es
+in vec2 p; out vec2 vUV;
+void main(){ vUV = vec2(p.x*0.5+0.5, 0.5-p.y*0.5); gl_Position = vec4(p,0.0,1.0); }`;
+const FRAG_FUNDO = `#version 300 es
+precision highp float; in vec2 vUV; uniform sampler2D t; out vec4 o; void main(){ o = texture(t, vUV); }`;
+
+function compilar(tipo, fonte) {
+  const sh = gl.createShader(tipo); gl.shaderSource(sh, fonte); gl.compileShader(sh);
+  if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) { const e = gl.getShaderInfoLog(sh); gl.deleteShader(sh); throw new Error(e); }
+  return sh;
+}
+function programa(fv, ff) {
+  const p = gl.createProgram();
+  gl.attachShader(p, compilar(gl.VERTEX_SHADER, fv)); gl.attachShader(p, compilar(gl.FRAGMENT_SHADER, ff));
+  gl.bindAttribLocation(p, 0, 'p'); gl.linkProgram(p);
+  if (!gl.getProgramParameter(p, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(p));
+  return p;
+}
+const quad = gl.createBuffer();
+gl.bindBuffer(gl.ARRAY_BUFFER, quad);
+gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, 1,1]), gl.STATIC_DRAW);
+gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+const progFundo = programa(VERT, FRAG_FUNDO);
+
+function texturaDe(fonteImg, repetir) {
+  const t = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, t);
+  gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, fonteImg);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+  const w = repetir ? gl.REPEAT : gl.CLAMP_TO_EDGE;
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, w); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, w);
+  return t;
+}
+
+// Texturas: ruídos embutidos + "Pixel" branco + bloom gerado + fundos
+const texs = {};
+function carregarImg(src) { return new Promise(ok => { const i = new Image(); i.onload = () => ok(i); i.src = src; }); }
+function canvasTex(w, h, desenhar) { const c = document.createElement('canvas'); c.width = w; c.height = h; desenhar(c.getContext('2d'), w, h); return c; }
+
+function cenaExemplo(w, h) {
+  return canvasTex(w, h, (g) => {
+    const ceu = g.createLinearGradient(0, 0, 0, h); ceu.addColorStop(0, '#3b4fa8'); ceu.addColorStop(0.7, '#9fb4ff'); ceu.addColorStop(1, '#cfd9ff');
+    g.fillStyle = ceu; g.fillRect(0, 0, w, h);
+    g.fillStyle = 'rgba(255,255,255,0.85)';
+    for (let i = 0; i < 6; i++) { const x = (i * 0.19 + 0.05) * w, y = h * (0.15 + (i % 3) * 0.08); g.beginPath(); g.ellipse(x, y, w * 0.07, h * 0.035, 0, 0, Math.PI * 2); g.fill(); }
+    g.fillStyle = '#5a7a4a'; g.beginPath(); g.moveTo(0, h * 0.72);
+    for (let x = 0; x <= w; x += 20) g.lineTo(x, h * 0.72 - Math.sin(x * 0.01) * h * 0.04 - Math.sin(x * 0.033) * h * 0.02);
+    g.lineTo(w, h); g.lineTo(0, h); g.fill();
+    const b = Math.max(8, Math.round(w / 60));
+    for (let x = 0; x < w; x += b) for (let y = Math.round(h * 0.8); y < h; y += b) { g.fillStyle = (x / b + y / b) % 2 ? '#7a5534' : '#6d4a2c'; g.fillRect(x, y, b, b); }
+    g.fillStyle = '#4caf50'; g.fillRect(0, Math.round(h * 0.8) - b / 3, w, b / 3);
+    g.fillStyle = '#e8b04a'; g.fillRect(w * 0.48, h * 0.8 - b * 3, b * 1.2, b * 3);
+    g.fillStyle = '#2b2b3d'; g.fillRect(w * 0.48 + b * 0.2, h * 0.8 - b * 2.6, b * 0.8, b * 0.6);
+  });
+}
+function noite(w, h) {
+  return canvasTex(w, h, (g) => {
+    const ceu = g.createLinearGradient(0, 0, 0, h); ceu.addColorStop(0, '#04050f'); ceu.addColorStop(0.6, '#281e4b'); ceu.addColorStop(1, '#140f28');
+    g.fillStyle = ceu; g.fillRect(0, 0, w, h);
+    for (let i = 0; i < 260; i++) { const x = Math.abs(Math.sin(i * 12.9898) * 43758.5453) % 1 * w, y = Math.abs(Math.sin(i * 78.233) * 12345.678) % 1 * h * 0.65;
+      g.fillStyle = `rgba(220,210,255,${0.3 + (i % 5) * 0.14})`; g.fillRect(x, y, 1.6, 1.6); }
+  });
+}
+function xadrez(w, h) {
+  return canvasTex(w, h, (g) => { const b = 24; for (let x = 0; x < w; x += b) for (let y = 0; y < h; y += b) { g.fillStyle = ((x + y) / b) % 2 ? '#2a2638' : '#3a3550'; g.fillRect(x, y, b, b); } });
+}
+function bloom(n) {
+  return canvasTex(n, n, (g) => { const r = g.createRadialGradient(n / 2, n / 2, 0, n / 2, n / 2, n / 2); r.addColorStop(0, '#fff'); r.addColorStop(1, '#000'); g.fillStyle = r; g.fillRect(0, 0, n, n); });
+}
+
+const estado = { area: 'tudo', tempo: 0, tocando: true, vel: 1, modo: 'sprite', fundo: 'cena', imagemUsuario: null, unidades: {}, valores: {}, foco: [0.5, 0.5], prog: null, info: null };
+
+async function prepararTexturas() {
+  for (const [nome, src] of Object.entries(RUIDOS)) texs[nome] = texturaDe(await carregarImg(src), true);
+  texs['Pixel (branco)'] = texturaDe(canvasTex(4, 4, (g) => { g.fillStyle = '#fff'; g.fillRect(0, 0, 4, 4); }), true);
+  texs['BloomCircle'] = texturaDe(bloom(256), false);
+}
+function texFundo() {
+  const w = tela.width, h = tela.height, chave = estado.fundo + w + 'x' + h;
+  if (texFundo.chave === chave && texFundo.t) return texFundo.t;
+  const c = estado.fundo === 'imagem' && estado.imagemUsuario ? canvasTex(w, h, g => g.drawImage(estado.imagemUsuario, 0, 0, w, h))
+    : estado.fundo === 'noite' ? noite(w, h) : estado.fundo === 'xadrez' ? xadrez(w, h) : estado.fundo === 'preto' ? canvasTex(w, h, g => { g.fillStyle = '#000'; g.fillRect(0, 0, w, h); }) : cenaExemplo(w, h);
+  if (texFundo.t) gl.deleteTexture(texFundo.t);
+  texFundo.t = texturaDe(c, false); texFundo.chave = chave;
+  return texFundo.t;
+}
+
+// ═══════════════ PARÂMETROS ═══════════════
+const AUTOMATICOS = ['globalTime', 'opacity', 'screenSize', 'screenPosition', 'focusPosition', 'uWorldViewProjection', 'zoom', 'uTime'];
+function padraoDe(u) {
+  const n = u.nome.toLowerCase();
+  const num = u.padrao ? u.padrao.match(/-?\d*\.?\d+/g)?.map(Number) : null;
+  const dim = { float: 1, int: 1, bool: 1, vec2: 2, vec3: 3, vec4: 4 }[u.tipo] || 0;
+  if (num && num.length >= dim) return num.slice(0, dim);
+  if (u.tipo === 'vec3' && /cor|color|colour/.test(n)) return [1, 0.8, 0.5];
+  if (u.tipo === 'vec4' && /cor|color/.test(n)) return [1, 0.8, 0.5, 1];
+  if (/pos|centro|center/.test(n) && u.tipo === 'vec2') return [0.5, 0.3];
+  if (/raio|radius/.test(n)) return [120];
+  if (/espessura|thickness|largura|width/.test(n)) return [60];
+  if (/propor|aspect/.test(n)) return [16 / 9];
+  if (/forca|força|intens|opac|strength|brilho/.test(n)) return [1];
+  return Array(Math.max(dim, 1)).fill(dim === 1 ? 0.5 : 0.5);
+}
+function faixaDe(u) {
+  const n = u.nome.toLowerCase();
+  if (/raio|radius|espessura|thickness|largura|width/.test(n)) return [0, 800, 1];
+  if (/propor|aspect/.test(n)) return [0.25, 4, 0.01];
+  if (/pos/.test(n)) return [-0.5, 1.5, 0.005];
+  return [0, 2, 0.01];
+}
+
+function montarParametros(info) {
+  const caixa = document.getElementById('params'); caixa.innerHTML = '';
+  for (const u of info.uniforms) {
+    if (u.tipo.startsWith('mat') || u.array) continue;
+    const auto = AUTOMATICOS.includes(u.nome);
+    if (!(u.nome in estado.valores)) estado.valores[u.nome] = padraoDe(u);
+    const el = document.createElement('div'); el.className = 'param';
+    el.innerHTML = `<div class="nome"><span>${u.nome}</span><small>${u.tipo}${auto ? ' · auto' : ''}</small></div>`;
+    if (auto) { el.querySelector('small').classList.add('auto'); caixa.appendChild(el); continue; }
+    const v = estado.valores[u.nome];
+    const linha = document.createElement('div'); linha.className = 'linha';
+    if (u.tipo === 'vec3' && /cor|color/i.test(u.nome)) {
+      const c = document.createElement('input'); c.type = 'color'; c.id = 'p-' + u.nome;
+      c.value = '#' + v.map(x => Math.round(Math.min(1, Math.max(0, x)) * 255).toString(16).padStart(2, '0')).join('');
+      c.oninput = () => { const h = c.value; estado.valores[u.nome] = [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16) / 255); };
+      linha.appendChild(c);
+      const t = document.createElement('small'); t.textContent = 'cor'; linha.appendChild(t);
+    } else {
+      const [mn, mx, st] = faixaDe(u);
+      v.forEach((x, k) => {
+        const r = document.createElement('input'); r.type = 'range'; r.min = mn; r.max = mx; r.step = st; r.value = x; r.id = `p-${u.nome}-${k}`;
+        const nmb = document.createElement('input'); nmb.type = 'number'; nmb.step = st; nmb.value = x; nmb.id = `n-${u.nome}-${k}`;
+        r.oninput = () => { nmb.value = r.value; estado.valores[u.nome][k] = parseFloat(r.value); };
+        nmb.oninput = () => { r.value = nmb.value; estado.valores[u.nome][k] = parseFloat(nmb.value) || 0; };
+        linha.appendChild(r); linha.appendChild(nmb);
+      });
+    }
+    el.appendChild(linha); caixa.appendChild(el);
+  }
+
+  const ct = document.getElementById('texturas'); ct.innerHTML = '';
+  const nomes = Object.keys(texs);
+  for (const sm of info.samplers.sort((a, b) => a.unidade - b.unidade)) {
+    if (!(sm.unidade in estado.unidades)) estado.unidades[sm.unidade] = sm.unidade === 0 ? (estado.modo === 'filtro' ? 'Fundo (tela do jogo)' : 'Pixel (branco)') : nomes[(sm.unidade - 1) % 4];
+    const d = document.createElement('div'); d.className = 'slot';
+    const opts = ['Fundo (tela do jogo)', ...nomes].map(n => `<option ${n === estado.unidades[sm.unidade] ? 'selected' : ''}>${n}</option>`).join('');
+    d.innerHTML = `<label for="t-${sm.unidade}">s${sm.unidade} · ${sm.nome}</label><select id="t-${sm.unidade}">${opts}</select>`;
+    d.querySelector('select').onchange = e => estado.unidades[sm.unidade] = e.target.value;
+    ct.appendChild(d);
+  }
+}
+
+// ═══════════════ COMPILAR E DESENHAR ═══════════════
+const log = document.getElementById('log');
+function compilarShader() {
+  const fonte = document.getElementById('codigo').value;
+  try {
+    const info = traduzir(fonte);
+    document.getElementById('glsl').textContent = info.glsl.split('\n').map((l, i) => String(i + 1).padStart(3) + '  ' + l).join('\n');
+    const p = programa(VERT, info.glsl);
+    if (estado.prog) gl.deleteProgram(estado.prog);
+    estado.prog = p; estado.info = info;
+    document.getElementById('entrada').textContent = 'entrada: ' + info.entrada + '()';
+    montarParametros(info);
+    log.className = 'ok';
+    log.textContent = 'Compilou. ' + info.uniforms.length + ' parâmetros, ' + info.samplers.length + ' texturas.' + (info.avisos.length ? '\n' + info.avisos.join('\n') : '');
+    return { ok: true };
+  } catch (e) {
+    log.className = 'erro';
+    log.textContent = 'Erro: ' + e.message + '\n(as linhas citadas são do GLSL traduzido — abra "Ver o GLSL traduzido")';
+    return { ok: false, erro: e.message };
+  }
+}
+
+function desenhar() {
+  const w = tela.width, h = tela.height;
+  gl.viewport(0, 0, w, h);
+  gl.disable(gl.BLEND);
+  gl.useProgram(progFundo);
+  gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, texFundo());
+  gl.uniform1i(gl.getUniformLocation(progFundo, 't'), 0);
+  gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+  if (!estado.prog) return;
+
+  const p = estado.prog, info = estado.info;
+  gl.useProgram(p);
+  // no modo sprite o retângulo pode ocupar só parte da tela (ex.: as nuvens ficam na metade de baixo)
+  const area = estado.modo === 'sprite' ? estado.area : 'tudo';
+  const rw = area === 'centro' ? Math.round(h * 0.6) : w, rh = area === 'tudo' ? h : area === 'centro' ? Math.round(h * 0.6) : Math.round(h / 2);
+  if (area === 'baixo') gl.viewport(0, 0, w, rh);
+  else if (area === 'cima') gl.viewport(0, h - rh, w, rh);
+  else if (area === 'centro') gl.viewport((w - rw) / 2, (h - rh) / 2, rw, rh);
+  if (estado.modo === 'sprite') { gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA); }
+  for (const sm of info.samplers) {
+    gl.activeTexture(gl.TEXTURE0 + sm.unidade);
+    const escolha = estado.unidades[sm.unidade];
+    gl.bindTexture(gl.TEXTURE_2D, escolha === 'Fundo (tela do jogo)' ? texFundo() : texs[escolha]);
+    gl.uniform1i(gl.getUniformLocation(p, sm.nome), sm.unidade);
+  }
+  const auto = {
+    globalTime: [estado.tempo], uTime: [estado.tempo], opacity: [1], screenSize: [w, h], screenPosition: [0, 0],
+    focusPosition: [estado.foco[0] * w, estado.foco[1] * h], zoom: [1, 1], proporcao: area !== 'tudo' && estado.valores.proporcao === undefined ? [rw / rh] : undefined
+  };
+  for (const u of info.uniforms) {
+    const loc = gl.getUniformLocation(p, u.nome); if (!loc) continue;
+    if (u.tipo === 'mat4') { gl.uniformMatrix4fv(loc, false, [1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1]); continue; }
+    const dimU = { float: 1, vec2: 2, vec3: 3, vec4: 4 }[u.tipo] || 1;
+    const v = [...((auto[u.nome] !== undefined ? auto[u.nome] : null) || estado.valores[u.nome] || [0])];
+    while (v.length < dimU) v.push(0);
+    v.length = dimU;
+    if (u.tipo === 'int' || u.tipo === 'bool') gl.uniform1i(loc, Math.round(v[0]));
+    else [gl.uniform1f, gl.uniform2f, gl.uniform3f, gl.uniform4f][({ float: 1, vec2: 2, vec3: 3, vec4: 4 }[u.tipo] || 1) - 1].call(gl, loc, ...v);
+  }
+  gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+  gl.disable(gl.BLEND);
+}
+
+let ultimo = performance.now();
+function quadro(agora) {
+  const dt = (agora - ultimo) / 1000; ultimo = agora;
+  if (estado.tocando) estado.tempo += dt * estado.vel;
+  document.getElementById('tempo').textContent = estado.tempo.toFixed(2) + ' s';
+  desenhar();
+  requestAnimationFrame(quadro);
+}
+
+// ═══════════════ INTERFACE ═══════════════
+const codigo = document.getElementById('codigo');
+const escolha = document.getElementById('escolha');
+for (const nome of Object.keys(SHADERS)) escolha.insertAdjacentHTML('beforeend', `<option>${nome}</option>`);
+escolha.insertAdjacentHTML('beforeend', '<option value="">(colar o meu…)</option>');
+function carregarShader(nome) {
+  if (!nome) { codigo.value = ''; codigo.focus(); return; }
+  codigo.value = SHADERS[nome];
+  estado.modo = /Filter/.test(nome) ? 'filtro' : 'sprite';
+  estado.area = /Nuvens/.test(nome) ? 'baixo' : 'tudo'; document.getElementById('area').value = estado.area;
+  estado.fundo = /Nuvens/.test(nome) ? 'noite' : 'cena'; document.getElementById('fundo').value = estado.fundo;
+  document.getElementById('modo').value = estado.modo;
+  estado.valores = {}; estado.unidades = {};
+  compilarShader();
+}
+escolha.onchange = () => carregarShader(escolha.value);
+document.getElementById('modo').onchange = e => { estado.modo = e.target.value; estado.unidades = {}; if (estado.info) montarParametros(estado.info); };
+document.getElementById('compilar').onclick = compilarShader;
+codigo.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); compilarShader(); }
+  if (e.key === 'Tab') { e.preventDefault(); const a = codigo.selectionStart; codigo.setRangeText('    ', a, codigo.selectionEnd, 'end'); }
+});
+let espera; codigo.addEventListener('input', () => { if (!document.getElementById('auto').checked) return; clearTimeout(espera); espera = setTimeout(compilarShader, 500); });
+document.getElementById('copiar').onclick = async () => {
+  try { await navigator.clipboard.writeText(codigo.value); log.textContent = 'Código copiado.'; } catch { codigo.select(); log.textContent = 'Selecionei o código: use Ctrl+C.'; }
+};
+document.getElementById('play').onclick = e => { estado.tocando = !estado.tocando; e.target.textContent = estado.tocando ? '⏸ Pausar' : '▶ Tocar'; };
+document.getElementById('vel').oninput = e => estado.vel = parseFloat(e.target.value);
+const arquivo = document.getElementById('arquivo');
+document.getElementById('fundo').onchange = e => { if (e.target.value === 'imagem') arquivo.click(); else estado.fundo = e.target.value; };
+arquivo.onchange = () => {
+  const f = arquivo.files[0]; if (!f) return;
+  const r = new FileReader(); r.onload = async () => { estado.imagemUsuario = await carregarImg(r.result); estado.fundo = 'imagem'; texFundo.chave = null; }; r.readAsDataURL(f);
+};
+document.getElementById('area').onchange = e => estado.area = e.target.value;
+document.getElementById('resol').onchange = e => { const [w, h] = e.target.value.split('x').map(Number); tela.width = w; tela.height = h; document.getElementById('res').textContent = w + '×' + h; };
+document.getElementById('res').textContent = tela.width + '×' + tela.height;
+tela.addEventListener('pointerdown', e => {
+  const r = tela.getBoundingClientRect(); estado.foco = [(e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height];
+  for (const u of (estado.info?.uniforms || [])) if (u.tipo === 'vec2' && /pos/i.test(u.nome) && !AUTOMATICOS.includes(u.nome)) {
+    estado.valores[u.nome] = [...estado.foco];
+    [0, 1].forEach(k => { const a = document.getElementById(`p-${u.nome}-${k}`), b = document.getElementById(`n-${u.nome}-${k}`); if (a) a.value = estado.foco[k]; if (b) b.value = estado.foco[k].toFixed(3); });
+  }
+});
+document.getElementById('tema').onclick = () => {
+  const r = document.documentElement, atual = r.dataset.theme || (matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+  r.dataset.theme = atual === 'light' ? 'dark' : 'light';
+};
+
+// API para testes automáticos (o Claude usa isto num navegador sem tela)
+window.bancada = {
+  carregar(fonte, modo) { codigo.value = fonte; estado.modo = modo || 'sprite'; document.getElementById('modo').value = estado.modo; estado.valores = {}; estado.unidades = {}; return compilarShader(); },
+  definir(nome, valor) { estado.valores[nome] = Array.isArray(valor) ? valor : [valor]; },
+  textura(unidade, nome) { estado.unidades[unidade] = nome; },
+  fundo(nome) { estado.fundo = nome; },
+  area(nome) { estado.area = nome; document.getElementById('area').value = nome; },
+  tempo(t) { estado.tempo = t; estado.tocando = false; desenhar(); },
+  foto() { desenhar(); return tela.toDataURL('image/png'); },
+  info() { return estado.info; }
+};
+
+prepararTexturas().then(() => { carregarShader(Object.keys(SHADERS)[0]); requestAnimationFrame(quadro); window.bancadaPronta = true; });
+</script>

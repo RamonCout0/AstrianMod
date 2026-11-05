@@ -1,0 +1,7 @@
+Ascensão Astral traz as raids de MMORPG para o Terraria.
+
+Depois da Parede de Carne, o mundo começa a sofrer uma interferência exterior: o minério Astrânia surge, algo cai do céu, e o planeta Astra começa a se aproximar.
+
+Raids com etapas, checkpoints, quebra de postura (stagger), mecânicas de wipe e um sistema de alma: quem cai só volta se um aliado parar sobre a alma para reviver.
+
+Versão de base (esqueleto): Raid da Silvanna (pós Queen Slime) e Raid do Astharoth (pós Golem).

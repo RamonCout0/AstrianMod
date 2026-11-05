@@ -1,0 +1,94 @@
+Mods: {
+	AscensaoAstral: {
+		Items: {
+			ControleDoBot: {
+				DisplayName: Controle do Bot
+				Tooltip: ""
+			}
+			Astrania: {
+				DisplayName: Astrânia
+				Tooltip: "'Pulsa como se tivesse um coração'"
+			}
+			ChamadoDaBruxa: {
+				DisplayName: Chamado da Bruxa
+				Tooltip:
+					'''
+					Começa a Raid da Silvanna
+					Use no bioma da neve, depois da Queen Slime
+					'''
+			}
+			FerramentaDeTeste: {
+				DisplayName: Ferramenta de Teste
+				Tooltip: "[DEBUG] Cada uso avança a história: 1º libera a Astrânia, 2º cria a cratera ao seu lado, depois te leva até ela"
+			}
+			LaminaErrante: {
+				DisplayName: Lâmina Errante
+				Tooltip:
+					'''
+					Começa a Raid do Astharoth
+					Depois do Golem
+					'''
+			}
+		}
+
+		Keybinds: {
+			UltimateDaFusao.DisplayName: Ultimate da Fusão
+		}
+
+		Subworlds: {
+			ArenaDaSilvanna.DisplayName: Vale Gélido de Armotheus
+			ArenaDoAstharoth.DisplayName: Errância de Astharoth
+		}
+
+		NPCs: {
+			EcoEstelar.DisplayName: Eco Estelar
+			RaidSilvanna.DisplayName: Armotheus
+			EstatuaViva.DisplayName: Estátua Viva
+			Astharoth.DisplayName: Astharoth, o Guerreiro Errante
+			DragaoDoEter.DisplayName: Dragão do Éter
+		}
+
+		Projectiles: {
+			PilarSolar.DisplayName: Pilar Solar
+			PenaDeLuz.DisplayName: Pena de Luz
+			RastroDeLuz.DisplayName: Risco de Luz
+			LaminaDoVazio.DisplayName: Lâmina do Vazio
+			EstrelaDeAstra.DisplayName: Estrela de Astra
+			DisparoEstelar.DisplayName: Disparo Estelar
+			CoroDosEcos.DisplayName: Coro dos Ecos
+			TiroDoEco.DisplayName: Tiro do Eco
+			EspinhoDeGelo.DisplayName: Espinho de Gelo
+			AnelDeGelo.DisplayName: Anel de Gelo
+			PrisaoDeGelo.DisplayName: Prisão de Gelo
+			SoproGlacial.DisplayName: Sopro Glacial
+			RastroDeGelo.DisplayName: Rastro de Gelo
+			LancaDoCeu.DisplayName: Lança do Céu
+			LaminaGuiada.DisplayName: Lâmina Guiada
+			FeixeGiratorio.DisplayName: Feixe do Éter
+			QuedaEstelar.DisplayName: Queda Estelar
+			RetanguloPerigo.DisplayName: Corte
+			Rajada.DisplayName: Rajada
+			AlmaDoJogador.DisplayName: Alma
+			VarreduraDoChao.DisplayName: Varredura Gélida
+			LancaVoadora.DisplayName: Lança
+			EscudoNoChao.DisplayName: Escudo Astral
+			OrbeEterea.DisplayName: Orbe Etérea
+		}
+
+		Buffs: {
+			EscudoAstral: {
+				DisplayName: Escudo Astral
+				Description: Protege da Rajada Solar
+			}
+			BarreiraEterea: {
+				DisplayName: Barreira Etérea
+				Description: Protege do mergulho do Arcanjo
+			}
+		}
+
+		Tiles: {
+			AstraniaTile.MapEntry: Astrânia
+			PonteEterea.MapEntry: Ponte Etérea
+		}
+	}
+}
