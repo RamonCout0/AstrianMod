@@ -178,13 +178,29 @@ namespace AscensaoAstral.Common.Raid
         private static Rectangle BotaoIniciar => new(Painel.X + 545, Painel.Bottom - 70, 200, 44);
         private static Rectangle BotaoSair => new(Painel.Right - 46, Painel.Y + 12, 32, 32);
 
+        private static InfoDaRaid entrarPendente;
+
         public override void UpdateUI(GameTime gameTime)
         {
+            if (entrarPendente is not null)
+            {
+                InfoDaRaid info = entrarPendente;
+                entrarPendente = null;
+                info.Entrar(Main.LocalPlayer);
+                return;
+            }
             if (Aberta is null) return;
-            if (Main.LocalPlayer.dead || Main.gameMenu || Main.keyState.IsKeyDown(Microsoft.Xna.Framework.Input.Keys.Escape)) { Fechar(); return; }
+            if (Main.LocalPlayer.dead || Main.gameMenu || Main.keyState.IsKeyDown(Microsoft.Xna.Framework.Input.Keys.Escape)) Fechar();
+        }
+
+        // Os cliques são lidos DENTRO do desenho: lá a tela e o mouse estão na mesma escala da interface
+        // (no UpdateUI o tamanho da tela não tem a escala da UI e os botões "fugiam" do lugar desenhado).
+        private static void Interagir()
+        {
             Point m = Main.MouseScreen.ToPoint();
-            if (Painel.Contains(m)) Main.LocalPlayer.mouseInterface = true;
+            if (Painel.Contains(m)) { Main.LocalPlayer.mouseInterface = true; Main.blockMouse = true; }
             if (!(Main.mouseLeft && Main.mouseLeftRelease)) return;
+            Main.mouseLeftRelease = false;
 
             if (BotaoSair.Contains(m)) { Fechar(); return; }
             if (BotaoPronto.Contains(m) && Main.netMode == NetmodeID.MultiplayerClient)
@@ -196,10 +212,9 @@ namespace AscensaoAstral.Common.Raid
             }
             if (BotaoIniciar.Contains(m) && TodosProntos())
             {
-                InfoDaRaid info = Aberta;
+                entrarPendente = Aberta; // entra no próximo update (não dá para trocar de mundo no meio do desenho)
                 Aberta = null;
                 SoundEngine.PlaySound(SoundID.Item4);
-                info.Entrar(Main.LocalPlayer);
             }
         }
 
@@ -212,6 +227,8 @@ namespace AscensaoAstral.Common.Raid
 
         private static void Desenhar(SpriteBatch sb)
         {
+            Interagir();
+            if (Aberta is null) return;
             InfoDaRaid info = Aberta;
             Texture2D px = TextureAssets.MagicPixel.Value; Rectangle um = new(0, 0, 1, 1);
             Point m = Main.MouseScreen.ToPoint();
