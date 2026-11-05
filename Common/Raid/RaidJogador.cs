@@ -35,6 +35,18 @@ namespace AscensaoAstral.Common.Raid
         private Vector2 camCinema;
         private float forcaAtual;
 
+        // Com o menu da raid aberto, o clique é do MENU: não usa o item da mão (senão o clique no Iniciar
+        // usava o item de novo e reabria o menu por cima)
+        public override void SetControls()
+        {
+            if (MenuDaRaid.Aberta is not null && Player.whoAmI == Main.myPlayer)
+            {
+                Player.controlUseItem = false;
+                Player.controlUseTile = false;
+                Player.mouseInterface = true;
+            }
+        }
+
         public override void OnEnterWorld()
         {
             TemAlma = false;

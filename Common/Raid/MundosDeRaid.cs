@@ -227,7 +227,8 @@ namespace AscensaoAstral.Common.Raid
         {
             if (Main.netMode == NetmodeID.SinglePlayer)
             {
-                SubworldSystem.Enter<T>();
+                if (!SubworldSystem.Enter<T>())
+                    Main.NewText("A Subworld Library recusou a entrada (ela está ativada?).", 255, 100, 100);
                 return;
             }
             if (Main.netMode == NetmodeID.MultiplayerClient)

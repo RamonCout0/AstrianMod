@@ -118,6 +118,7 @@ namespace AscensaoAstral.Common.Raid
         {
             if (Main.dedServ) return;
             Aberta = InfoDaRaid.Todas[indice];
+            mouseAntes = true; // o clique que usou o item não conta como clique no menu
             prontoLocal = Main.netMode == NetmodeID.SinglePlayer;
             Array.Clear(Prontos);
             Prontos[Main.myPlayer] = prontoLocal;
@@ -186,7 +187,15 @@ namespace AscensaoAstral.Common.Raid
             {
                 InfoDaRaid info = entrarPendente;
                 entrarPendente = null;
-                info.Entrar(Main.LocalPlayer);
+                try
+                {
+                    info.Entrar(Main.LocalPlayer);
+                }
+                catch (Exception e)
+                {
+                    Main.NewText("Não consegui entrar na raid: " + e.Message, 255, 100, 100);
+                    Mod.Logger.Error("Erro ao entrar na raid", e);
+                }
                 return;
             }
             if (Aberta is null) return;
@@ -195,12 +204,22 @@ namespace AscensaoAstral.Common.Raid
 
         // Os cliques são lidos DENTRO do desenho: lá a tela e o mouse estão na mesma escala da interface
         // (no UpdateUI o tamanho da tela não tem a escala da UI e os botões "fugiam" do lugar desenhado).
+        private static bool mouseAntes = true;
+
         private static void Interagir()
         {
             Point m = Main.MouseScreen.ToPoint();
-            if (Painel.Contains(m)) { Main.LocalPlayer.mouseInterface = true; Main.blockMouse = true; }
-            if (!(Main.mouseLeft && Main.mouseLeftRelease)) return;
-            Main.mouseLeftRelease = false;
+            Main.LocalPlayer.mouseInterface = true; // menu aberto: o clique é do menu, não do item na mão
+            // Detecta o clique sozinho (não depende do mouseLeftRelease, que outras partes do jogo podem gastar antes)
+            bool clicou = Main.mouseLeft && !mouseAntes;
+            mouseAntes = Main.mouseLeft;
+            // Enter também inicia
+            if (Main.keyState.IsKeyDown(Microsoft.Xna.Framework.Input.Keys.Enter) && !Main.oldKeyState.IsKeyDown(Microsoft.Xna.Framework.Input.Keys.Enter) && !Main.drawingPlayerChat)
+            {
+                clicou = true;
+                m = BotaoIniciar.Center;
+            }
+            if (!clicou) return;
 
             if (BotaoSair.Contains(m)) { Fechar(); return; }
             if (BotaoPronto.Contains(m) && Main.netMode == NetmodeID.MultiplayerClient)
@@ -210,8 +229,11 @@ namespace AscensaoAstral.Common.Raid
                 EnviarPronto(prontoLocal);
                 SoundEngine.PlaySound(SoundID.MenuTick);
             }
+            if (BotaoIniciar.Contains(m) && !TodosProntos())
+                Main.NewText("Ainda falta alguém marcar Pronto.", 255, 200, 120);
             if (BotaoIniciar.Contains(m) && TodosProntos())
             {
+                Main.NewText("Entrando na raid...", 180, 220, 255);
                 entrarPendente = Aberta; // entra no próximo update (não dá para trocar de mundo no meio do desenho)
                 Aberta = null;
                 SoundEngine.PlaySound(SoundID.Item4);

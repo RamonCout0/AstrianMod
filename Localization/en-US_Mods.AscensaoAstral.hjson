@@ -53,6 +53,8 @@ Mods: {
 			PenaDeLuz.DisplayName: Light Feather
 			RastroDeLuz.DisplayName: Light Streak
 			LaminaDoVazio.DisplayName: Void Blade
+			MeiaLuaDoVazio.DisplayName: Void Crescent
+			ChuvaDeAstra.DisplayName: Astra Rain
 			EstrelaDeAstra.DisplayName: Astra Star
 			DisparoEstelar.DisplayName: Stellar Shot
 			CoroDosEcos.DisplayName: Choir of Echoes

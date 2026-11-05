@@ -53,6 +53,8 @@ Mods: {
 			PenaDeLuz.DisplayName: Pena de Luz
 			RastroDeLuz.DisplayName: Risco de Luz
 			LaminaDoVazio.DisplayName: Lâmina do Vazio
+			MeiaLuaDoVazio.DisplayName: Meia-Lua do Vazio
+			ChuvaDeAstra.DisplayName: Chuva de Astra
 			EstrelaDeAstra.DisplayName: Estrela de Astra
 			DisparoEstelar.DisplayName: Disparo Estelar
 			CoroDosEcos.DisplayName: Coro dos Ecos

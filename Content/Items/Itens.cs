@@ -54,7 +54,7 @@ namespace AscensaoAstral.Content.Items
 
         // Com DEBUG ligado, os pré-requisitos (chefe derrotado, bioma) são ignorados para facilitar os testes
         // Só funciona no mundo principal: lá dentro o chefe aparece sozinho
-        public override bool CanUseItem(Player player) => !Common.Raid.Raids.DentroDeUmaRaid && (AscensaoAstral.DEBUG || PodeInvocar(player));
+        public override bool CanUseItem(Player player) => Common.Raid.MenuDaRaid.Aberta is null && !Common.Raid.Raids.DentroDeUmaRaid && (AscensaoAstral.DEBUG || PodeInvocar(player));
 
         public override bool? UseItem(Player player)
         {
