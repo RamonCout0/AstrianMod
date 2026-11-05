@@ -195,14 +195,29 @@ namespace AscensaoAstral.Content.Cenario
         public static Vector2 PosicaoNaTela(float volta)
         {
             int w = Main.screenWidth, h = Main.screenHeight;
-            const float horizonte = 0.6f;
+            float horizonte = BaseDoCeu() - h * 0.4f;
             if (volta < 0.5f)
             {
                 float k = volta / 0.5f;
-                return new Vector2(MathHelper.Lerp(-0.06f, 1.06f, k) * w, h * horizonte - MathF.Sin(k * MathHelper.Pi) * h * 0.52f);
+                return new Vector2(MathHelper.Lerp(-0.06f, 1.06f, k) * w, horizonte - MathF.Sin(k * MathHelper.Pi) * h * 0.5f);
             }
             float n = (volta - 0.5f) / 0.5f;
-            return new Vector2(MathHelper.Lerp(1.06f, -0.06f, n) * w, h * (horizonte + 0.12f) + MathF.Sin(n * MathHelper.Pi) * h * 0.1f);
+            return new Vector2(MathHelper.Lerp(1.06f, -0.06f, n) * w, horizonte + h * 0.12f + MathF.Sin(n * MathHelper.Pi) * h * 0.1f);
+        }
+
+        /// <summary>
+        /// Onde o céu "termina" na tela: a linha do chão da arena. O mar de nuvens fica EM CIMA do chão,
+        /// senão o chão da arena cobre metade das nuvens (e o Arcanjo some atrás dele).
+        /// </summary>
+        public static float BaseDoCeu()
+        {
+            int h = Main.screenHeight;
+            if (Common.Raid.RaidBoss.Ativo is Common.Raid.RaidBoss chefe)
+            {
+                float chao = chefe.RetanguloArena.Bottom - Main.screenPosition.Y + 24f;
+                return MathHelper.Clamp(chao, h * 0.62f, h);
+            }
+            return h;
         }
 
         /// <summary>1 ao meio-dia, 0 à noite.</summary>
@@ -275,13 +290,15 @@ namespace AscensaoAstral.Content.Cenario
             // 1) Céu: noite escura → amanhecer alaranjado → meio-dia azul-violeta claro (o dia passando)
             Color topo = Color.Lerp(Color.Lerp(new Color(4, 5, 18), new Color(45, 60, 130), dia), new Color(60, 40, 90), crep * 0.5f);
             Color horizonte = Color.Lerp(Color.Lerp(new Color(40, 30, 75), new Color(150, 150, 210), dia), new Color(230, 120, 90), crep * 0.8f);
-            Degrade.Desenhar(sb, new Rectangle(0, 0, w, (int)(h * 0.62f)), topo, horizonte, a);
-            Degrade.Desenhar(sb, new Rectangle(0, (int)(h * 0.62f) - 1, w, h - (int)(h * 0.62f) + 1), horizonte, new Color(20, 15, 40), a);
+            int baseCeu = (int)ArcanjoNoCeu.BaseDoCeu();
+            int linhaHorizonte = baseCeu - (int)(h * 0.38f);
+            Degrade.Desenhar(sb, new Rectangle(0, 0, w, linhaHorizonte), topo, horizonte, a);
+            Degrade.Desenhar(sb, new Rectangle(0, linhaHorizonte - 1, w, h - linhaHorizonte + 1), horizonte, new Color(20, 15, 40), a);
 
             // 2) Estrelas (somem perto da luz dele)
             foreach (Vector3 e in estrelas)
             {
-                Vector2 p = new(e.X * w, e.Y * h);
+                Vector2 p = new(e.X * w, e.Y / 0.62f * linhaHorizonte);
                 float perto = Utils.GetLerpValue(420f, 120f, Vector2.Distance(p, luz), true) * presenca;
                 float pisca = (0.5f + 0.5f * MathF.Sin(t * 2f + e.Z)) * (1f - perto) * (1f - dia * 0.9f); // de dia as estrelas somem
                 sb.Draw(bloom, p, null, new Color(210, 200, 255, 0) * pisca * a * 0.8f, 0f, bloom.Size() / 2f, 0.035f + (e.Z % 1f) * 0.03f, 0, 0f);
@@ -292,8 +309,10 @@ namespace AscensaoAstral.Content.Cenario
                 DesenharArcanjo(sb, luz, presenca * a, t);
 
             // 4) Mar de nuvens com shader, iluminado pela luz dele
-            int yNuvens = (int)(h * 0.55f);
-            Rectangle areaNuvens = new(0, yNuvens, w, h - yNuvens);
+            int yNuvens = baseCeu - (int)(h * 0.45f);
+            Rectangle areaNuvens = new(0, yNuvens, w, (int)(h * 0.45f));
+            if (areaNuvens.Bottom < h) // embaixo da linha do chão: o "fundo" das nuvens, sem buraco
+                Degrade.Desenhar(sb, new Rectangle(0, areaNuvens.Bottom - 2, w, h - areaNuvens.Bottom + 2), new Color(26, 23, 51), new Color(10, 8, 20), a);
             Vector2 luzUv = new(luz.X / w, (luz.Y - yNuvens) / (float)areaNuvens.Height);
             if (!DesenharNuvensComShader(sb, areaNuvens, luzUv, forcaLuz * a, dia, relampagoUv, relampago * a))
                 DesenharNuvensSimples(sb, areaNuvens, a);
@@ -312,6 +331,34 @@ namespace AscensaoAstral.Content.Cenario
             Texture2D bloom = MiscTexturesRegistry.BloomCircleSmall.Value;
             float carga = ArcanjoNoCeu.Carga;
             Color dourado = new(255, 215, 140, 0);
+
+            // ESTRELA CADENTE: a cauda de luz pelo caminho que ele acabou de fazer no céu
+            {
+                const int n = 26;
+                float volta = ArcanjoNoCeu.Volta;
+                Vector2 antes = pos;
+                for (int i = 1; i <= n; i++)
+                {
+                    float k = i / (float)n;
+                    Vector2 p = ArcanjoNoCeu.PosicaoNaTela(Math.Max(0f, volta - k * 0.07f));
+                    if (volta - k * 0.07f < 0f) break;
+                    Vector2 meio = (antes + p) / 2f, d = p - antes;
+                    float largura = (1f - k);
+                    Color cauda = Color.Lerp(new Color(255, 245, 220, 0), new Color(255, 130, 60, 0), k);
+                    // núcleo fino + halo largo, os dois afinando para o fim
+                    sb.Draw(bloom, meio, null, cauda * a * 0.9f * largura, d.ToRotation(), bloom.Size() / 2f, new Vector2(d.Length() / bloom.Width * 1.6f + 0.02f, 0.06f + 0.10f * largura), 0, 0f);
+                    sb.Draw(bloom, meio, null, cauda * a * 0.25f * largura, d.ToRotation(), bloom.Size() / 2f, new Vector2(d.Length() / bloom.Width * 1.8f + 0.02f, 0.3f + 0.5f * largura), 0, 0f);
+                    antes = p;
+                }
+                // centelhas soltas caindo da cauda
+                for (int i = 0; i < 10; i++)
+                {
+                    float k = ((t * 0.7f + i * 0.137f) % 1f);
+                    if (volta - k * 0.07f < 0f) continue;
+                    Vector2 p = ArcanjoNoCeu.PosicaoNaTela(volta - k * 0.07f) + new Vector2(MathF.Sin(i * 12.3f) * 14f, k * 40f);
+                    sb.Draw(bloom, p, null, new Color(255, 220, 150, 0) * a * (1f - k) * 0.8f, 0f, bloom.Size() / 2f, 0.04f, 0, 0f);
+                }
+            }
 
             // Raios girando em volta dele
             for (int i = 0; i < 10; i++)

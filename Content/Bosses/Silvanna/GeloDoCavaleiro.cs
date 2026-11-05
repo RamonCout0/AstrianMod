@@ -123,8 +123,12 @@ namespace AscensaoAstral.Content.Bosses.Silvanna
             }
             float h = AlturaAgora;
             // espinho: faixa que afina no topo + brilho na ponta
-            Desenho.Faixa(Projectile.Center, Projectile.Center - new Vector2(0f, h), 26f, c, Color.White);
-            Desenho.Brilho(Projectile.Center - new Vector2(0f, h), Color.White, 0.3f);
+            // espinho de cristal: ponta principal + duas lascas menores do lado
+            Vector2 baseE = Projectile.Center;
+            Desenho.Ponta(baseE, baseE - new Vector2(0f, h), 30f, c, Color.White);
+            Desenho.Ponta(baseE + new Vector2(-10f, 0f), baseE + new Vector2(-22f, -h * 0.45f), 14f, c, Color.White);
+            Desenho.Ponta(baseE + new Vector2(10f, 0f), baseE + new Vector2(24f, -h * 0.35f), 12f, c, Color.White);
+            Desenho.Brilho(baseE, c, 0.5f);
             return false;
         }
     }
@@ -237,7 +241,7 @@ namespace AscensaoAstral.Content.Bosses.Silvanna
             for (int i = 0; i < 6; i++)
             {
                 float ang = i / 6f * MathHelper.TwoPi + MathHelper.PiOver2;
-                Desenho.Faixa(Projectile.Center, Projectile.Center + ang.ToRotationVector2() * Raio * 1.2f, 18f * s, c, Color.White);
+                Desenho.Ponta(Projectile.Center, Projectile.Center + ang.ToRotationVector2() * Raio * (1.1f + 0.15f * (i % 2)), 26f * s, c, Color.White);
             }
             Desenho.Brilho(Projectile.Center, Color.White * s, 1.2f);
             return false;

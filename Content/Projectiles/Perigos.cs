@@ -26,22 +26,113 @@ namespace AscensaoAstral.Content.Projectiles
             _ => new Color(255, 60, 50)
         };
 
-        /// <summary>Faixa reta com o shader do laser (ou o padrão, se ainda não compilou).</summary>
-        public static void Faixa(Vector2 a, Vector2 b, float largura, Color cor, Color nucleo)
+        private static ManagedShader Energia(Color cor, Color nucleo, float intensidade, float afilar)
         {
-            ManagedShader shader = null;
+            if (ShaderManager.TryGetShader("AscensaoAstral.EnergiaShader", out ManagedShader e))
+            {
+                e.TrySetParameter("corBorda", cor.ToVector3());
+                e.TrySetParameter("corNucleo", nucleo.ToVector3());
+                e.TrySetParameter("intensidade", intensidade);
+                e.TrySetParameter("afilar", afilar);
+                e.TrySetParameter("velocidade", 1f);
+                e.SetTexture(MiscTexturesRegistry.TurbulentNoise.Value, 1, SamplerState.LinearWrap);
+                e.SetTexture(MiscTexturesRegistry.WavyBlotchNoise.Value, 2, SamplerState.LinearWrap);
+                return e;
+            }
             if (ShaderManager.TryGetShader("AscensaoAstral.LaserEscarlateShader", out ManagedShader s))
             {
-                shader = s;
-                shader.TrySetParameter("corBorda", cor.ToVector3());
-                shader.TrySetParameter("corNucleo", nucleo.ToVector3());
-                shader.SetTexture(MiscTexturesRegistry.WavyBlotchNoise.Value, 1, SamplerState.LinearWrap);
+                s.TrySetParameter("corBorda", cor.ToVector3());
+                s.TrySetParameter("corNucleo", nucleo.ToVector3());
+                s.SetTexture(MiscTexturesRegistry.WavyBlotchNoise.Value, 1, SamplerState.LinearWrap);
+                return s;
             }
+            return null;
+        }
 
-            Vector2[] pontos = new Vector2[8];
-            for (int i = 0; i < pontos.Length; i++)
-                pontos[i] = Vector2.Lerp(a, b, i / (float)(pontos.Length - 1));
-            PrimitiveRenderer.RenderTrail(pontos, new PrimitiveSettings(_ => largura, _ => Color.White, Smoothen: false, Shader: shader), 8);
+        private static Vector2[] Pontos(Vector2 a, Vector2 b, int n)
+        {
+            Vector2[] p = new Vector2[n];
+            for (int i = 0; i < n; i++) p[i] = Vector2.Lerp(a, b, i / (float)(n - 1));
+            return p;
+        }
+
+        /// <summary>
+        /// Golpe reto de energia (cortes, feixes, pilares). Três camadas: halo largo e suave → corpo com o
+        /// EnergiaShader (filamentos correndo, borda irregular, pontas afiladas) → clarão nas pontas.
+        /// <paramref name="afilar"/>: 1 = pontas finas (corte), 0 = pontas retas (pilar que bate no chão).
+        /// </summary>
+        public static void Faixa(Vector2 a, Vector2 b, float largura, Color cor, Color nucleo, float intensidade = 1f, float afilar = 0.6f)
+        {
+            if (largura < 0.5f || a == b) return;
+            Vector2[] pts = Pontos(a, b, 12);
+            // halo (aditivo)
+            PrimitiveRenderer.RenderTrail(pts, new PrimitiveSettings(t => largura * 2.2f * Afinar(t, afilar), _ => (cor with { A = 0 }) * 0.28f, Smoothen: false), 12);
+            // corpo
+            PrimitiveRenderer.RenderTrail(pts, new PrimitiveSettings(_ => largura, _ => Color.White, Smoothen: false, Shader: Energia(cor, nucleo, intensidade, afilar)), 12);
+            // pontas
+            float ponta = MathHelper.Clamp(largura / 90f, 0.15f, 1.4f);
+            Brilho(a, cor, ponta * (1f - afilar * 0.6f));
+            Brilho(b, cor, ponta * (1f - afilar * 0.6f));
+        }
+
+        private static float Afinar(float t, float afilar) => MathHelper.Lerp(1f, MathF.Pow(MathF.Sin(MathHelper.Pi * t), 0.5f), afilar);
+
+        /// <summary>Ponta: larga na base, afiada na ponta (espinhos, cristais, lâminas, penas).</summary>
+        public static void Ponta(Vector2 baseDaPonta, Vector2 ponta, float largura, Color cor, Color nucleo, float intensidade = 1f)
+        {
+            if (largura < 0.5f || baseDaPonta == ponta) return;
+            Vector2[] pts = Pontos(baseDaPonta, ponta, 10);
+            PrimitiveRenderer.RenderTrail(pts, new PrimitiveSettings(t => largura * 1.9f * (1f - t), _ => (cor with { A = 0 }) * 0.3f, Smoothen: false), 10);
+            PrimitiveRenderer.RenderTrail(pts, new PrimitiveSettings(t => largura * MathF.Pow(1f - t, 0.85f), _ => Color.White, Smoothen: false, Shader: Energia(cor, nucleo, intensidade, 0f)), 10);
+            Brilho(ponta, Color.White, 0.12f + largura / 260f);
+        }
+
+        /// <summary>Clarão em cruz (estrela de 4 pontas) — o "brilho" de impacto/ativação.</summary>
+        public static void Clarao(Vector2 mundo, Color cor, float escala, float giro = 0f)
+        {
+            Texture2D flare = MiscTexturesRegistry.ShineFlareTexture.Value;
+            Vector2 tela = mundo - Main.screenPosition;
+            Main.spriteBatch.Draw(flare, tela, null, cor with { A = 0 }, giro, flare.Size() / 2f, escala, 0, 0f);
+            Main.spriteBatch.Draw(flare, tela, null, Color.White with { A = 0 } * 0.8f, giro, flare.Size() / 2f, escala * 0.5f, 0, 0f);
+        }
+
+        /// <summary>Linha de luz (BloomLine) entre dois pontos.</summary>
+        public static void Risco(Vector2 a, Vector2 b, float espessura, Color cor)
+        {
+            Texture2D linha = MiscTexturesRegistry.BloomLineTexture.Value;
+            Vector2 d = b - a;
+            if (d.LengthSquared() < 1f) return;
+            Main.spriteBatch.Draw(linha, (a + b) / 2f - Main.screenPosition, null, cor with { A = 0 }, d.ToRotation() + MathHelper.PiOver2, linha.Size() / 2f,
+                new Vector2(espessura / linha.Width, d.Length() / linha.Height), 0, 0f);
+        }
+
+        /// <summary>
+        /// Esfera de energia com o OrbeShader (gira em 3D, borda acesa, veios de energia). <paramref name="revelar"/> mistura
+        /// <paramref name="corA"/> → <paramref name="corB"/>. Sem shader, cai num brilho simples.
+        /// </summary>
+        public static void Orbe(Vector2 mundo, float diametro, Color corA, Color corB, float revelar, float semente, float opacidade = 1f)
+        {
+            if (!ShaderManager.TryGetShader("AscensaoAstral.OrbeShader", out ManagedShader shader))
+            {
+                Color c = Color.Lerp(corA, corB, revelar) * opacidade;
+                Brilho(mundo, c, diametro / 70f);
+                Brilho(mundo, Color.White * opacidade, diametro / 220f);
+                return;
+            }
+            SpriteBatch sb = Main.spriteBatch;
+            sb.End();
+            sb.Begin(SpriteSortMode.Immediate, BlendState.AlphaBlend, SamplerState.LinearClamp, DepthStencilState.None, RasterizerState.CullNone, null, Main.GameViewMatrix.TransformationMatrix);
+            shader.TrySetParameter("corA", corA.ToVector3());
+            shader.TrySetParameter("corB", corB.ToVector3());
+            shader.TrySetParameter("revelar", MathHelper.Clamp(revelar, 0f, 1f));
+            shader.TrySetParameter("semente", semente);
+            shader.SetTexture(MiscTexturesRegistry.TurbulentNoise.Value, 1, SamplerState.LinearWrap);
+            shader.SetTexture(MiscTexturesRegistry.WavyBlotchNoise.Value, 2, SamplerState.LinearWrap);
+            shader.Apply();
+            Vector2 tela = mundo - Main.screenPosition;
+            sb.Draw(ModContent.Request<Texture2D>("AscensaoAstral/Assets/Branco").Value, new Rectangle((int)(tela.X - diametro / 2f), (int)(tela.Y - diametro / 2f), (int)diametro, (int)diametro), Color.White * opacidade);
+            sb.End();
+            sb.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, Main.DefaultSamplerState, DepthStencilState.None, RasterizerState.CullCounterClockwise, null, Main.GameViewMatrix.TransformationMatrix);
         }
 
         /// <summary>
@@ -170,12 +261,77 @@ namespace AscensaoAstral.Content.Projectiles
                 return false;
             }
 
-            // A faixa segue o lado mais comprido do retângulo
+            int idade = Tempo - Aviso;
+            float some = Utils.GetLerpValue(Ativo, Ativo - 8, idade, true);   // apaga no fim
+            float bate = Utils.GetLerpValue(5f, 0f, idade, true);             // o instante do golpe
             bool horizontal = r.Width >= r.Height;
             Vector2 a = horizontal ? new Vector2(r.Left, r.Center.Y) : new Vector2(r.Center.X, r.Top);
             Vector2 b = horizontal ? new Vector2(r.Right, r.Center.Y) : new Vector2(r.Center.X, r.Bottom);
-            float largura = (horizontal ? r.Height : r.Width) * 1.4f * Utils.GetLerpValue(Aviso + Ativo, Aviso + Ativo - 6, Tempo, true);
-            Desenho.Faixa(a, b, largura, cor, Color.White);
+            float curto = horizontal ? r.Height : r.Width;
+            Vector2 lado = horizontal ? Vector2.UnitY : Vector2.UnitX;
+
+            // 1) o clarão do golpe: um retângulo branco estourado que encolhe até o tamanho certo
+            if (bate > 0f)
+            {
+                Rectangle estouro = r; estouro.Inflate((int)(bate * 14f), (int)(bate * 14f));
+                Main.spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(estouro.X - (int)Main.screenPosition.X, estouro.Y - (int)Main.screenPosition.Y, estouro.Width, estouro.Height),
+                    new Rectangle(0, 0, 1, 1), (Color.Lerp(cor, Color.White, 0.7f) with { A = 0 }) * 0.55f * bate);
+            }
+
+            // 2) o corpo de energia (pontas retas: o retângulo é a área exata)
+            float largura = curto * (1.05f + 0.35f * bate) * some;
+            Desenho.Faixa(a, b, largura, cor, Color.White, 1f + bate * 0.8f, Tipo == TipoPerigo.Corte ? 0.25f : 0f);
+
+            // 3) bordas acesas: deixam claro ONDE acaba o perigo
+            Vector2 meia = lado * curto / 2f;
+            Desenho.Risco(a - meia, b - meia, 10f * some, cor * 0.9f);
+            Desenho.Risco(a + meia, b + meia, 10f * some, cor * 0.9f);
+
+            // 4) o detalhe de cada tipo
+            ulong semente = (ulong)Projectile.identity * 7919UL + 13UL;
+            float comprimento = Vector2.Distance(a, b);
+            Vector2 ao = (b - a).SafeNormalize(Vector2.UnitX);
+            switch (Tipo)
+            {
+                case TipoPerigo.Corte:
+                    // riscos diagonais de lâmina que cruzam o golpe no início
+                    if (idade < 12)
+                    {
+                        float k = idade / 12f;
+                        for (int i = 0; i < 4; i++)
+                        {
+                            float pos = Utils.RandomFloat(ref semente) * comprimento;
+                            Vector2 c = a + ao * pos;
+                            Vector2 diag = (ao * 0.8f + lado * (i % 2 == 0 ? 1f : -1f)).SafeNormalize(lado) * curto * 0.9f;
+                            Desenho.Risco(c - diag, c + diag, 18f * (1f - k), Color.White);
+                        }
+                    }
+                    break;
+                case TipoPerigo.Gelo:
+                    // cristais saindo das bordas
+                    for (int i = 0; i < Math.Max(2, (int)(comprimento / 60f)); i++)
+                    {
+                        float pos = (i + 0.5f) / Math.Max(2, (int)(comprimento / 60f)) * comprimento;
+                        float alt = (18f + Utils.RandomFloat(ref semente) * 26f) * some * (1f - bate * 0.5f);
+                        int s1 = i % 2 == 0 ? 1 : -1;
+                        Vector2 baseC = a + ao * pos + lado * s1 * curto / 2f;
+                        Desenho.Ponta(baseC, baseC + (lado * s1).RotatedBy((Utils.RandomFloat(ref semente) - 0.5f) * 0.8f) * alt, 9f, cor, Color.White);
+                    }
+                    break;
+                case TipoPerigo.Solar:
+                    // calor: coluna clara no centro e um brilho forte onde bate
+                    Desenho.Brilho(b, new Color(255, 170, 70), curto / 50f * some);
+                    break;
+                default:
+                    // éter / atordoar: centelhas piscando dentro
+                    for (int i = 0; i < 5; i++)
+                    {
+                        Vector2 c = a + ao * Utils.RandomFloat(ref semente) * comprimento + lado * (Utils.RandomFloat(ref semente) - 0.5f) * curto;
+                        float pisca = 0.5f + 0.5f * MathF.Sin(Tempo * 0.4f + i * 1.7f);
+                        Desenho.Clarao(c, cor, 0.18f * pisca * some, Tempo * 0.05f);
+                    }
+                    break;
+            }
             return false;
         }
     }
@@ -242,9 +398,11 @@ namespace AscensaoAstral.Content.Projectiles
             for (int i = 0; i < pontos.Length; i++)
                 pontos[i] = Projectile.oldPos[i] == Vector2.Zero ? Projectile.Center : Projectile.oldPos[i] + Projectile.Size / 2f;
             Color c = Cor;
-            PrimitiveRenderer.RenderTrail(pontos, new PrimitiveSettings(t => 16f * (1f - t), t => c * (1f - t) * 0.8f), 16);
-            Desenho.Brilho(Projectile.Center, c, 0.45f);
-            Desenho.Brilho(Projectile.Center, Color.White, 0.18f);
+            PrimitiveRenderer.RenderTrail(pontos, new PrimitiveSettings(t => 22f * MathF.Pow(1f - t, 1.4f), t => (Color.Lerp(Color.White, c, t * 1.5f) with { A = 0 }) * (1f - t)), 16);
+            float giro = Main.GlobalTimeWrappedHourly * 6f + Projectile.identity;
+            Desenho.Brilho(Projectile.Center, c, 0.55f);
+            Desenho.Clarao(Projectile.Center, c, 0.22f + 0.04f * MathF.Sin(giro * 2f), giro);
+            Desenho.Brilho(Projectile.Center, Color.White, 0.16f);
             return false;
         }
     }

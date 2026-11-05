@@ -1117,7 +1117,7 @@ namespace AscensaoAstral.Content.Bosses.Astharoth
             float prof = orbitando ? 1f - Timer / Entrada : 1f; // encolhe e apaga enquanto vai para o fundo
             float escala = orbitando ? MathHelper.Lerp(0.3f, 1.8f, prof) : mergulho ? 1.8f : NPC.scale;
 
-            if (mergulho && Timer >= MergulhoCai)
+            if ((mergulho && Timer >= MergulhoCai) || orbitando)
                 DesenharRastroDeEstrela(new Color(255, 215, 120), new Color(255, 120, 40));
             Color tinta = Fase >= 3 ? new Color(255, 235, 170) : Color.White;
             Color cor = NPC.GetAlpha(Color.Lerp(drawColor, Color.White, 0.85f)).MultiplyRGB(tinta);
@@ -1253,25 +1253,36 @@ namespace AscensaoAstral.Content.Bosses.Astharoth
             float flutua = MathF.Sin(Projectile.localAI[0] * 0.06f + Projectile.ai[2]) * 4f;
             Vector2 c = Projectile.Center + new Vector2(0f, flutua);
 
-            // Fundo escuro atrás da orbe: assim ela aparece até contra o céu claro
+            float idade = Projectile.localAI[0];
+            float entra = Utils.GetLerpValue(0f, 30f, idade, true);
+            // revelar suave (sobe e desce em vez de trocar de cor de uma vez)
+            float fase = (idade + Projectile.ai[2]) % 200f;
+            float revela = Utils.GetLerpValue(0f, 8f, fase, true) * Utils.GetLerpValue(45f, 37f, fase, true);
+
+            // coluna de luz até o chão: dá para achar a orbe de longe
+            Desenho.Risco(c + new Vector2(0f, -260f), c + new Vector2(0f, 260f), 26f, Color.Lerp(neutra, verdadeira, revela) * 0.22f * entra);
+            // sombra escura atrás (a orbe aparece até contra o céu claro do meio-dia)
             Texture2D circulo = ModContent.Request<Texture2D>("AscensaoAstral/Assets/Circulo").Value;
-            Main.spriteBatch.Draw(circulo, c - Main.screenPosition, null, new Color(15, 10, 35) * 0.75f, 0f, circulo.Size() / 2f, 52f / circulo.Width, 0, 0f);
-            // Anel girando + núcleo
-            for (int i = 0; i < 16; i++)
+            Main.spriteBatch.Draw(circulo, c - Main.screenPosition, null, new Color(10, 6, 26) * 0.7f * entra, 0f, circulo.Size() / 2f, 60f / circulo.Width, 0, 0f);
+            // a esfera
+            Desenho.Orbe(c, 92f * (0.6f + 0.4f * entra), new Color(200, 205, 255), verdadeira, revela, Projectile.ai[2] * 0.013f, entra);
+            // três faíscas orbitando com rastro
+            for (int i = 0; i < 3; i++)
             {
-                float ang = i / 16f * MathHelper.TwoPi + Projectile.localAI[0] * 0.04f;
-                Desenho.Brilho(c + ang.ToRotationVector2() * 24f, cor, 0.09f);
+                float ang = idade * 0.07f + i / 3f * MathHelper.TwoPi;
+                for (int k = 0; k < 6; k++)
+                {
+                    float a2 = ang - k * 0.09f;
+                    Vector2 o = c + new Vector2(MathF.Cos(a2) * 40f, MathF.Sin(a2) * 14f);
+                    Desenho.Brilho(o, Color.Lerp(neutra, verdadeira, revela) * (1f - k / 6f) * entra, 0.07f);
+                }
             }
-            Desenho.Brilho(c, cor, 0.7f);
-            Desenho.Brilho(c, Color.White, 0.22f);
-            // Coluna de luz fininha marcando onde ela está de longe
-            Desenho.Brilho(c + new Vector2(0f, -90f), cor * 0.35f, 0.25f);
+            Desenho.Clarao(c, Color.Lerp(neutra, verdadeira, revela), (0.25f + 0.25f * revela) * entra, idade * 0.02f);
             Lighting.AddLight(c, cor.ToVector3() * 0.6f);
             if (Revelando)
             {
                 // O eco: uma silhueta de luz por cima da orbe, na cor verdadeira
-                Desenho.Brilho(Projectile.Center + new Vector2(0f, -46f), verdadeira * 0.6f, 0.5f);
-                Desenho.Brilho(Projectile.Center + new Vector2(0f, -70f), verdadeira * 0.6f, 0.3f);
+                Desenho.Clarao(c + new Vector2(0f, -62f), verdadeira, 0.35f * revela, 0f);
             }
             return false;
         }

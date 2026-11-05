@@ -96,11 +96,11 @@ namespace AscensaoAstral.Content.Projectiles
                 pontos[i] = Projectile.oldPos[i] == Vector2.Zero ? Projectile.Center : Projectile.oldPos[i] + Projectile.Size / 2f;
             PrimitiveRenderer.RenderTrail(pontos, new PrimitiveSettings(t => 14f * (1f - t), t => c * (1f - t) * 0.85f), 20);
 
-            // Lâmina: losango comprido de luz
+            // Lâmina: losango afiado (ponta comprida na frente, curta atrás)
             Vector2 frente = Projectile.rotation.ToRotationVector2();
-            for (int i = -3; i <= 3; i++)
-                Desenho.Brilho(Projectile.Center + frente * i * 6f, c, 0.22f - Math.Abs(i) * 0.025f);
-            Desenho.Brilho(Projectile.Center + frente * 10f, Color.White, 0.12f);
+            Desenho.Ponta(Projectile.Center, Projectile.Center + frente * 34f, 16f, c, Color.White);
+            Desenho.Ponta(Projectile.Center, Projectile.Center - frente * 14f, 16f, c, Color.White);
+            Desenho.Brilho(Projectile.Center, c, 0.3f);
 
             // Antes de perseguir, um anel avisa que ela vai mirar
             int idade = 240 - Projectile.timeLeft;
@@ -186,14 +186,15 @@ namespace AscensaoAstral.Content.Projectiles
             {
                 // Linha de aviso mostrando também PARA ONDE ele vai girar
                 float pulso = 0.5f + 0.5f * MathF.Sin(Idade * 0.5f);
-                Desenho.Faixa(Projectile.Center, Fim, 6f + pulso * 4f, c * 0.6f, c);
+                Desenho.Risco(Projectile.Center, Fim, 8f + pulso * 6f, c * 0.7f);
                 Vector2 seta = Projectile.Center + (Projectile.ai[0] + Math.Sign(Projectile.ai[1]) * 0.25f).ToRotationVector2() * 260f;
                 Desenho.Brilho(seta, c, 0.5f + pulso * 0.3f);
                 return false;
             }
             float largura = 70f * Utils.GetLerpValue(0, 8, Idade - Aviso, true) * Utils.GetLerpValue(0, 10, Projectile.timeLeft, true);
-            Desenho.Faixa(Projectile.Center, Fim, largura, c, Color.White);
+            Desenho.Faixa(Projectile.Center, Fim, largura, c, Color.White, 1f + Utils.GetLerpValue(6, 0, Idade - Aviso, true), 0.35f);
             Desenho.Brilho(Projectile.Center, c, 1.6f);
+            Desenho.Clarao(Projectile.Center, c, 0.9f, Main.GlobalTimeWrappedHourly * 2f);
             return false;
         }
     }
@@ -266,9 +267,10 @@ namespace AscensaoAstral.Content.Projectiles
             Vector2[] pontos = new Vector2[Projectile.oldPos.Length];
             for (int i = 0; i < pontos.Length; i++)
                 pontos[i] = Projectile.oldPos[i] == Vector2.Zero ? Projectile.Center : Projectile.oldPos[i] + Projectile.Size / 2f;
-            PrimitiveRenderer.RenderTrail(pontos, new PrimitiveSettings(t => 20f * (1f - t), t => c * (1f - t)), 16);
-            Desenho.Brilho(Projectile.Center, c, 0.5f);
-            Desenho.Brilho(Projectile.Center, Color.White, 0.2f);
+            // estrela cadente: cauda longa de energia + clarão em cruz na cabeça
+            PrimitiveRenderer.RenderTrail(pontos, new PrimitiveSettings(t => 24f * MathF.Pow(1f - t, 1.3f), t => (Color.Lerp(Color.White, c, t * 1.6f) with { A = 0 }) * (1f - t)), 16);
+            Desenho.Brilho(Projectile.Center, c, 0.6f);
+            Desenho.Clarao(Projectile.Center, c, 0.3f, Projectile.identity);
             return false;
         }
 

@@ -62,6 +62,9 @@ namespace AscensaoAstral.Common.Raid
         {
             Main.dayTime = false;
             Main.time = 16200;
+            // O mundo todo conta como "superfície": o fundo de caverna (a parede de terra) nunca aparece atrás da arena
+            Main.worldSurface = Main.maxTilesY - Margem;
+            Main.rockLayer = Main.maxTilesY - Margem + 1;
 
             bool alguem = false;
             foreach (Player p in Main.ActivePlayers)
@@ -135,8 +138,8 @@ namespace AscensaoAstral.Common.Raid
 
         protected static void PrepararMundo(int superficie)
         {
-            Main.worldSurface = superficie + 12; // tudo acima do chão conta como "superfície" (céu de fundo)
-            Main.rockLayer = superficie + 20;
+            Main.worldSurface = Main.maxTilesY - Margem; // tudo conta como "superfície": sem fundo de caverna atrás da arena
+            Main.rockLayer = Main.maxTilesY - Margem + 1;
             Main.spawnTileX = Main.maxTilesX / 2;
             Main.spawnTileY = superficie - 3;
         }
