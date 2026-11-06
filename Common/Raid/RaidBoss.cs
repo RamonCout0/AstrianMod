@@ -187,7 +187,7 @@ namespace AscensaoAstral.Common.Raid
             // Todos na raid morreram → como no Terraria: o chefe vai embora (sem checkpoint) e a raid acaba
             if (vivos == 0)
             {
-                if (++tempoSemNinguemVivo > 60 && !indoEmbora)
+                if (++tempoSemNinguemVivo > 60 && !indoEmbora && !Vitrine.Ligada)
                     IrEmbora();
             }
             else

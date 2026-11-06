@@ -17,6 +17,7 @@ namespace AscensaoAstral.Common.Raid
     ///   /vitrine          → todos os ataques + as mecânicas grandes
     ///   /vitrine ataques  → só os ataques (rápido)
     ///   /vitrine video    → grava VÍDEO: um quadro a cada 4 ticks em 1/3 da resolução (vira .mp4 depois)
+    ///   /vitrine pular    → pula o ataque atual (se ele travar)
     ///   /vitrine parar    → encerra
     /// Se a janela do jogo for minimizada, o jogo para de desenhar: a vitrine percebe e REPETE o ataque quando a
     /// janela voltar, para nenhum ficar sem foto.
@@ -59,6 +60,15 @@ namespace AscensaoAstral.Common.Raid
             Ligada = true;
             indice = -1; tempo = 0; fotos = 0; esperaNaPausa = 0; TotalDeFotos = 0;
             Main.NewText($"Vitrine: {fila.Count} ataques. As fotos vão para {Pasta}", 180, 220, 255);
+        }
+
+        /// <summary>Pula o ataque atual (se travar).</summary>
+        public static void Pular(RaidBoss chefe)
+        {
+            if (!Ligada || indice < 0 || indice >= fila.Count) return;
+            Main.NewText($"[vitrine] pulando {fila[indice].Nome}", 255, 220, 150);
+            chefe.VitrineIr(chefe.EstadoDePausa, fila[indice].Fase);
+            esperaNaPausa = 0;
         }
 
         public static void Parar(string motivo)
@@ -172,12 +182,13 @@ namespace AscensaoAstral.Common.Raid
         public override bool IsLoadingEnabled(Mod mod) => AscensaoAstral.DEBUG;
         public override CommandType Type => CommandType.Chat;
         public override string Command => "vitrine";
-        public override string Usage => "/vitrine [ataques|video|parar]";
+        public override string Usage => "/vitrine [ataques|video|pular|parar]";
         public override string Description => "O chefe da raid faz todos os ataques em sequência e o jogo tira prints de cada um.";
 
         public override void Action(CommandCaller caller, string input, string[] args)
         {
             if (args.Length > 0 && args[0] == "parar") { Vitrine.Parar("pedido"); return; }
+            if (args.Length > 0 && args[0] == "pular") { if (RaidBoss.Ativo is RaidBoss c) Vitrine.Pular(c); return; }
             if (Main.netMode != NetmodeID.SinglePlayer) { caller.Reply("A vitrine só funciona em single player.", Color.OrangeRed); return; }
             if (RaidBoss.Ativo is not RaidBoss chefe) { caller.Reply("Entre numa raid (o chefe precisa estar vivo) e digite /vitrine de novo.", Color.OrangeRed); return; }
             bool video = args.Length > 0 && args[0] == "video";

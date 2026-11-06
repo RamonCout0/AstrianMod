@@ -726,6 +726,16 @@ namespace AscensaoAstral.Content.Bosses.Astharoth
                             // (as mordidas agora são o próprio DragaoDoEter perseguindo)
                         }
 
+                        // Na vitrine ninguém corre a ponte: depois de 6 s ela pula para os símbolos sozinha
+                        if (Common.Raid.Vitrine.Ligada && Timer > 360)
+                        {
+                            simbolo = Main.rand.Next(3);
+                            etapa = 2;
+                            Timer = 0;
+                            NPC.netUpdate = true;
+                            break;
+                        }
+
                         // Alguém chegou ao fim da ponte → sequência de símbolos
                         foreach (Player p in Main.ActivePlayers)
                             if (!p.dead && EstaNaMascara(p.whoAmI) && p.Center.X >= EterEstrutura.FimDaPonteX)

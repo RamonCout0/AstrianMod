@@ -47,6 +47,19 @@ namespace AscensaoAstral.Common.Raid
             }
         }
 
+        // Na vitrine ninguém morre (nem pelas mecânicas que matam na hora, como o buraco negro e o sol)
+        public override bool PreKill(double damage, int hitDirection, bool pvp, ref bool playSound, ref bool genDust, ref PlayerDeathReason damageSource)
+        {
+            if (!Vitrine.Ligada) return true;
+            Player.statLife = Player.statLifeMax2;
+            return false;
+        }
+
+        public override void ModifyHurt(ref Player.HurtModifiers modifiers)
+        {
+            if (Vitrine.Ligada) modifiers.FinalDamage *= 0f;
+        }
+
         public override void OnEnterWorld()
         {
             TemAlma = false;
