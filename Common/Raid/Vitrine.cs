@@ -117,7 +117,7 @@ namespace AscensaoAstral.Common.Raid
 
             Item atual = fila[indice];
             tempo++;
-            if (tempo % atual.Intervalo == 8 && fotos < atual.MaxFotos)
+            if (tempo % atual.Intervalo == 8 % atual.Intervalo && fotos < atual.MaxFotos)
             {
                 fotos++;
                 string nome = Video ? $"{indice + 1:00}_{atual.Nome}_{fotos:0000}" : $"{indice + 1:00}_{atual.Nome}_{fotos:00}";
