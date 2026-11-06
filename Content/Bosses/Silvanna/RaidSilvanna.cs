@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System;
 using System.IO;
 using AscensaoAstral.Common;
@@ -40,6 +41,17 @@ namespace AscensaoAstral.Content.Bosses.Silvanna
             ESTRELA_GELO = 17, CHUVA_GELIDA = 18,
             // Cavaleiro de gelo (etapa final): todos os ataques são de GELO
             ESPINHOS = 19, ANEL = 20, PRISAO = 21, SOPRO = 22;
+
+        public override IEnumerable<Common.Raid.Vitrine.Item> AtaquesDaVitrine(bool comMecanicas)
+        {
+            yield return new(PENDULO, 1, "Pendulo"); yield return new(RAJADA_TRIPLA, 1, "RajadaTripla"); yield return new(VARREDURA_CHAO, 1, "VarreduraChao");
+            yield return new(CORTES, 2, "Cortes"); yield return new(CLONES, 2, "Clones"); yield return new(SALTO, 2, "Salto");
+            yield return new(ESTRELA_GELO, 2, "EstrelaGelo"); yield return new(CHUVA_GELIDA, 2, "ChuvaGelida");
+            yield return new(LANCA, 3, "Lanca"); yield return new(ESPINHOS, 3, "Espinhos"); yield return new(INVESTIDA, 3, "Investida");
+            yield return new(ANEL, 3, "Anel"); yield return new(PRISAO, 3, "Prisao"); yield return new(ESCUDO, 3, "Escudo"); yield return new(SOPRO, 3, "Sopro");
+            if (!comMecanicas) yield break;
+            yield return new(T_GIRO, 1, "M_Giro", true); yield return new(T_NEVASCA, 2, "M_Nevasca", true); yield return new(FINAL, 3, "M_Final", true);
+        }
 
         // ─── Balanceamento ───
         private const float VelMover = 11f;

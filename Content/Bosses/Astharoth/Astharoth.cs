@@ -44,6 +44,17 @@ namespace AscensaoAstral.Content.Bosses.Astharoth
             // Etapa final — o ARCANJO tem ataques só dele, de luz
             JULGAMENTO = 16, ASAS = 17, CRUZ_DE_LUZ = 18;
 
+        public override IEnumerable<Common.Raid.Vitrine.Item> AtaquesDaVitrine(bool comMecanicas)
+        {
+            yield return new(CORTE, 1, "Corte"); yield return new(RAJADAS, 1, "Rajadas"); yield return new(LAMINAS, 1, "Laminas"); yield return new(CHUVA, 1, "Chuva");
+            yield return new(DUELO_CORTE, 2, "DueloCorte"); yield return new(ESPIRAL, 2, "Espiral"); yield return new(DUELO_INVESTIDA, 2, "DueloInvestida");
+            yield return new(FEIXE, 2, "Feixe"); yield return new(RASANTE, 2, "Rasante");
+            yield return new(JULGAMENTO, 3, "Julgamento"); yield return new(ASAS, 3, "Asas"); yield return new(CRUZ_DE_LUZ, 3, "CruzDeLuz");
+            yield return new(FEIXE, 3, "Feixe_F3"); yield return new(CHUVA, 3, "Chuva_F3");
+            if (!comMecanicas) yield break;
+            yield return new(T_ALMA, 1, "M_Alma", true); yield return new(T_FUSAO, 2, "M_Fusao", true);
+        }
+
         private const float VelMover = 12f;
         private const float LimiarAlma = 0.70f, LimiarFusao = 0.35f;
         private const int TempoSimbolos = 12 * 60;

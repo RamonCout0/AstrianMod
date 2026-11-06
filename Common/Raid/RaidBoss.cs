@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System;
 using System.IO;
 using Microsoft.Xna.Framework;
@@ -67,6 +68,16 @@ namespace AscensaoAstral.Common.Raid
         public virtual float AlturaArena => 1300f;  // ~80 blocos de altura
 
         protected abstract void ExecutarEstado();
+
+        // ─── Vitrine de ataques (debug): veja Vitrine.cs ───
+        public virtual int EstadoDePausa => 2;
+        public virtual IEnumerable<Vitrine.Item> AtaquesDaVitrine(bool comMecanicas) { yield break; }
+        public void VitrineIr(int estado, int fase)
+        {
+            LimparPerigos();
+            Fase = fase;
+            IrPara(estado);
+        }
         /// <summary>Chamado ao voltar para o checkpoint: reposicione o chefe, limpe flags da etapa.</summary>
         protected abstract void AoReiniciar();
         /// <summary>Faça a luta normal "não contar" o stun enquanto isto for verdade (cutscenes etc.).</summary>
@@ -203,6 +214,8 @@ namespace AscensaoAstral.Common.Raid
                 avisouMemoria = true;
                 Dialogo.FalaDoEco("Isso não é ele. É só o que sobrou na memória da Astrânia... sem alma nenhuma lá dentro.");
             }
+            if (Vitrine.Ligada && Main.netMode == NetmodeID.SinglePlayer)
+                Vitrine.Controlar(this);
             ExecutarEstado();
             ConfinarJogadorLocal();
             AtualizarImpacto();

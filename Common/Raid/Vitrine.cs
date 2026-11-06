@@ -1,0 +1,153 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
+using Terraria;
+using Terraria.ID;
+using Terraria.ModLoader;
+
+namespace AscensaoAstral.Common.Raid
+{
+    /// <summary>
+    /// VITRINE DE ATAQUES (só com DEBUG): dentro de uma raid, digite <c>/vitrine</c> no chat.
+    /// O chefe faz TODOS os ataques, um atrás do outro (sem precisar de dano nem de fase), e o jogo tira
+    /// prints sozinho durante cada um — salvos em ModSources/AscensaoAstral/Capturas/&lt;data&gt;/.
+    /// Assim dá para revisar o visual de tudo sem jogar.
+    ///   /vitrine          → todos os ataques + as mecânicas grandes
+    ///   /vitrine ataques  → só os ataques (rápido)
+    ///   /vitrine parar    → encerra
+    /// </summary>
+    public static class Vitrine
+    {
+        public struct Item
+        {
+            public int Estado, Fase, Limite, Intervalo, MaxFotos;
+            public string Nome;
+            public Item(int estado, int fase, string nome, bool mecanica = false)
+            {
+                Estado = estado; Fase = fase; Nome = nome;
+                Limite = mecanica ? 60 * 50 : 60 * 16;
+                Intervalo = mecanica ? 75 : 22;
+                MaxFotos = mecanica ? 20 : 11;
+            }
+        }
+
+        public static bool Ligada;
+        private static List<Item> fila = new();
+        private static int indice = -1, tempo, fotos, esperaNaPausa;
+        public static string Pasta;
+        public static int TotalDeFotos;
+
+        public static void Iniciar(RaidBoss chefe, bool comMecanicas)
+        {
+            fila = new List<Item>(chefe.AtaquesDaVitrine(comMecanicas));
+            if (fila.Count == 0) { Main.NewText("Esse chefe não tem lista de vitrine.", 255, 120, 120); return; }
+            Pasta = Path.Combine(Main.SavePath, "ModSources", "AscensaoAstral", "Capturas", DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss") + "_" + chefe.Name);
+            Directory.CreateDirectory(Pasta);
+            File.WriteAllText(Path.Combine(Pasta, "_indice.txt"), "foto;chefe;ataque;estado;fase;tick\n");
+            Ligada = true;
+            indice = -1; tempo = 0; fotos = 0; esperaNaPausa = 0; TotalDeFotos = 0;
+            Main.NewText($"Vitrine: {fila.Count} ataques. As fotos vão para {Pasta}", 180, 220, 255);
+        }
+
+        public static void Parar(string motivo)
+        {
+            if (!Ligada) return;
+            Ligada = false;
+            Main.NewText($"Vitrine encerrada ({motivo}). {TotalDeFotos} fotos em {Pasta}", 180, 220, 255);
+        }
+
+        /// <summary>Chamado pelo RaidBoss antes de cada tick do estado.</summary>
+        public static void Controlar(RaidBoss chefe)
+        {
+            NPC n = chefe.NPC;
+            n.life = n.lifeMax; // vida cheia: nenhuma transição automática atrapalha a ordem
+            chefe.Stagger = 0f;
+
+            // o jogador fica parado no meio da arena, invulnerável
+            Player eu = Main.LocalPlayer;
+            eu.immune = true; eu.immuneTime = Math.Max(eu.immuneTime, 30);
+            eu.statLife = eu.statLifeMax2;
+
+            bool naPausa = chefe.Estado == chefe.EstadoDePausa;
+            if (indice < 0 || naPausa)
+            {
+                // espera o chefe chegar na pausa (fim da intro / fim do ataque anterior) e chama o próximo
+                if (!naPausa || ++esperaNaPausa < 40) return;
+                esperaNaPausa = 0;
+                indice++;
+                if (indice >= fila.Count) { Parar("acabou a lista"); return; }
+                Item it = fila[indice];
+                chefe.VitrineIr(it.Estado, it.Fase);
+                tempo = 0; fotos = 0;
+                Main.NewText($"[vitrine {indice + 1}/{fila.Count}] {it.Nome}", 200, 200, 255);
+                return;
+            }
+
+            Item atual = fila[indice];
+            tempo++;
+            if (tempo % atual.Intervalo == 8 && fotos < atual.MaxFotos)
+            {
+                fotos++;
+                string nome = $"{indice + 1:00}_{atual.Nome}_{fotos:00}";
+                Captura.Pedir(nome, $"{nome};{chefe.Name};{atual.Nome};{chefe.NomeDoEstado};{atual.Fase};{tempo}");
+            }
+            if (tempo > atual.Limite) // travou ou é longo demais: volta para a pausa e segue a fila
+                chefe.VitrineIr(chefe.EstadoDePausa, atual.Fase);
+        }
+    }
+
+    /// <summary>Tira um print do jogo (o quadro inteiro, já desenhado) e salva como JPG em meia resolução.</summary>
+    public class Captura : ModSystem
+    {
+        private static string pendente, linha;
+        private static Color[] dados;
+
+        public static void Pedir(string nome, string linhaDoIndice) { pendente = nome; linha = linhaDoIndice; }
+
+        public override void Load() { if (!Main.dedServ) Main.OnPostDraw += DepoisDeDesenhar; }
+        public override void Unload() { Main.OnPostDraw -= DepoisDeDesenhar; dados = null; }
+
+        private static void DepoisDeDesenhar(GameTime _)
+        {
+            if (pendente is null || Vitrine.Pasta is null) return;
+            string nome = pendente; pendente = null;
+            try
+            {
+                GraphicsDevice gd = Main.instance.GraphicsDevice;
+                int w = gd.PresentationParameters.BackBufferWidth, h = gd.PresentationParameters.BackBufferHeight;
+                if (dados is null || dados.Length != w * h) dados = new Color[w * h];
+                gd.GetBackBufferData(dados);
+                for (int i = 0; i < dados.Length; i++) dados[i].A = 255;
+                using Texture2D tex = new(gd, w, h);
+                tex.SetData(dados);
+                using FileStream fs = File.Create(Path.Combine(Vitrine.Pasta, nome + ".jpg"));
+                tex.SaveAsJpeg(fs, w / 2, h / 2);
+                File.AppendAllText(Path.Combine(Vitrine.Pasta, "_indice.txt"), linha + "\n");
+                Vitrine.TotalDeFotos++;
+            }
+            catch (Exception e)
+            {
+                ModContent.GetInstance<AscensaoAstral>().Logger.Warn("Falha ao capturar a tela: " + e.Message);
+            }
+        }
+    }
+
+    public class ComandoVitrine : ModCommand
+    {
+        public override bool IsLoadingEnabled(Mod mod) => AscensaoAstral.DEBUG;
+        public override CommandType Type => CommandType.Chat;
+        public override string Command => "vitrine";
+        public override string Usage => "/vitrine [ataques|parar]";
+        public override string Description => "O chefe da raid faz todos os ataques em sequência e o jogo tira prints de cada um.";
+
+        public override void Action(CommandCaller caller, string input, string[] args)
+        {
+            if (args.Length > 0 && args[0] == "parar") { Vitrine.Parar("pedido"); return; }
+            if (Main.netMode != NetmodeID.SinglePlayer) { caller.Reply("A vitrine só funciona em single player.", Color.OrangeRed); return; }
+            if (RaidBoss.Ativo is not RaidBoss chefe) { caller.Reply("Entre numa raid (o chefe precisa estar vivo) e digite /vitrine de novo.", Color.OrangeRed); return; }
+            Vitrine.Iniciar(chefe, !(args.Length > 0 && args[0] == "ataques"));
+        }
+    }
+}

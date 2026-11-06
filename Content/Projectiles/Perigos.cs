@@ -433,6 +433,14 @@ namespace AscensaoAstral.Content.Projectiles
             }
             if (Projectile.velocity.Length() < 14f)
                 Projectile.velocity *= 1.015f;
+            // bateu no chão da arena: estoura (não atravessa o chão iluminando a terra por baixo)
+            if (RaidBoss.Ativo is RaidBoss chefe && Projectile.Center.Y > chefe.ArenaPiso + 4f)
+            {
+                for (int i = 0; i < 8; i++)
+                    Dust.NewDustPerfect(Projectile.Center, Projectile.ai[0] switch { 1 => DustID.PurpleTorch, 2 => DustID.Torch, _ => DustID.IceTorch }, Main.rand.NextVector2Circular(4f, 4f) - Vector2.UnitY * 2f, 0, default, 1.3f).noGravity = true;
+                Projectile.Kill();
+                return;
+            }
             Lighting.AddLight(Projectile.Center, Cor.ToVector3() * 0.6f);
             if (Main.rand.NextBool(3))
                 Dust.NewDustPerfect(Projectile.Center, Projectile.ai[0] switch { 1 => DustID.PurpleTorch, 2 => DustID.Torch, _ => DustID.IceTorch }, -Projectile.velocity * 0.15f, 0, default, 1.1f).noGravity = true;
