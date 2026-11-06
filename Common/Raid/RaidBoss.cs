@@ -184,14 +184,27 @@ namespace AscensaoAstral.Common.Raid
             }
             tempoSemNinguem = 0;
 
-            // Todos na raid morreram → WIPE (volta ao checkpoint)
-            if (!Reiniciando && vivos == 0)
+            // Todos na raid morreram → como no Terraria: o chefe vai embora (sem checkpoint) e a raid acaba
+            if (vivos == 0)
             {
-                if (++tempoSemNinguemVivo > 60)
-                    IniciarReinicio();
+                if (++tempoSemNinguemVivo > 60 && !indoEmbora)
+                    IrEmbora();
             }
             else
                 tempoSemNinguemVivo = 0;
+            if (indoEmbora)
+            {
+                NPC.dontTakeDamage = true;
+                NPC.velocity.Y -= 0.35f;
+                NPC.velocity.X *= 0.95f;
+                NPC.alpha = Math.Min(255, NPC.alpha + 4);
+                if (++tempoIndoEmbora > 150 && Servidor)
+                {
+                    NPC.active = false;
+                    NPC.netUpdate = true;
+                }
+                return;
+            }
 
             if (Alvo.dead || !Alvo.active || !JogadorNaRaid(Alvo))
                 NPC.TargetClosest(false);
@@ -476,7 +489,24 @@ namespace AscensaoAstral.Common.Raid
             }
         }
 
-        // ─── Checkpoint e wipe ───
+        // ─── Derrota (sem checkpoint) ───
+        private bool indoEmbora;
+        private int tempoIndoEmbora;
+
+        private void IrEmbora()
+        {
+            indoEmbora = true;
+            tempoIndoEmbora = 0;
+            LimparPerigos();
+            if (Servidor) MundoDeRaid.Derrotada = true;
+            if (Main.netMode != NetmodeID.Server)
+                Main.NewText(EhMemoria ? $"A {NomeDaMemoria} se desfaz. A raid acabou." : $"{NPC.GivenOrTypeName} venceu. A raid acabou.", 175, 75, 255);
+            SoundEngine.PlaySound(SoundID.Roar with { Pitch = -0.8f }, NPC.Center);
+        }
+
+        protected virtual string NomeDaMemoria => "memória";
+
+        // ─── Checkpoint e wipe (não usados mais: ficaram para um modo de desafio) ───
         protected void SalvarCheckpoint(int estado, Vector2 retorno)
         {
             checkpointEstado = estado;
@@ -486,14 +516,17 @@ namespace AscensaoAstral.Common.Raid
 
         private void IniciarReinicio()
         {
+            IrEmbora(); return; // sem checkpoint: a derrota encerra a raid
+#pragma warning disable CS0162
             Estado = REINICIANDO;
             Timer = 0;
             etapa = 0;
             wipeAgendado = false;
             NPC.netUpdate = true;
             LimparPerigos();
-            Hud.Banner("WIPE", new Color(255, 70, 70));
+            Hud.Fase("WIPE", new Color(255, 70, 70));
             SoundEngine.PlaySound(SoundID.Roar with { Pitch = -0.8f }, NPC.Center);
+#pragma warning restore CS0162
         }
 
         private void FazerReinicio()
@@ -513,7 +546,7 @@ namespace AscensaoAstral.Common.Raid
             if (Timer >= 240)
             {
                 NPC.dontTakeDamage = false;
-                Hud.Banner("Tentando de novo...", new Color(200, 200, 255));
+                Hud.Fase("Tentando de novo...", new Color(200, 200, 255));
                 AoReiniciar();
                 Estado = checkpointEstado;
                 Timer = 0;

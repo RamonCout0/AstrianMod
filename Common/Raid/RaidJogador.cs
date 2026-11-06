@@ -114,9 +114,7 @@ namespace AscensaoAstral.Common.Raid
                 }
             }
 
-            // Congela o contador do Terraria: ninguém renasce sozinho durante a raid
-            if (Player.respawnTimer < 60)
-                Player.respawnTimer = 60;
+            // Sem checkpoint: o contador normal do Terraria vale (a alma só deixa um aliado reviver ANTES dele acabar)
         }
 
         public override void PreUpdate()

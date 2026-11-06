@@ -44,6 +44,9 @@ namespace AscensaoAstral.Common.Raid
         public override bool NoPlayerSaving => false;
 
         public static bool Vencida;
+        /// <summary>Todos morreram: o chefe foi embora e todo mundo volta para casa.</summary>
+        public static bool Derrotada;
+        private static int tempoDepoisDaDerrota;
         private static int tempoComJogadores;
         private static int tempoDepoisDaVitoria;
 
@@ -52,6 +55,8 @@ namespace AscensaoAstral.Common.Raid
         public override void OnLoad()
         {
             Vencida = false;
+            Derrotada = false;
+            tempoDepoisDaDerrota = 0;
             tempoComJogadores = 0;
             tempoDepoisDaVitoria = 0;
             Main.dayTime = false;
@@ -75,6 +80,13 @@ namespace AscensaoAstral.Common.Raid
             {
                 // Depois da despedida, todo mundo volta para casa
                 if (++tempoDepoisDaVitoria == 60 * 8)
+                    VoltarTodos();
+                return;
+            }
+
+            if (Derrotada)
+            {
+                if (++tempoDepoisDaDerrota == 60 * 6)
                     VoltarTodos();
                 return;
             }

@@ -46,9 +46,22 @@ namespace AscensaoAstral.Common
             tempoBanner = DuracaoBanner;
         }
 
+        /// <summary>
+        /// Avisos de instrução ("FIQUE ATRÁS DELE!") e banners de etapa estão DESLIGADOS: no Terraria nenhum chefe
+        /// explica a luta por texto — o golpe se mostra pelo próprio visual (área marcada, brilho, som).
+        /// Ligue para depurar.
+        /// </summary>
+        public static bool AvisosDeTexto = false;
+
+        /// <summary>Banner de etapa de chefe ("ETAPA 2: ..."): desligado junto com os avisos.</summary>
+        public static void Fase(string texto, Color cor)
+        {
+            if (AvisosDeTexto) Banner(texto, cor);
+        }
+
         public static void Aviso(string texto, Color cor, int duracao = 120)
         {
-            if (Main.dedServ) return;
+            if (Main.dedServ || !AvisosDeTexto) return;
             textoAviso = texto;
             corAviso = cor;
             tempoAviso = duracao;

@@ -60,6 +60,8 @@ Mods: {
 			CoroDosEcos.DisplayName: Choir of Echoes
 			TiroDoEco.DisplayName: Echo Shot
 			EspinhoDeGelo.DisplayName: Ice Spike
+			CloneDeGelo.DisplayName: Ice Clone
+			OndaDeEscudo.DisplayName: Shield Wave
 			AnelDeGelo.DisplayName: Ice Ring
 			PrisaoDeGelo.DisplayName: Ice Prison
 			SoproGlacial.DisplayName: Glacial Breath

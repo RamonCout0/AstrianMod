@@ -358,7 +358,7 @@ namespace AscensaoAstral.Content.Bosses.Astharoth
                 RaidJogador.Foco = null;
                 NPC.dontTakeDamage = false;
                 Fase = 1;
-                Hud.Banner("ETAPA 1: O Guerreiro Errante", CorAstharoth);
+                Hud.Fase("ETAPA 1: O Guerreiro Errante", CorAstharoth);
                 SalvarCheckpoint(PAUSA, PosNoChao);
                 IrPara(PAUSA);
             }
@@ -478,26 +478,27 @@ namespace AscensaoAstral.Content.Bosses.Astharoth
         }
 
         // ─── O dragão atravessa: olhe para ele ───
+        /// <summary>
+        /// Rasante do dragão: o dragão do Éter atravessa a arena de um lado ao outro, rasgando uma faixa na sua altura.
+        /// A faixa aparece antes (aviso) — saia da altura dela. Duas passadas (três no Mítico), cada uma de um lado.
+        /// </summary>
         private void FazerRasante()
         {
             NPC.velocity *= 0.85f;
+            int passadas = Dificuldade.Mitico ? 3 : 2;
+            int intervalo = 70;
             if (Timer == 1)
-            {
-                if (Servidor) { ladoDragao = Main.rand.NextBool() ? 1 : -1; NPC.netUpdate = true; }
-                Hud.Aviso("OLHE PARA O DRAGÃO!", new Color(200, 140, 255), 100);
                 SoundEngine.PlaySound(SoundID.Roar with { Pitch = -0.8f });
-            }
-            if (Timer == 100 && Main.netMode != NetmodeID.Server)
-            {
-                Player eu = Main.LocalPlayer;
-                if (!eu.dead && JogadorNaRaid(eu) && eu.direction != ladoDragao)
+            for (int k = 0; k < passadas; k++)
+                if (Timer == 10 + k * intervalo && Servidor)
                 {
-                    eu.Hurt(PlayerDeathReason.ByNPC(NPC.whoAmI), 120, -ladoDragao);
-                    eu.AddBuff(BuffID.Frozen, 60);
+                    ladoDragao = k % 2 == 0 ? (Main.rand.NextBool() ? 1 : -1) : -ladoDragao;
+                    NPC.netUpdate = true;
+                    float y = MathHelper.Clamp(Alvo.Center.Y, ArenaTopo + 80f, ArenaPiso - 65f);
+                    float largura = ArenaDir - ArenaEsq;
+                    RetanguloPerigo.Criar(NPC, new Vector2((ArenaEsq + ArenaDir) / 2f, y), new Vector2(largura, 130f), 55, TipoPerigo.Eter, 40);
                 }
-                ScreenShakeSystem.StartShake(12f);
-            }
-            if (Timer >= 170)
+            if (Timer >= 10 + passadas * intervalo + 40)
                 IrPara(PAUSA);
         }
 
@@ -537,30 +538,28 @@ namespace AscensaoAstral.Content.Bosses.Astharoth
             if (Timer >= 220) IrPara(PAUSA);
         }
 
-        /// <summary>Feixe giratório: dois feixes opostos saem do chefe e varrem ~200° — corra (ou voe) em volta dele.</summary>
+        /// <summary>
+        /// Feixe: ele vai para um lado da arena e solta feixes HORIZONTAIS que cruzam tudo, um de cada vez:
+        /// o baixo (rente ao chão → pule) e o alto (na altura do peito de quem voa → fique no chão ou passe por cima).
+        /// No Arcanjo são quatro, mais rápidos, de luz solar.
+        /// </summary>
         private void FazerFeixe()
         {
-            if (Timer < 45)
-            {
-                MoverAte(CentroArena, VelMover * 1.3f);
-                return;
-            }
-            NPC.velocity = Vector2.Zero;
-            if (Timer == 45)
-            {
-                Hud.Aviso("O FEIXE VAI GIRAR — FIQUE PERTO DELE E ACOMPANHE!", CorDaParede, 110);
-                if (Servidor)
+            bool arcanjo = Fase >= 3;
+            int n = arcanjo ? 4 : 3, intervalo = arcanjo ? 42 : 52;
+            if (Timer == 1 && Servidor) { ladoAtaque = Alvo.Center.X > CentroArena.X ? -1 : 1; NPC.netUpdate = true; }
+            MoverAte(new Vector2(ladoAtaque < 0 ? ArenaEsq + 90f : ArenaDir - 90f, ArenaPiso - 170f), VelMover * 1.3f);
+            for (int k = 0; k < n; k++)
+                if (Timer == 30 + k * intervalo && Servidor)
                 {
-                    // começa um pouco ANTES de você e varre por cima de você (testado no laboratório: antes podia nem passar)
-                    float sentido = Main.rand.NextBool() ? 1f : -1f;
-                    float ang = NPC.AngleTo(Alvo.Center) - sentido * 0.5f;
-                    int feixes = Fase >= 3 ? 3 : 2; // o Arcanjo solta três
-                    for (int k = 0; k < feixes; k++)
-                        Projectile.NewProjectile(NPC.GetSource_FromAI(), NPC.Center, Vector2.Zero, ModContent.ProjectileType<FeixeGiratorio>(),
-                            45, 0f, Main.myPlayer, ang + k * MathHelper.TwoPi / feixes, sentido * 2.4f, NPC.whoAmI);
+                    bool baixo = k % 2 == 0;
+                    float largura = ArenaDir - ArenaEsq;
+                    Vector2 centro = baixo ? new Vector2((ArenaEsq + ArenaDir) / 2f, ArenaPiso - 36f) : new Vector2((ArenaEsq + ArenaDir) / 2f, ArenaPiso - 230f);
+                    Vector2 tamanho = baixo ? new Vector2(largura, 72f) : new Vector2(largura, 230f);
+                    RetanguloPerigo.Criar(NPC, centro, tamanho, arcanjo ? 38 : 45, arcanjo ? TipoPerigo.Solar : TipoPerigo.Eter, 45);
+                    SoundEngine.PlaySound(SoundID.Item15 with { Pitch = baixo ? -0.4f : 0.2f }, NPC.Center);
                 }
-            }
-            if (Timer >= 45 + FeixeGiratorio.Aviso + FeixeGiratorio.Giro + 20) IrPara(PAUSA);
+            if (Timer >= 30 + n * intervalo + 50) IrPara(PAUSA);
         }
 
         /// <summary>Chuva estelar: cai do teto na largura toda, com um único buraco seguro por onda.</summary>
@@ -670,7 +669,7 @@ namespace AscensaoAstral.Content.Bosses.Astharoth
                         fezAlma = true;
                         SalvarCheckpoint(T_ALMA, CentroFora);
                         LimparPerigos();
-                        Hud.Banner("TRANSIÇÃO: A Separação das Almas", CorAstharoth);
+                        Hud.Fase("TRANSIÇÃO: A Separação das Almas", CorAstharoth);
                         Dialogo.Falar("Astharoth", "Este mundo é pequeno demais para nós dois. Vou cortar vocês ao meio.", CorAstharoth, 200);
                         if (JogadoresVivosNaRaid() > 1)
                             Hud.Aviso("UM À ESQUERDA, OUTRO À DIREITA!", new Color(220, 180, 255), 150);
@@ -684,13 +683,13 @@ namespace AscensaoAstral.Content.Bosses.Astharoth
                         if (Servidor)
                         {
                             SortearAlmas();
-                            EterEstrutura.Construir(soArena: modoSolo); // solo: sem a ponte, direto para a arena
+                            EterEstrutura.Construir(soArena: false); // solo também corre a ponte e resolve os símbolos
                         }
                         Hud.Clarao(0.9f);
                         ScreenShakeSystem.StartShake(18f);
                         SoundEngine.PlaySound(SoundID.Item71 with { Pitch = -0.8f, Volume = 1.2f });
                         Timer = 0;
-                        etapa = modoSolo ? 3 : 1;
+                        etapa = 1;
                     }
                     break;
 
@@ -749,16 +748,20 @@ namespace AscensaoAstral.Content.Bosses.Astharoth
                         if (Timer == 1)
                             Hud.Aviso(dentro ? "PERGUNTEM AOS DE FORA QUAL É O SÍMBOLO!" : "DIGA AOS DO ÉTER QUAL É ESTE SÍMBOLO!", new Color(230, 200, 255), 200);
                     }
-                    if (Timer >= TempoSimbolos && Servidor)
+                    if (Timer >= TempoSimbolos)
                     {
-                        if (ResolverSimbolos())
+                        // Errou (ou ficou fora das plataformas): os dois mundos colidem — dói muito, mas a luta segue
+                        if (souCliente && !eu.dead && EterEstrutura.Dentro(eu) && !NaPlataformaCerta(eu))
+                        {
+                            eu.Hurt(PlayerDeathReason.ByNPC(NPC.whoAmI), (int)(eu.statLifeMax2 * Dificuldade.Escolher(0.3f, 0.45f, 0.6f)), 0);
+                            ScreenShakeSystem.StartShake(14f);
+                        }
+                        if (Servidor)
                         {
                             etapa = 3;
                             Timer = 0;
                             NPC.netUpdate = true;
                         }
-                        else
-                            WipeGlobal(); // os dois mundos colidem
                     }
                     break;
 
@@ -778,7 +781,7 @@ namespace AscensaoAstral.Content.Bosses.Astharoth
                     if (Timer >= 40)
                     {
                         Fase = 2;
-                        Hud.Banner("ETAPA 2: O Duelo no Éter", CorAstharoth);
+                        Hud.Fase("ETAPA 2: O Duelo no Éter", CorAstharoth);
                         Dialogo.Falar("Astharoth", "Aqui não existe chão para fugir. Só eu, você... e ele.", CorAstharoth, 200);
                         SalvarCheckpoint(PAUSA, new Vector2(ArenaEsq + 160f, ArenaPiso - 60f));
                         IrPara(PAUSA);
@@ -823,6 +826,8 @@ namespace AscensaoAstral.Content.Bosses.Astharoth
             return null;
         }
 
+        private bool NaPlataformaCerta(Player p) => Plataforma(simbolo).Intersects(p.Hitbox);
+
         /// <summary>Acertou se pelo menos um de dentro está na plataforma certa e ninguém está numa errada.</summary>
         private bool ResolverSimbolos()
         {
@@ -856,7 +861,7 @@ namespace AscensaoAstral.Content.Bosses.Astharoth
                         fezFusao = true;
                         SalvarCheckpoint(T_FUSAO, new Vector2(CentroArena.X, ArenaPiso - 60f));
                         LimparPerigos();
-                        Hud.Banner("TRANSIÇÃO: O Arcanjo", new Color(255, 225, 140));
+                        Hud.Fase("TRANSIÇÃO: O Arcanjo", new Color(255, 225, 140));
                         Dialogo.Falar("Astharoth", "Vamos, irmão. Uma última vez.", CorAstharoth, 150);
                     }
                     NPC.velocity *= 0.9f;
@@ -993,7 +998,7 @@ namespace AscensaoAstral.Content.Bosses.Astharoth
                                 MatarLocal(eu);
                             NPC.dontTakeDamage = false;
                             SalvarCheckpoint(PAUSA, new Vector2(CentroArena.X, ArenaPiso - 60f));
-                            Hud.Banner("ETAPA FINAL", new Color(255, 225, 140));
+                            Hud.Fase("ETAPA FINAL", new Color(255, 225, 140));
                             IrPara(ATORDOADO);
                         }
                     }
@@ -1189,6 +1194,19 @@ namespace AscensaoAstral.Content.Bosses.Astharoth
                     Desenho.RetanguloAviso(r, Hud.CorDoSimbolo(i), 0.4f);
                     Hud.DesenharSimbolo(Main.spriteBatch, r.Center.ToVector2() - Main.screenPosition + new Vector2(0f, -70f), i, 26f);
                 }
+
+            // O ECO do símbolo certo pisca no céu do Éter: dá para resolver sozinho (com grupo, os de fora veem ele fixo)
+            if (Estado == T_ALMA && etapa == 2)
+            {
+                float ciclo = (Timer + 110f) % 150f;
+                if (ciclo < 40f)
+                {
+                    float a = MathF.Sin(ciclo / 40f * MathHelper.Pi);
+                    Vector2 ceu = new(EterEstrutura.Arena.Center.X, EterEstrutura.Arena.Top + 300f);
+                    Desenho.Brilho(ceu, Hud.CorDoSimbolo(simbolo) * a, 2.2f);
+                    Hud.DesenharSimbolo(Main.spriteBatch, ceu - Main.screenPosition, simbolo, 34f * (0.9f + 0.1f * a));
+                }
+            }
 
             // Rasante: seta piscando do lado de onde o dragão vem (o dragão de verdade está lá)
             if (Estado == RASANTE && Timer < 100)

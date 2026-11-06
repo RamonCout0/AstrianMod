@@ -243,7 +243,7 @@ namespace AscensaoAstral.Content.Bosses.Silvanna
                 Fase = 1;
                 NPC.dontTakeDamage = false;
                 ScreenShakeSystem.StartShakeAtPoint(NPC.Center, 8f);
-                Hud.Banner("ETAPA 1: O Chapéu", new Color(255, 110, 90));
+                Hud.Fase("ETAPA 1: O Chapéu", new Color(255, 110, 90));
                 SalvarCheckpoint(PAUSA, PosOcioso);
                 IrPara(PAUSA);
             }
@@ -503,7 +503,7 @@ namespace AscensaoAstral.Content.Bosses.Silvanna
                     fezGiro = true;
                     SalvarCheckpoint(T_GIRO, PosOcioso);
                     LimparPerigos();
-                    Hud.Banner("TRANSIÇÃO: O Giro de Armotheus", new Color(255, 120, 120));
+                    Hud.Fase("TRANSIÇÃO: O Giro de Armotheus", new Color(255, 120, 120));
                     Dialogo.Falar("Silvanna", "Cansou, Armotheus? Então pare de fingir.", CorSilvanna, 150);
                 }
                 if (MoverAte(new Vector2(CentroArena.X, ArenaPiso - 90f), VelMover))
@@ -551,7 +551,7 @@ namespace AscensaoAstral.Content.Bosses.Silvanna
             if (PortaoQuebrado)
             {
                 CombatText.NewText(NPC.Hitbox, new Color(255, 230, 120), "POSTURA QUEBRADA!", true);
-                Hud.Banner("ETAPA 2: A Forma Verdadeira", new Color(255, 140, 140));
+                Hud.Fase("ETAPA 2: A Forma Verdadeira", new Color(255, 140, 140));
                 ScreenShakeSystem.StartShake(14f);
                 NPC.rotation = 0f;
                 Stagger = 0f;
@@ -599,38 +599,32 @@ namespace AscensaoAstral.Content.Bosses.Silvanna
 
         private Vector2 PosClone(int lado) => new(lado < 0 ? ArenaEsq + 90f : ArenaDir - 90f, ArenaPiso - 90f);
 
+        /// <summary>
+        /// Clones de gelo: cópias dela surgem em volta de você, cada uma risca uma linha até onde você estava
+        /// e avança por ela, uma depois da outra. Saia da linha antes que o clone venha.
+        /// </summary>
         private void FazerClones()
         {
             MoverAte(PosOcioso + new Vector2(0f, -140f), VelMover);
-            if (Timer == 1)
+            int n = Dificuldade.Escolher(2, 3, 4);
+            if (Timer == 20)
             {
+                SoundEngine.PlaySound(SoundID.Item8, NPC.Center);
                 if (Servidor)
                 {
-                    ladoErrado = Main.rand.NextBool() ? 1 : -1;
-                    NPC.netUpdate = true;
-                }
-                SoundEngine.PlaySound(SoundID.Item8, NPC.Center);
-                Hud.Aviso("MIRE (MOUSE E CORPO) NO CLONE DE COR ERRADA!", new Color(255, 120, 120), 110);
-            }
-
-            if (Timer == 110)
-            {
-                // Resolução local: o mouse E o corpo virados para o clone errado
-                if (Main.netMode != NetmodeID.Server)
-                {
-                    Player eu = Main.LocalPlayer;
-                    if (!eu.dead && JogadorNaRaid(eu))
+                    float base_ = Main.rand.NextFloat(MathHelper.TwoPi);
+                    for (int k = 0; k < n; k++)
                     {
-                        bool mouseCerto = Math.Sign(Main.MouseWorld.X - eu.Center.X) == ladoErrado;
-                        bool corpoCerto = eu.direction == ladoErrado;
-                        if (!(mouseCerto && corpoCerto))
-                            eu.Hurt(PlayerDeathReason.ByNPC(NPC.whoAmI), 130, -ladoErrado);
+                        float ang = base_ + k * MathHelper.TwoPi / n;
+                        Vector2 de = Alvo.Center + ang.ToRotationVector2() * 520f;
+                        de.X = MathHelper.Clamp(de.X, ArenaEsq + 40f, ArenaDir - 40f);
+                        de.Y = MathHelper.Clamp(de.Y, ArenaTopo + 40f, ArenaPiso - 50f);
+                        Projectile.NewProjectile(NPC.GetSource_FromAI(), de, Vector2.Zero, ModContent.ProjectileType<CloneDeGelo>(), 34, 0f, Main.myPlayer,
+                            Alvo.Center.X, Alvo.Center.Y, 55 + k * 20);
                     }
                 }
-                SoundEngine.PlaySound(SoundID.Item71 with { Pitch = 0.3f }, NPC.Center);
-                ScreenShakeSystem.StartShake(8f);
             }
-            if (Timer >= 150)
+            if (Timer >= 20 + 55 + n * 20 + 45)
                 IrPara(PAUSA);
         }
 
@@ -690,7 +684,7 @@ namespace AscensaoAstral.Content.Bosses.Silvanna
                     Fase = 3; // cavaleiro de gelo
                     posSilvanna = new Vector2(ArenaDir - 130f, ArenaPiso - 64f);
                     Hud.Clarao(0.8f);
-                    Hud.Banner("TRANSIÇÃO: A Nevasca", new Color(170, 230, 255));
+                    Hud.Fase("TRANSIÇÃO: A Nevasca", new Color(170, 230, 255));
                     Hud.Aviso("FIQUE ATRÁS DO CAVALEIRO!", new Color(170, 230, 255), 180);
                     Dialogo.Falar("Silvanna", "A tempestade sempre vem. Ele é o único que fica de pé na frente dela.", CorSilvanna, 200);
                     SoundEngine.PlaySound(SoundID.Item120 with { Pitch = -0.4f }, NPC.Center);
@@ -742,7 +736,7 @@ namespace AscensaoAstral.Content.Bosses.Silvanna
             if (PortaoQuebrado)
             {
                 CombatText.NewText(NPC.Hitbox, new Color(255, 230, 120), "POSTURA QUEBRADA!", true);
-                Hud.Banner("ÚLTIMA ETAPA: O Cavaleiro", new Color(170, 230, 255));
+                Hud.Fase("ÚLTIMA ETAPA: O Cavaleiro", new Color(170, 230, 255));
                 Stagger = 0f;
                 SalvarCheckpoint(PAUSA, new Vector2(CentroArena.X, ArenaPiso - 60f));
                 IrPara(PAUSA);
@@ -810,37 +804,35 @@ namespace AscensaoAstral.Content.Bosses.Silvanna
             }
         }
 
+        /// <summary>
+        /// Escudo: ele crava o escudo no chão e solta uma ONDA de gelo que corre rente ao chão até a parede — pule
+        /// por cima (como a onda da Queen Slime). No Heroico/Mítico ela vai e volta.
+        /// </summary>
         private void FazerEscudo()
         {
-            int dir = Alvo.Center.X > NPC.Center.X ? 1 : -1;
             if (etapa == 0)
             {
-                MoverAte(new Vector2(Alvo.Center.X - dir * 150f, ArenaPiso - 62f), VelMover);
-                if (Math.Abs(Alvo.Center.X - NPC.Center.X) < 230f || Timer > 70)
+                MoverAte(new Vector2(MathHelper.Clamp(NPC.Center.X, ArenaEsq + 160f, ArenaDir - 160f), ArenaPiso - 62f), VelMover);
+                if (Timer > 30)
                 {
                     etapa = 1;
                     Timer = 0;
-                    ladoAtaque = dir;
+                    ladoAtaque = Alvo.Center.X > NPC.Center.X ? 1 : -1;
+                    NPC.netUpdate = true;
                 }
                 return;
             }
 
             NPC.velocity *= 0.8f;
-            if (Timer == 35)
+            if (Timer == 1 && Servidor)
+                Projectile.NewProjectile(NPC.GetSource_FromAI(), new Vector2(NPC.Center.X + ladoAtaque * 70f, ArenaPiso), Vector2.Zero,
+                    ModContent.ProjectileType<OndaDeEscudo>(), 34, 0f, Main.myPlayer, ladoAtaque, Dificuldade.Heroico ? 1f : 0f);
+            if (Timer == 40)
             {
-                Vector2 frente = NPC.Center + new Vector2(ladoAtaque * 130f, 0f);
-                RetanguloPerigo.Criar(NPC, frente, new Vector2(210f, 160f), 1, TipoPerigo.Atordoar, 30);
-                if (Main.netMode != NetmodeID.Server)
-                {
-                    Player eu = Main.LocalPlayer;
-                    Rectangle area = new((int)(frente.X - 105f), (int)(frente.Y - 80f), 210, 160);
-                    if (!eu.dead && area.Intersects(eu.Hitbox))
-                        eu.velocity += new Vector2(ladoAtaque * 14f, -4f);
-                }
                 SoundEngine.PlaySound(SoundID.Item37 with { Pitch = -0.5f }, NPC.Center);
                 ScreenShakeSystem.StartShakeAtPoint(NPC.Center, 7f);
             }
-            if (Timer >= 70)
+            if (Timer >= (Dificuldade.Heroico ? 300 : 190))
                 IrPara(PAUSA);
         }
 
@@ -855,7 +847,7 @@ namespace AscensaoAstral.Content.Bosses.Silvanna
                         fezFinal = true;
                         SalvarCheckpoint(FINAL, new Vector2(CentroArena.X, ArenaPiso - 60f));
                         LimparPerigos();
-                        Hud.Banner("MECÂNICA FINAL: A Lança Solar", new Color(255, 215, 110));
+                        Hud.Fase("MECÂNICA FINAL: A Lança Solar", new Color(255, 215, 110));
                         Dialogo.Falar("Silvanna", "Ele vai trazer o sol inteiro para baixo. Achem um escudo.", CorSilvanna, 180);
                         AbrirPortao();
                     }
@@ -1139,11 +1131,6 @@ namespace AscensaoAstral.Content.Bosses.Silvanna
 
             DesenharCorpo(sb, screenPos, drawColor);
 
-            if (Estado == CLONES)
-            {
-                DesenharClone(sb, screenPos, -1);
-                DesenharClone(sb, screenPos, 1);
-            }
             return false;
         }
 
@@ -1554,6 +1541,126 @@ namespace AscensaoAstral.Content.Bosses.Silvanna
                     Dust.NewDustPerfect(de, DustID.Snow, new Vector2(Main.rand.NextFloat(16f, 24f), Main.rand.NextFloat(-1f, 2f)), 0, default, 1.4f).noGravity = true;
                 }
             }
+        }
+    }
+}
+
+namespace AscensaoAstral.Content.Bosses.Silvanna
+{
+    /// <summary>Clone de gelo: ai[0], ai[1] = onde mira; ai[2] = ticks de aviso antes de avançar.</summary>
+    public class CloneDeGelo : ModProjectile
+    {
+        public override string Texture => "AscensaoAstral/Assets/Vazio";
+        private const int Corrida = 32;
+        private int Idade => (int)Projectile.ai[2] + Corrida - Projectile.timeLeft;
+        private bool Ativo => Idade >= Projectile.ai[2];
+        private Vector2 Inicio => new(Projectile.localAI[0], Projectile.localAI[1]);
+        private Vector2 Direcao => (new Vector2(Projectile.ai[0], Projectile.ai[1]) - Inicio).SafeNormalize(Vector2.UnitX);
+
+        public override void SetStaticDefaults() => ProjectileID.Sets.DrawScreenCheckFluff[Type] = 2400;
+        public override void SetDefaults()
+        {
+            Projectile.width = 56; Projectile.height = 56;
+            Projectile.hostile = true; Projectile.tileCollide = false; Projectile.penetrate = -1; Projectile.timeLeft = 2;
+        }
+        public override void OnSpawn(Terraria.DataStructures.IEntitySource source) => Projectile.timeLeft = (int)Projectile.ai[2] + Corrida;
+
+        public override void AI()
+        {
+            if (Projectile.localAI[2] == 0f) { Projectile.localAI[2] = 1f; Projectile.localAI[0] = Projectile.Center.X; Projectile.localAI[1] = Projectile.Center.Y; }
+            if (!Ativo) { Projectile.velocity = Vector2.Zero; return; }
+            if (Idade == (int)Projectile.ai[2])
+            {
+                Projectile.velocity = Direcao * 34f;
+                SoundEngine.PlaySound(SoundID.Item71 with { Pitch = 0.2f, Volume = 0.8f }, Projectile.Center);
+            }
+            Lighting.AddLight(Projectile.Center, 0.4f, 0.7f, 1f);
+            if (Main.rand.NextBool(2))
+                Dust.NewDustPerfect(Projectile.Center, DustID.IceTorch, -Projectile.velocity * 0.2f, 0, default, 1.4f).noGravity = true;
+        }
+
+        public override bool CanHitPlayer(Player target) => Ativo;
+        public override void OnHitPlayer(Player target, Player.HurtInfo info) => target.AddBuff(BuffID.Chilled, 150);
+
+        public override bool PreDraw(ref Color lightColor)
+        {
+            Color gelo = new(150, 225, 255);
+            Texture2D tex = ModContent.Request<Texture2D>("AscensaoAstral/Assets/Sheets/VerdadeiraForma").Value;
+            SpriteEffects flip = Direcao.X >= 0f ? SpriteEffects.None : SpriteEffects.FlipHorizontally;
+            float surge = Utils.GetLerpValue(0f, 18f, Idade, true);
+            if (!Ativo)
+            {
+                // a linha por onde ele vai passar, cada vez mais forte
+                float k = Idade / Projectile.ai[2];
+                Desenho.Risco(Inicio, Inicio + Direcao * 1150f, 8f + k * 18f, gelo * (0.25f + 0.55f * k));
+                Desenho.Brilho(Projectile.Center, gelo, 0.8f + k * 0.6f);
+            }
+            else
+            {
+                Desenho.Golpe(Desenho.Estilo.Gelo, Projectile.Center - Direcao * 220f, Projectile.Center, 46f, gelo, 1.2f);
+                Desenho.Lanca(Projectile.Center - Direcao * 40f, Projectile.Center + Direcao * 90f, 22f, gelo, 1.3f);
+            }
+            float some = Math.Min(1f, Projectile.timeLeft / 8f);
+            Main.spriteBatch.Draw(tex, Projectile.Center - Main.screenPosition, null, (gelo with { A = 180 }) * 0.85f * surge * some, 0f, tex.Size() / 2f, 1f, flip, 0f);
+            return false;
+        }
+    }
+
+    /// <summary>Onda de gelo do escudo: corre rente ao chão. ai[0] = direção (±1), ai[1] = 1 → volta depois de bater na parede.</summary>
+    public class OndaDeEscudo : ModProjectile
+    {
+        public override string Texture => "AscensaoAstral/Assets/Vazio";
+        private const int Aviso = 40;
+        private const float Altura = 110f, Velocidade = 15f;
+        private ref float Idade => ref Projectile.localAI[0];
+        private ref float Voltou => ref Projectile.localAI[1];
+
+        public override void SetStaticDefaults() => ProjectileID.Sets.DrawScreenCheckFluff[Type] = 3000;
+        public override void SetDefaults()
+        {
+            Projectile.width = 70; Projectile.height = (int)Altura;
+            Projectile.hostile = true; Projectile.tileCollide = false; Projectile.penetrate = -1; Projectile.timeLeft = 600;
+        }
+
+        public override void AI()
+        {
+            Idade++;
+            if (Idade == 1) Projectile.Bottom = new Vector2(Projectile.Center.X, Projectile.Center.Y); // nasce em cima do chão
+            float dir = Projectile.ai[0];
+            if (Idade < Aviso) { Projectile.velocity = Vector2.Zero; return; }
+            Projectile.velocity = new Vector2(dir * Velocidade, 0f);
+            if (RaidBoss.Ativo is RaidBoss b && (Projectile.Right.X > b.ArenaDir || Projectile.Left.X < b.ArenaEsq))
+            {
+                if (Projectile.ai[1] == 1f && Voltou == 0f) { Voltou = 1f; Projectile.ai[0] = -dir; Projectile.netUpdate = true; ScreenShakeSystem.StartShakeAtPoint(Projectile.Center, 5f); }
+                else Projectile.Kill();
+            }
+            if (Main.rand.NextBool())
+                Dust.NewDustPerfect(new Vector2(Projectile.Center.X, Projectile.Bottom.Y - 4f), DustID.Ice, new Vector2(-dir * 2f, -Main.rand.NextFloat(2f, 6f)), 0, default, 1.2f);
+            Lighting.AddLight(Projectile.Center, 0.4f, 0.7f, 1f);
+        }
+
+        public override bool CanHitPlayer(Player target) => Idade >= Aviso;
+        public override void OnHitPlayer(Player target, Player.HurtInfo info) { target.AddBuff(BuffID.Chilled, 150); target.velocity.Y = -7f; }
+
+        public override bool PreDraw(ref Color lightColor)
+        {
+            Color gelo = new(140, 215, 255);
+            float chao = Projectile.Bottom.Y;
+            if (Idade < Aviso && RaidBoss.Ativo is RaidBoss b)
+            {
+                // a pista rente ao chão por onde a onda vai correr
+                float dir = Projectile.ai[0];
+                float x0 = Projectile.Center.X, x1 = dir > 0 ? b.ArenaDir : b.ArenaEsq;
+                Rectangle r = new((int)Math.Min(x0, x1), (int)(chao - Altura), (int)Math.Abs(x1 - x0), (int)Altura);
+                Desenho.RetanguloAviso(r, gelo, 0.5f + 0.5f * MathF.Sin(Idade * 0.5f), Idade / Aviso);
+                return false;
+            }
+            // a onda: um paredão de cristal correndo, mais alto na frente
+            Vector2 frente = new(Projectile.Center.X + Projectile.ai[0] * 30f, chao);
+            Desenho.Golpe(Desenho.Estilo.Gelo, new Vector2(frente.X, chao), new Vector2(frente.X, chao - Altura), 70f, gelo, 1.2f);
+            for (int i = 1; i <= 3; i++)
+                Desenho.Ponta(new Vector2(frente.X - Projectile.ai[0] * i * 26f, chao), new Vector2(frente.X - Projectile.ai[0] * i * 30f, chao - Altura * (1f - i * 0.22f)), 20f, gelo, Color.White, 1f, Desenho.Estilo.Gelo);
+            return false;
         }
     }
 }
