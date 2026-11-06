@@ -70,7 +70,7 @@ namespace AscensaoAstral.Common
         public static void Clarao(float intensidade)
         {
             if (Main.dedServ) return;
-            clarao = Math.Max(clarao, intensidade);
+            clarao = Math.Max(clarao, Math.Min(intensidade * 0.4f, 0.3f)); // flash curto e fraco: o Terraria quase nunca estoura a tela
         }
 
         public override void OnWorldUnload()
@@ -84,7 +84,7 @@ namespace AscensaoAstral.Common
         {
             if (Main.dedServ) return;
             if (Raid.RaidBoss.Ativo is null) ClaraoAlvo = 0f; // sem luta, nada de tela clara presa
-            clarao = ClaraoAlvo > 0f ? MathHelper.Lerp(clarao, ClaraoAlvo, 0.08f) : Math.Max(0f, clarao - 0.015f);
+            clarao = ClaraoAlvo > 0f ? MathHelper.Lerp(clarao, ClaraoAlvo, 0.08f) : Math.Max(0f, clarao - 0.03f);
             if (tempoBanner > 0) tempoBanner--;
             if (tempoAviso > 0) tempoAviso--;
         }

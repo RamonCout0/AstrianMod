@@ -299,23 +299,43 @@ namespace AscensaoAstral.Content.Bosses.Silvanna
         public override bool PreDraw(ref Color lightColor)
         {
             Texture2D bloom = MiscTexturesRegistry.BloomCircleSmall.Value;
-            Color c = new Color(150, 220, 255) with { A = 0 };
-            float alfa = Soprando ? 1f : Idade / (float)Aviso * 0.4f;
+            Color gelo = new(150, 220, 255);
             float pulso = 0.8f + 0.2f * MathF.Sin(Idade * 0.6f);
-            // o cone: vários "sopros" de bloom esticados ao longo do raio
-            for (int i = 1; i <= 14; i++)
+            if (!Soprando)
             {
-                float k = i / 14f;
-                Vector2 p = Projectile.Center + Angulo.ToRotationVector2() * Alcance * k - Main.screenPosition;
-                float largura = Alcance * k * MathF.Tan(Abertura) * 2f / bloom.Width;
-                Main.spriteBatch.Draw(bloom, p, null, c * alfa * 0.35f * pulso * (1.1f - k * 0.5f), Angulo, bloom.Size() / 2f, new Vector2(0.6f, largura), 0, 0f);
-            }
-            if (!Soprando) // linhas das bordas do cone (o aviso)
+                // aviso: as bordas do cone acendendo + um leque fraquinho por dentro
+                float k = Idade / (float)Aviso;
                 for (int s = -1; s <= 1; s += 2)
                 {
-                    Vector2 fim = Projectile.Center + (Angulo + s * Abertura).ToRotationVector2() * Alcance;
-                    Desenho.Faixa(Projectile.Center, fim, 3f, new Color(150, 220, 255) * 0.6f, Color.White);
+                    Vector2 fim = Desenho.CortarNoChao(Projectile.Center, Projectile.Center + (Angulo + s * Abertura).ToRotationVector2() * Alcance);
+                    Desenho.Risco(Projectile.Center, fim, 4f + k * 6f, gelo * (0.3f + 0.5f * k));
                 }
+                for (int i = 1; i <= 10; i++)
+                {
+                    Vector2 p = Projectile.Center + Angulo.ToRotationVector2() * Alcance * (i / 10f) - Main.screenPosition;
+                    float largura = Alcance * (i / 10f) * MathF.Tan(Abertura) * 2f / bloom.Width;
+                    Main.spriteBatch.Draw(bloom, p, null, (gelo with { A = 0 }) * k * 0.12f, Angulo, bloom.Size() / 2f, new Vector2(0.6f, largura), 0, 0f);
+                }
+                return false;
+            }
+            // o sopro: um leque de jatos de cristal (shader de gelo) que tremem, com névoa por baixo
+            for (int i = 1; i <= 12; i++)
+            {
+                float k = i / 12f;
+                Vector2 p = Projectile.Center + Angulo.ToRotationVector2() * Alcance * k - Main.screenPosition;
+                float largura = Alcance * k * MathF.Tan(Abertura) * 2f / bloom.Width;
+                Main.spriteBatch.Draw(bloom, p, null, (gelo with { A = 0 }) * 0.28f * pulso * (1.1f - k * 0.6f), Angulo, bloom.Size() / 2f, new Vector2(0.6f, largura), 0, 0f);
+            }
+            const int jatos = 7;
+            for (int j = 0; j < jatos; j++)
+            {
+                float lado = j / (float)(jatos - 1) * 2f - 1f;
+                float ang = Angulo + lado * Abertura * 0.85f + MathF.Sin(Idade * 0.3f + j * 1.9f) * 0.03f;
+                float alcance = Alcance * (0.75f + 0.25f * MathF.Sin(Idade * 0.2f + j));
+                Vector2 fim = Desenho.CortarNoChao(Projectile.Center, Projectile.Center + ang.ToRotationVector2() * alcance);
+                Desenho.Golpe(Desenho.Estilo.Gelo, Projectile.Center + ang.ToRotationVector2() * 30f, fim, 34f + (1f - Math.Abs(lado)) * 30f, gelo, 1f + (1f - Math.Abs(lado)) * 0.3f, 0.75f);
+            }
+            Desenho.Brilho(Projectile.Center, Color.White, 0.6f * pulso);
             return false;
         }
     }

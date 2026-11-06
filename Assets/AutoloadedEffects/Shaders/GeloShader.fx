@@ -47,7 +47,7 @@ float4 Pixels(VertexOut input) : COLOR0
     float veio = pow(tex2D(texturaRuido, p * 0.25 + float2(t * 0.02, 0)).r, 3.0);
 
     float corpo = step(dl, 0.5 + (n - 0.5) * 0.12);       // borda dura e irregular, de cristal
-    float3 dentro = lerp(cor * 0.35, lerp(cor, float3(1, 1, 1), 0.5), face) + float3(1, 1, 1) * aresta * 0.8 + cor * veio * 0.6;
+    float3 dentro = lerp(cor * 0.6, cor * 1.15 + float3(0.08, 0.1, 0.12), face) + lerp(cor, float3(1, 1, 1), 0.6) * aresta * 0.7 + cor * veio * 0.8;
     // reflexo: uma faixa clara atravessando o cristal
     float reflexo = exp(-pow((uv.x - frac(t * 0.35)) * 12.0 - (uv.y - 0.5) * 3.0, 2.0)) * 0.7;
     dentro += reflexo;
@@ -58,7 +58,7 @@ float4 Pixels(VertexOut input) : COLOR0
     float bruma = Brilho(dl, 0.4) * (1.0 - corpo) * (0.7 + 0.3 * tex2D(texturaRuido2, uv * 2.0 + t * 0.1).r);
     float3 c = dentro * corpo + cor * bruma;
     c = lerp(c, float3(1, 1, 1), saturate(intensidade - 1.0) * 0.6 * corpo);
-    float a = saturate(corpo * 0.85 + bruma);
+    float a = saturate(corpo * (0.55 + 0.35 * face + aresta * 0.3) + bruma);
     a *= smoothstep(1.0, 0.8, abs(input.TexCoord.y - 0.5) * 2.0); // nunca uma borda reta no limite da faixa
     return float4(c, a) * a * opacidade * input.Color.a;
 }

@@ -57,8 +57,8 @@ namespace AscensaoAstral.Content.Bosses.Astharoth
             Vector2 topo = new(Projectile.Center.X, Projectile.ai[0]), chao = new(Projectile.Center.X, Projectile.ai[1]);
             Desenho.Golpe(Desenho.Estilo.Solar, chao, topo, Largura * (1.1f + 0.4f * bate), c, 1f + bate, a);
             // onde bate no chão: anel de luz achatado + clarão
-            Desenho.Brilho(chao, c, 2.5f * a);
-            Desenho.Clarao(chao, c, (0.8f + bate) * a);
+            Desenho.Brilho(chao - new Vector2(0f, 40f), c, 1.5f * a); // o brilho fica EM CIMA do chão, não vaza para a terra
+            Desenho.Clarao(chao - new Vector2(0f, 6f), c, (0.5f + bate * 0.6f) * a);
             Main.spriteBatch.Draw(MiscTexturesRegistry.BloomCircleSmall.Value, chao - Main.screenPosition, null, (c with { A = 0 }) * a * 0.6f, 0f,
                 MiscTexturesRegistry.BloomCircleSmall.Value.Size() / 2f, new Vector2(Largura / 40f * (1f + bate), 0.35f), 0, 0f);
             return false;

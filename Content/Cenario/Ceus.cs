@@ -598,6 +598,99 @@ namespace AscensaoAstral.Content.Cenario
     ///   Nuvens → quando o Astharoth virou Arcanjo
     /// Vários céus podem estar ativos ao mesmo tempo (inclusive os de outros mods).
     /// </summary>
+    /// <summary>
+    /// O CÉU DO DUELO (Astharoth antes do Éter): crepúsculo violeta com uma nebulosa em camadas (parallax),
+    /// poeira de éter subindo e, no alto, um ECLIPSE — um sol escondido atrás de um disco preto.
+    /// A coroa dourada do eclipse vai acendendo conforme a vida dele cai: é o Arcanjo esperando para nascer.
+    /// </summary>
+    public class CeuDoDuelo : CustomSky
+    {
+        public const string Chave = "AscensaoAstral:Duelo";
+        private bool ativo;
+        private float intensidade;
+        private readonly Vector3[] estrelas = new Vector3[260];
+        private readonly Vector4[] nebulosa = new Vector4[34];
+
+        public CeuDoDuelo()
+        {
+            Random rng = new(4242);
+            for (int i = 0; i < estrelas.Length; i++)
+                estrelas[i] = new Vector3((float)rng.NextDouble(), (float)rng.NextDouble() * 0.8f, (float)rng.NextDouble() * MathHelper.TwoPi);
+            for (int i = 0; i < nebulosa.Length; i++) // x, y, tamanho, camada (0 = longe, 2 = perto)
+                nebulosa[i] = new Vector4((float)rng.NextDouble() * 1.4f - 0.2f, 0.15f + (float)rng.NextDouble() * 0.5f, 0.6f + (float)rng.NextDouble() * 1.4f, i % 3);
+        }
+
+        public override void Update(GameTime gameTime) => intensidade = MathHelper.Clamp(intensidade + (ativo ? 0.02f : -0.02f), 0f, 1f);
+
+        public override void Draw(SpriteBatch sb, float minDepth, float maxDepth)
+        {
+            if (!(maxDepth >= 0f && minDepth < 0f))
+                return;
+            Texture2D bloom = MiscTexturesRegistry.BloomCircleSmall.Value;
+            Texture2D circulo = ModContent.Request<Texture2D>("AscensaoAstral/Assets/Circulo").Value;
+            int w = Main.screenWidth, h = Main.screenHeight;
+            float t = Main.GlobalTimeWrappedHourly;
+            float a = intensidade;
+            float raiva = RaidBoss.Ativo is RaidBoss b && b.NPC.lifeMax > 0 ? 1f - b.NPC.life / (float)b.NPC.lifeMax : 0f;
+            int baseCeu = (int)ArcanjoNoCeu.BaseDoCeu();
+            float camX = Main.screenPosition.X;
+
+            // 1) degradê: quase preto lá em cima → violeta → um rosa-alaranjado queimado no horizonte
+            int linha = baseCeu - (int)(h * 0.3f);
+            Degrade.Desenhar(sb, new Rectangle(0, 0, w, linha), new Color(5, 4, 16), new Color(48, 26, 78), a);
+            Degrade.Desenhar(sb, new Rectangle(0, linha - 1, w, baseCeu - linha + 1), new Color(48, 26, 78), new Color(120, 52, 82), a);
+            Degrade.Desenhar(sb, new Rectangle(0, baseCeu - 1, w, Math.Max(1, h - baseCeu + 1)), new Color(40, 18, 40), new Color(8, 5, 14), a);
+
+            // 2) estrelas, com um pouquinho de parallax
+            foreach (Vector3 e in estrelas)
+            {
+                float x = ((e.X * w - camX * 0.02f) % w + w) % w;
+                Vector2 p = new(x, e.Y * linha);
+                float pisca = 0.45f + 0.55f * MathF.Sin(t * 1.7f + e.Z * 3f);
+                sb.Draw(bloom, p, null, new Color(220, 205, 255, 0) * pisca * a * 0.7f, 0f, bloom.Size() / 2f, 0.03f + (e.Z % 1f) * 0.025f, 0, 0f);
+            }
+
+            // 3) o eclipse: coroa dourada (cresce com a raiva dele) + raios lentos + disco negro
+            Vector2 ec = new(w * 0.72f - camX * 0.01f % (w * 0.1f), baseCeu - h * 0.62f);
+            float coroa = 0.35f + raiva * 0.9f + 0.08f * MathF.Sin(t * 1.3f);
+            sb.Draw(bloom, ec, null, new Color(255, 170, 90, 0) * a * 0.35f * coroa, 0f, bloom.Size() / 2f, 3.4f + raiva * 1.5f, 0, 0f);
+            for (int i = 0; i < 12; i++)
+            {
+                float ang = i * MathHelper.TwoPi / 12f + t * 0.04f;
+                float len = (0.9f + 0.4f * MathF.Sin(t * 0.8f + i * 1.7f)) * (1f + raiva);
+                sb.Draw(bloom, ec + ang.ToRotationVector2() * 60f * len, null, new Color(255, 210, 140, 0) * a * 0.22f * coroa, ang, bloom.Size() / 2f, new Vector2(1.2f * len, 0.07f), 0, 0f);
+            }
+            sb.Draw(bloom, ec, null, new Color(255, 235, 190, 0) * a * 0.9f * coroa, 0f, bloom.Size() / 2f, 1.05f, 0, 0f);
+            sb.Draw(circulo, ec, null, new Color(6, 4, 12) * a, 0f, circulo.Size() / 2f, 92f / circulo.Width, 0, 0f);
+
+            // 4) nebulosa em 3 camadas: manchas grandes violeta/magenta/azul, cada camada anda num ritmo
+            foreach (Vector4 n in nebulosa)
+            {
+                float par = 0.03f + n.W * 0.05f;
+                float x = (((n.X * w - camX * par + t * (4f + n.W * 3f)) % (w * 1.4f)) + w * 1.4f) % (w * 1.4f) - w * 0.2f;
+                Vector2 p = new(x, linha - (0.7f - n.Y) * h * 0.8f + n.W * 40f);
+                Color c = n.W == 0 ? new Color(90, 50, 170, 0) : n.W == 1 ? new Color(170, 60, 150, 0) : new Color(60, 90, 190, 0);
+                float respira = 0.8f + 0.2f * MathF.Sin(t * 0.5f + n.X * 9f);
+                sb.Draw(bloom, p, null, c * a * 0.16f * respira, n.X * 6f, bloom.Size() / 2f, new Vector2(n.Z * 3.2f, n.Z * 1.4f), 0, 0f);
+            }
+
+            // 5) poeira de éter subindo do horizonte
+            for (int i = 0; i < 40; i++)
+            {
+                float k = (t * 0.05f + i * 0.0731f) % 1f;
+                float x = (i * 0.618f % 1f) * w + MathF.Sin(t * 0.6f + i) * 20f;
+                Vector2 p = new(x, baseCeu - k * h * 0.7f);
+                float brilho = MathF.Sin(k * MathHelper.Pi);
+                sb.Draw(bloom, p, null, new Color(200, 150, 255, 0) * a * brilho * 0.6f, 0f, bloom.Size() / 2f, 0.05f, 0, 0f);
+            }
+        }
+
+        public override void Activate(Vector2 position, params object[] args) => ativo = true;
+        public override void Deactivate(params object[] args) => ativo = false;
+        public override void Reset() => ativo = false;
+        public override bool IsActive() => ativo || intensidade > 0f;
+    }
+
     public class SistemaDeCeus : ModSystem
     {
         public override void Load()
@@ -607,6 +700,7 @@ namespace AscensaoAstral.Content.Cenario
             SkyManager.Instance[CeuDoEter.Chave] = new CeuDoEter();
             SkyManager.Instance[CeuDasNuvens.Chave] = new CeuDasNuvens();
             SkyManager.Instance[CeuDoArmotheus.Chave] = new CeuDoArmotheus();
+            SkyManager.Instance[CeuDoDuelo.Chave] = new CeuDoDuelo();
         }
 
         public override void PostUpdateEverything()
@@ -616,6 +710,8 @@ namespace AscensaoAstral.Content.Cenario
             Ligar(CeuAstral.Chave, AstralMundo.AstraniaLiberada);
             Ligar(CeuDoEter.Chave, AstralMundo.EterConstruido && EterEstrutura.Dentro(Main.LocalPlayer));
             Ligar(CeuDasNuvens.Chave, RaidBoss.Ativo is Astharoth a && a.EmFormaDeArcanjo);
+            bool noEter = AstralMundo.EterConstruido && EterEstrutura.Dentro(Main.LocalPlayer);
+            Ligar(CeuDoDuelo.Chave, RaidBoss.Ativo is Astharoth d && !d.EmFormaDeArcanjo && !noEter);
             Ligar(CeuDoArmotheus.Chave, RaidBoss.Ativo is Bosses.Silvanna.RaidSilvanna);
         }
 

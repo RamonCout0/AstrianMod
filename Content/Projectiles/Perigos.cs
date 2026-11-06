@@ -170,6 +170,15 @@ namespace AscensaoAstral.Content.Projectiles
         }
 
         /// <summary>Linha de luz (BloomLine) entre dois pontos.</summary>
+        /// <summary>Corta o segmento a→b na linha do chão da arena (nada de golpe/aviso aparecendo embaixo da terra).</summary>
+        public static Vector2 CortarNoChao(Vector2 a, Vector2 b)
+        {
+            if (RaidBoss.Ativo is not RaidBoss chefe) return b;
+            float piso = chefe.ArenaPiso;
+            if (b.Y <= piso || a.Y >= piso) return b;
+            return Vector2.Lerp(a, b, (piso - a.Y) / (b.Y - a.Y));
+        }
+
         public static void Risco(Vector2 a, Vector2 b, float espessura, Color cor)
         {
             Texture2D linha = MiscTexturesRegistry.BloomLineTexture.Value;

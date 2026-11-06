@@ -1088,7 +1088,12 @@ namespace AscensaoAstral.Content.Bosses.Silvanna
             if (NevascaAtiva && JogadorNaRaid(local) && ShaderManager.TryGetFilter("AscensaoAstral.NevascaFilter", out ManagedScreenFilter nev))
             {
                 // A nevasca "crítica": neve em camadas + névoa + cristais de gelo crescendo das bordas conforme você congela
-                nev.TrySetParameter("intensidade", 1f);
+                nev.TrySetParameter("intensidade", 0.8f);
+                Rectangle ab = Abrigo;
+                Matrix m = Main.GameViewMatrix.TransformationMatrix;
+                float x0 = Vector2.Transform(new Vector2(ab.Left, 0f) - Main.screenPosition, m).X / Main.screenWidth;
+                float x1 = Vector2.Transform(new Vector2(ab.Right, 0f) - Main.screenPosition, m).X / Main.screenWidth;
+                nev.TrySetParameter("abrigoX", etapa >= 1 ? new Vector2(x0, x1) : new Vector2(-2f, -2f));
                 nev.TrySetParameter("congelamento", local.GetModPlayer<FrioJogador>().Congelamento);
                 nev.TrySetParameter("abrigado", nevascaAbrigado);
                 nev.SetTexture(MiscTexturesRegistry.DendriticNoise.Value, 1, SamplerState.LinearWrap);
@@ -1160,7 +1165,7 @@ namespace AscensaoAstral.Content.Bosses.Silvanna
                 Desenho.RetanguloAviso(new Rectangle((int)ArenaEsq, (int)(NPC.Center.Y - 60f), (int)(ArenaDir - ArenaEsq), 120), new Color(200, 240, 255), pulso);
 
             if (Estado == LANCA && (int)(Timer - 1) % 60 < 35)
-                Desenho.Risco(NPC.Center, NPC.Center + NPC.DirectionTo(Alvo.Center) * 1400f, 10f, new Color(150, 230, 255) * 0.55f);
+                Desenho.Risco(NPC.Center, Desenho.CortarNoChao(NPC.Center, NPC.Center + NPC.DirectionTo(Alvo.Center) * 1400f), 10f, new Color(150, 230, 255) * 0.55f);
 
             if (Estado == SALTO)
                 Desenho.RetanguloAviso(new Rectangle((int)(alvoSalto.X - 150f), (int)(alvoSalto.Y - 25f), 300, 90), new Color(255, 80, 80), pulso);
@@ -1592,15 +1597,22 @@ namespace AscensaoAstral.Content.Bosses.Silvanna
             {
                 // a linha por onde ele vai passar, cada vez mais forte
                 float k = Idade / Projectile.ai[2];
-                Desenho.Risco(Inicio, Inicio + Direcao * 1150f, 8f + k * 18f, gelo * (0.25f + 0.55f * k));
-                Desenho.Brilho(Projectile.Center, gelo, 0.8f + k * 0.6f);
-            }
-            else
-            {
-                Desenho.Golpe(Desenho.Estilo.Gelo, Projectile.Center - Direcao * 220f, Projectile.Center, 46f, gelo, 1.2f);
-                Desenho.Lanca(Projectile.Center - Direcao * 40f, Projectile.Center + Direcao * 90f, 22f, gelo, 1.3f);
+                Desenho.Risco(Inicio, Desenho.CortarNoChao(Inicio, Inicio + Direcao * 1150f), 4f + k * 10f, gelo * (0.25f + 0.55f * k));
+                Desenho.Brilho(Projectile.Center, gelo, 0.5f + k * 0.4f);
             }
             float some = Math.Min(1f, Projectile.timeLeft / 8f);
+            if (Ativo)
+            {
+                // imagens residuais (como as dashes do Duke Fishron / Empress): cópias azuladas que vão sumindo pra trás
+                for (int i = 4; i >= 1; i--)
+                {
+                    Vector2 atras = Projectile.Center - Direcao * i * 34f;
+                    Main.spriteBatch.Draw(tex, atras - Main.screenPosition, null, new Color(90, 170, 255, 0) * (0.5f - i * 0.1f) * some, 0f, tex.Size() / 2f, 1f - i * 0.03f, flip, 0f);
+                }
+                // um fio de gelo fino e afilado no caminho (nada de laje cinza)
+                Desenho.Golpe(Desenho.Estilo.Gelo, Projectile.Center - Direcao * 160f, Projectile.Center, 18f, gelo, 1f, 0.7f * some);
+                Desenho.Lanca(Projectile.Center - Direcao * 30f, Projectile.Center + Direcao * 80f, 18f, gelo, 1.3f);
+            }
             Main.spriteBatch.Draw(tex, Projectile.Center - Main.screenPosition, null, (gelo with { A = 180 }) * 0.85f * surge * some, 0f, tex.Size() / 2f, 1f, flip, 0f);
             return false;
         }
