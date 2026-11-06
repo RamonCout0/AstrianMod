@@ -16,7 +16,10 @@ namespace AscensaoAstral.Common.Raid
     /// Assim dá para revisar o visual de tudo sem jogar.
     ///   /vitrine          → todos os ataques + as mecânicas grandes
     ///   /vitrine ataques  → só os ataques (rápido)
+    ///   /vitrine video    → grava VÍDEO: um quadro a cada 4 ticks em 1/3 da resolução (vira .mp4 depois)
     ///   /vitrine parar    → encerra
+    /// Se a janela do jogo for minimizada, o jogo para de desenhar: a vitrine percebe e REPETE o ataque quando a
+    /// janela voltar, para nenhum ficar sem foto.
     /// </summary>
     public static class Vitrine
     {
@@ -31,19 +34,26 @@ namespace AscensaoAstral.Common.Raid
                 Intervalo = mecanica ? 75 : 22;
                 MaxFotos = mecanica ? 20 : 11;
             }
+
+            public Item ComoVideo() { Item v = this; v.Intervalo = 4; v.MaxFotos = v.Limite / 4 + 1; return v; }
         }
 
         public static bool Ligada;
+        public static bool Video;
+        private static bool refazer;
         private static List<Item> fila = new();
         private static int indice = -1, tempo, fotos, esperaNaPausa;
         public static string Pasta;
         public static int TotalDeFotos;
 
-        public static void Iniciar(RaidBoss chefe, bool comMecanicas)
+        public static void Iniciar(RaidBoss chefe, bool comMecanicas, bool video = false)
         {
-            fila = new List<Item>(chefe.AtaquesDaVitrine(comMecanicas));
+            Video = video;
+            fila = new List<Item>();
+            foreach (Item it in chefe.AtaquesDaVitrine(comMecanicas)) fila.Add(video ? it.ComoVideo() : it);
+            refazer = false;
             if (fila.Count == 0) { Main.NewText("Esse chefe não tem lista de vitrine.", 255, 120, 120); return; }
-            Pasta = Path.Combine(Main.SavePath, "ModSources", "AscensaoAstral", "Capturas", DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss") + "_" + chefe.Name);
+            Pasta = Path.Combine(Main.SavePath, "ModSources", "AscensaoAstral", "Capturas", DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss") + "_" + chefe.Name + (video ? "_video" : ""));
             Directory.CreateDirectory(Pasta);
             File.WriteAllText(Path.Combine(Pasta, "_indice.txt"), "foto;chefe;ataque;estado;fase;tick\n");
             Ligada = true;
@@ -70,6 +80,26 @@ namespace AscensaoAstral.Common.Raid
             eu.immune = true; eu.immuneTime = Math.Max(eu.immuneTime, 30);
             eu.statLife = eu.statLifeMax2;
 
+            // Janela minimizada = o jogo não desenha = sem foto. Espera voltar e repete o ataque do começo.
+            bool desenhando = Main.GameUpdateCount - Captura.UltimoDesenho < 20;
+            if (!desenhando)
+            {
+                if (indice >= 0 && !refazer) refazer = true;
+                return;
+            }
+            if (refazer)
+            {
+                refazer = false;
+                if (indice >= 0)
+                {
+                    Main.NewText($"[vitrine] a janela voltou — repetindo {fila[indice].Nome}", 255, 220, 150);
+                    indice--;
+                    chefe.VitrineIr(chefe.EstadoDePausa, fila[indice + 1].Fase);
+                    esperaNaPausa = 0;
+                    return;
+                }
+            }
+
             bool naPausa = chefe.Estado == chefe.EstadoDePausa;
             if (indice < 0 || naPausa)
             {
@@ -90,7 +120,7 @@ namespace AscensaoAstral.Common.Raid
             if (tempo % atual.Intervalo == 8 && fotos < atual.MaxFotos)
             {
                 fotos++;
-                string nome = $"{indice + 1:00}_{atual.Nome}_{fotos:00}";
+                string nome = Video ? $"{indice + 1:00}_{atual.Nome}_{fotos:0000}" : $"{indice + 1:00}_{atual.Nome}_{fotos:00}";
                 Captura.Pedir(nome, $"{nome};{chefe.Name};{atual.Nome};{chefe.NomeDoEstado};{atual.Fase};{tempo}");
             }
             if (tempo > atual.Limite) // travou ou é longo demais: volta para a pausa e segue a fila
@@ -102,6 +132,7 @@ namespace AscensaoAstral.Common.Raid
     public class Captura : ModSystem
     {
         private static string pendente, linha;
+        public static uint UltimoDesenho;
         private static Color[] dados;
 
         public static void Pedir(string nome, string linhaDoIndice) { pendente = nome; linha = linhaDoIndice; }
@@ -111,6 +142,7 @@ namespace AscensaoAstral.Common.Raid
 
         private static void DepoisDeDesenhar(GameTime _)
         {
+            UltimoDesenho = Main.GameUpdateCount;
             if (pendente is null || Vitrine.Pasta is null) return;
             string nome = pendente; pendente = null;
             try
@@ -123,7 +155,8 @@ namespace AscensaoAstral.Common.Raid
                 using Texture2D tex = new(gd, w, h);
                 tex.SetData(dados);
                 using FileStream fs = File.Create(Path.Combine(Vitrine.Pasta, nome + ".jpg"));
-                tex.SaveAsJpeg(fs, w / 2, h / 2);
+                int div = Vitrine.Video ? 3 : 2;
+                tex.SaveAsJpeg(fs, w / div, h / div);
                 File.AppendAllText(Path.Combine(Vitrine.Pasta, "_indice.txt"), linha + "\n");
                 Vitrine.TotalDeFotos++;
             }
@@ -139,7 +172,7 @@ namespace AscensaoAstral.Common.Raid
         public override bool IsLoadingEnabled(Mod mod) => AscensaoAstral.DEBUG;
         public override CommandType Type => CommandType.Chat;
         public override string Command => "vitrine";
-        public override string Usage => "/vitrine [ataques|parar]";
+        public override string Usage => "/vitrine [ataques|video|parar]";
         public override string Description => "O chefe da raid faz todos os ataques em sequência e o jogo tira prints de cada um.";
 
         public override void Action(CommandCaller caller, string input, string[] args)
@@ -147,7 +180,8 @@ namespace AscensaoAstral.Common.Raid
             if (args.Length > 0 && args[0] == "parar") { Vitrine.Parar("pedido"); return; }
             if (Main.netMode != NetmodeID.SinglePlayer) { caller.Reply("A vitrine só funciona em single player.", Color.OrangeRed); return; }
             if (RaidBoss.Ativo is not RaidBoss chefe) { caller.Reply("Entre numa raid (o chefe precisa estar vivo) e digite /vitrine de novo.", Color.OrangeRed); return; }
-            Vitrine.Iniciar(chefe, !(args.Length > 0 && args[0] == "ataques"));
+            bool video = args.Length > 0 && args[0] == "video";
+            Vitrine.Iniciar(chefe, !(args.Length > 0 && args[0] == "ataques"), video);
         }
     }
 }

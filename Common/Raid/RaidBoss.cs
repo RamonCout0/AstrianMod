@@ -224,12 +224,16 @@ namespace AscensaoAstral.Common.Raid
                 FlashDano--;
         }
 
-        // ─── Arena fechada (contra quem só voa e desvia de tudo) ───
+        // ─── Arena fechada (DESLIGADA) ───
+        // No Terraria nenhum chefe tranca o jogador numa caixa. Dentro da dimensão da raid a borda do mapa já
+        // é o limite natural, então a parede de luz, o dano por "fugir" e o escuro fora da caixa ficam desligados.
+        // Para voltar a ligar (num modo de desafio, por exemplo), mude para true.
+        public static bool ArenaFechada = false;
         private int tempoForaDaArena;
 
         private void ConfinarJogadorLocal()
         {
-            if (Main.netMode == NetmodeID.Server || !ConfinarAgora || ArenaDir <= ArenaEsq)
+            if (!ArenaFechada || Main.netMode == NetmodeID.Server || !ConfinarAgora || ArenaDir <= ArenaEsq)
                 return;
 
             Player eu = Main.LocalPlayer;
@@ -275,7 +279,7 @@ namespace AscensaoAstral.Common.Raid
 
         protected void DesenharArena(Microsoft.Xna.Framework.Graphics.SpriteBatch sb)
         {
-            if (!ConfinarAgora || ArenaDir <= ArenaEsq)
+            if (!ArenaFechada || !ConfinarAgora || ArenaDir <= ArenaEsq)
                 return;
             if (Estado == REINICIANDO) return;
 
