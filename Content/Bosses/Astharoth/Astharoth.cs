@@ -57,8 +57,8 @@ namespace AscensaoAstral.Content.Bosses.Astharoth
 
         private const float VelMover = 12f;
         private const float LimiarAlma = 0.70f, LimiarFusao = 0.35f;
-        private const int TempoSimbolos = 12 * 60;
-        private const int TempoOrbes = 45 * 60;
+        private static int TempoSimbolos => Dificuldade.Escolher(16, 14, 12) * 60;
+        private static int TempoOrbes => Dificuldade.Escolher(30, 38, 45) * 60;
         // Ciclo da luz do Arcanjo: a sombra surge devagar → a luz carrega → rajada → respiro
         // Ele entra no fundo do céu (Entrada) e dá voltas: cada VOLTA é um "dia"; no fim de cada volta, a rajada
         private const int Entrada = 100, VoltaTicks = 720;
@@ -67,7 +67,22 @@ namespace AscensaoAstral.Content.Bosses.Astharoth
         private float CargaDaVolta => Utils.GetLerpValue(0.78f, 1f, ProgressoDaVolta, true);
         // O mergulho: sobe → a estrela pisca lá em cima → cai como estrela cadente
         private const int MergulhoSobe = 80, MergulhoCai = 170;
-        private const int OrbesNecessarias = 4;
+        public static int OrbesNecessarias => Dificuldade.Escolher(3, 4, 4);
+        private static int OrbesRuins => Dificuldade.Escolher(2, 4, 4);
+
+        // Rotações: cada nível libera mais ataques
+        private static int[] RotacaoDuelo => Dificuldade.Escolher(
+            new[] { CORTE, RAJADAS, LAMINAS },
+            new[] { CORTE, RAJADAS, LAMINAS, CHUVA },
+            new[] { CORTE, RAJADAS, LAMINAS, CHUVA });
+        private static int[] RotacaoAlma => Dificuldade.Escolher(
+            new[] { DUELO_CORTE, DUELO_INVESTIDA, FEIXE },
+            new[] { DUELO_CORTE, ESPIRAL, DUELO_INVESTIDA, FEIXE },
+            new[] { DUELO_CORTE, ESPIRAL, DUELO_INVESTIDA, FEIXE, RASANTE });
+        private static int[] RotacaoArcanjo => Dificuldade.Escolher(
+            new[] { JULGAMENTO, ASAS, FEIXE, CRUZ_DE_LUZ, DUELO_INVESTIDA },
+            new[] { JULGAMENTO, ESPIRAL, ASAS, FEIXE, CRUZ_DE_LUZ, LAMINAS, DUELO_INVESTIDA },
+            new[] { JULGAMENTO, ESPIRAL, ASAS, FEIXE, CRUZ_DE_LUZ, LAMINAS, CHUVA, DUELO_INVESTIDA });
         private static readonly Color CorAstharoth = new(190, 150, 255);
 
         public override float StaggerMax => 2200f;
@@ -307,7 +322,7 @@ namespace AscensaoAstral.Content.Bosses.Astharoth
             }
 
             // No duelo, o dragão cospe bolas de fogo pela boca de vez em quando
-            if (Fase == 2 && ModoDragao == 0 && Main.GameUpdateCount % 150 == 0 && Servidor && Dragao is DragaoDoEter dragao && !dragao.Mirando)
+            if (Dificuldade.Heroico && Fase == 2 && ModoDragao == 0 && Main.GameUpdateCount % 150 == 0 && Servidor && Dragao is DragaoDoEter dragao && !dragao.Mirando)
             {
                 Player alvo = AlvoDoDragao(dragao.Boca);
                 if (alvo is not null)
@@ -371,10 +386,10 @@ namespace AscensaoAstral.Content.Bosses.Astharoth
             int i = contadorAtaque++;
             IrPara(Fase switch
             {
-                1 => (i % 4) switch { 0 => CORTE, 1 => RAJADAS, 2 => LAMINAS, _ => CHUVA },
-                2 => (i % 5) switch { 0 => DUELO_CORTE, 1 => ESPIRAL, 2 => DUELO_INVESTIDA, 3 => FEIXE, _ => RASANTE },
-                // Etapa final (o Arcanjo): os ataques de luz dele + os mais fortes de antes, mais densos
-                _ => (i % 8) switch { 0 => JULGAMENTO, 1 => ESPIRAL, 2 => ASAS, 3 => FEIXE, 4 => CRUZ_DE_LUZ, 5 => LAMINAS, 6 => CHUVA, _ => DUELO_INVESTIDA }
+                1 => RotacaoDuelo[i % RotacaoDuelo.Length],
+                2 => RotacaoAlma[i % RotacaoAlma.Length],
+                // Etapa final (o Arcanjo): os ataques de luz dele + os mais fortes de antes (5 / 7 / 8 conforme o nível)
+                _ => RotacaoArcanjo[i % RotacaoArcanjo.Length]
             });
         }
 
@@ -858,7 +873,7 @@ namespace AscensaoAstral.Content.Bosses.Astharoth
                             GerarOrbes();
                             sombraX = Main.rand.NextFloat(ArenaEsq + 150f, ArenaDir - 150f);
                         }
-                        Hud.Aviso("PEGUE 4 ORBES BOAS — OS ECOS REVELAM QUAIS ATORDOAM", new Color(255, 225, 140), 220);
+                        Hud.Aviso($"PEGUE {OrbesNecessarias} ORBES BOAS — OS ECOS REVELAM QUAIS ATORDOAM", new Color(255, 225, 140), 220);
                         etapa = 1;
                         Timer = 0;
                         NPC.netUpdate = true;
@@ -988,8 +1003,9 @@ namespace AscensaoAstral.Content.Bosses.Astharoth
 
         private void GerarOrbes()
         {
-            // 4 boas e 4 que atordoam, embaralhadas pelo chão da arena
-            int[] tipos = { 0, 0, 0, 0, 1, 1, 1, 1 };
+            // as boas (o que precisa pegar) e as que atordoam, embaralhadas pelo chão da arena
+            int[] tipos = new int[OrbesNecessarias + OrbesRuins];
+            for (int k = OrbesNecessarias; k < tipos.Length; k++) tipos[k] = 1;
             for (int i = tipos.Length - 1; i > 0; i--)
             {
                 int j = Main.rand.Next(i + 1);
@@ -1239,7 +1255,7 @@ namespace AscensaoAstral.Content.Bosses.Astharoth
                     {
                         dono.OrbesBoas++;
                         dono.NPC.netUpdate = true;
-                        CombatText.NewText(p.Hitbox, new Color(255, 225, 140), $"{dono.OrbesBoas}/4", true);
+                        CombatText.NewText(p.Hitbox, new Color(255, 225, 140), $"{dono.OrbesBoas}/{Astharoth.OrbesNecessarias}", true);
                     }
                     SoundEngine.PlaySound(SoundID.Item29 with { Pitch = Atordoa ? -0.6f : 0.4f }, Projectile.Center);
                     Projectile.Kill();

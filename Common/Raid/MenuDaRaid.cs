@@ -266,7 +266,9 @@ namespace AscensaoAstral.Common.Raid
 
             // Direita: nome, fala, dicas, grupo
             int x = p.X + 330, y = p.Y + 28;
-            Utils.DrawBorderString(sb, "RAID", new Vector2(x, y), info.Cor, 0.8f); y += 22;
+            Utils.DrawBorderString(sb, "RAID", new Vector2(x, y), info.Cor, 0.8f);
+            Utils.DrawBorderString(sb, "Dificuldade: " + Dificuldade.Nome, new Vector2(p.Right - 60, y), Dificuldade.Cor, 0.8f, 1f, 0f);
+            y += 22;
             Utils.DrawBorderString(sb, info.Titulo, new Vector2(x, y), Color.White, 1.15f); y += 38;
             Utils.DrawBorderString(sb, $"\"{info.FalaMostrada}\"", new Vector2(x, y), new Color(200, 195, 225), 0.8f); y += 20;
             Utils.DrawBorderString(sb, "- " + info.QuemFalaMostrado, new Vector2(x, y), new Color(150, 145, 175), 0.7f); y += 36;
@@ -280,8 +282,11 @@ namespace AscensaoAstral.Common.Raid
                 bool pronto = EstaPronto(g);
                 Utils.DrawBorderString(sb, (pronto ? "[pronto]  " : "[...]  ") + g.name, new Vector2(x + 6, y), pronto ? new Color(130, 240, 170) : new Color(190, 190, 200), 0.75f);
                 y += 20;
-                if (y > p.Bottom - 90) break;
+                if (y > p.Bottom - 116) break;
             }
+
+            // O que a dificuldade libera (fica logo acima dos botões)
+            Utils.DrawBorderString(sb, Dificuldade.Descricao, new Vector2(x, p.Bottom - 96), Dificuldade.Cor * 0.9f, 0.7f);
 
             // Botões
             if (Main.netMode == NetmodeID.MultiplayerClient)

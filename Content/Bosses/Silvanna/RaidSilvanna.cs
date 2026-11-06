@@ -56,7 +56,20 @@ namespace AscensaoAstral.Content.Bosses.Silvanna
         // ─── Balanceamento ───
         private const float VelMover = 11f;
         private const float LimiarGiro = 0.75f, LimiarNevasca = 0.45f, LimiarFinal = 0.15f;
-        private const int TempoGiro = 25 * 60, TempoNevasca = 30 * 60, TempoFinal = 30 * 60;
+        // Mecânicas grandes: mais curtas no Normal, tempo cheio no Mítico (veja Common/Raid/Dificuldade.cs)
+        private static int TempoGiro => Dificuldade.Escolher(15, 20, 25) * 60;
+        private static int TempoNevasca => Dificuldade.Escolher(20, 25, 30) * 60;
+        private static int TempoFinal => Dificuldade.Escolher(20, 25, 30) * 60;
+
+        // Rotações: cada nível libera mais ataques
+        private static int[] RotacaoForma => Dificuldade.Escolher(
+            new[] { CORTES, SALTO },
+            new[] { CORTES, CLONES, SALTO },
+            new[] { CORTES, CLONES, ESTRELA_GELO, SALTO, CHUVA_GELIDA });
+        private static int[] RotacaoCavaleiro => Dificuldade.Escolher(
+            new[] { LANCA, ESPINHOS, INVESTIDA, ESCUDO },
+            new[] { LANCA, ESPINHOS, INVESTIDA, ANEL, ESCUDO, SOPRO },
+            new[] { LANCA, ESPINHOS, INVESTIDA, ANEL, PRISAO, ESCUDO, SOPRO });
         private const float PuxaoGiro = 9f, PuxaoComGancho = 0.8f;
         private static readonly Color CorSilvanna = new(120, 210, 230);
 
@@ -268,9 +281,9 @@ namespace AscensaoAstral.Content.Bosses.Silvanna
             {
                 // Etapa 1 (o chapéu) e 2 (a forma verdadeira): as mecânicas do As Astral
                 1 => (i % 3) switch { 0 => PENDULO, 1 => RAJADA_TRIPLA, _ => VARREDURA_CHAO },
-                2 => (i % 3) switch { 0 => CORTES, 1 => CLONES, _ => SALTO },
-                // Cavaleiro de gelo: 7 ataques, todos de gelo
-                _ => (i % 7) switch { 0 => LANCA, 1 => ESPINHOS, 2 => INVESTIDA, 3 => ANEL, 4 => PRISAO, 5 => ESCUDO, _ => SOPRO }
+                2 => RotacaoForma[i % RotacaoForma.Length],
+                // Cavaleiro de gelo: só ataques de gelo (4 no Normal, 6 no Heroico, os 7 no Mítico)
+                _ => RotacaoCavaleiro[i % RotacaoCavaleiro.Length]
             });
         }
 
@@ -705,12 +718,12 @@ namespace AscensaoAstral.Content.Bosses.Silvanna
                         FrioJogador frio = eu.GetModPlayer<FrioJogador>();
                         frio.Exposto = true; // vai congelando: mais lento, voa menos, toma mais dano
                         eu.velocity.X = Math.Min(eu.velocity.X + 0.2f, 6.5f);   // o vento leva para a direita (dá para andar contra, devagar)
-                        if (Timer % 45 == 0)
+                        if (Timer % 45 == 0 && Dificuldade.Heroico) // no Normal o frio só deixa lento
                             eu.Hurt(PlayerDeathReason.ByNPC(NPC.whoAmI), (int)(14 * (1f + frio.Congelamento * 2f)), 1);
                     }
 
                     // A lança: a cada 110 ticks ele tenta empurrar quem está atrás dele
-                    if (Timer % 110 == 109 && abrigado)
+                    if (Timer % 110 == 109 && abrigado && Dificuldade.Mitico)
                     {
                         eu.velocity.X += 6f;
                         eu.Hurt(PlayerDeathReason.ByNPC(NPC.whoAmI), 20, 1);
@@ -1234,8 +1247,9 @@ namespace AscensaoAstral.Content.Bosses.Silvanna
 
         // ─── Os cavaleiros do céu: um de cada vez acorda, brilha e arremessa lanças em você ───
         private int relogioCeu;
-        private const int CicloCavaleiro = 110, AvisoCavaleiro = 50;
-        private bool CavaleirosAtivos => Fase >= 3 && Estado != FINAL && Estado != DESPEDIDA && Estado != REINICIANDO && Estado != T_NEVASCA && Estado != ATORDOADO;
+        private static int CicloCavaleiro => Dificuldade.Mitico ? 85 : 110;
+        private const int AvisoCavaleiro = 50;
+        private bool CavaleirosAtivos => Dificuldade.Heroico && Fase >= 3 && Estado != FINAL && Estado != DESPEDIDA && Estado != REINICIANDO && Estado != T_NEVASCA && Estado != ATORDOADO;
 
         // No plano de fundo, na linha do chão da arena (perto de onde você está olhando)
         private Vector2 PosCavaleiro(int i) => new(MathHelper.Lerp(ArenaEsq + 200f, ArenaDir - 200f, i / 4f),
