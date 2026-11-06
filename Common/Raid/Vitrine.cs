@@ -40,6 +40,8 @@ namespace AscensaoAstral.Common.Raid
         }
 
         public static bool Ligada;
+        /// <summary>Onde o jogador fica preso durante a vitrine (meio da arena, no chão).</summary>
+        public static Microsoft.Xna.Framework.Vector2? PontoFixo;
         public static bool Video;
         private static bool refazer;
         private static List<Item> fila = new();
@@ -71,10 +73,22 @@ namespace AscensaoAstral.Common.Raid
             esperaNaPausa = 0;
         }
 
+        /// <summary>Segura o jogador no ponto fixo (chamado pela vitrine e pelo próprio jogador a cada tick).</summary>
+        public static void Prender(Player eu)
+        {
+            if (!Ligada || PontoFixo is not Vector2 p) return;
+            eu.Center = p;
+            eu.velocity = Vector2.Zero;
+            eu.fallStart = (int)(eu.position.Y / 16f);
+            eu.immune = true; eu.immuneTime = Math.Max(eu.immuneTime, 30); eu.immuneNoBlink = true;
+            eu.statLife = eu.statLifeMax2;
+        }
+
         public static void Parar(string motivo)
         {
             if (!Ligada) return;
             Ligada = false;
+            PontoFixo = null;
             Main.NewText($"Vitrine encerrada ({motivo}). {TotalDeFotos} fotos em {Pasta}", 180, 220, 255);
         }
 
@@ -85,8 +99,10 @@ namespace AscensaoAstral.Common.Raid
             n.life = n.lifeMax; // vida cheia: nenhuma transição automática atrapalha a ordem
             chefe.Stagger = 0f;
 
-            // o jogador fica parado no meio da arena, invulnerável
+            // o jogador fica PARADO no meio da arena (a arena atual do chefe), imortal: só assiste
             Player eu = Main.LocalPlayer;
+            PontoFixo = new Vector2((chefe.ArenaEsq + chefe.ArenaDir) / 2f, chefe.ArenaPiso - eu.height / 2f - 2f);
+            Prender(eu);
             eu.immune = true; eu.immuneTime = Math.Max(eu.immuneTime, 30);
             eu.statLife = eu.statLifeMax2;
 

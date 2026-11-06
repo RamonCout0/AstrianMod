@@ -39,12 +39,24 @@ namespace AscensaoAstral.Common.Raid
         // usava o item de novo e reabria o menu por cima)
         public override void SetControls()
         {
+            // Vitrine: o jogador só assiste — sem andar, pular, voar, usar item ou gancho
+            if (Vitrine.Ligada && Player.whoAmI == Main.myPlayer)
+            {
+                Player.controlLeft = Player.controlRight = Player.controlUp = Player.controlDown = false;
+                Player.controlJump = Player.controlHook = Player.controlMount = Player.controlUseItem = Player.controlUseTile = false;
+                Player.controlQuickHeal = Player.controlQuickMana = false;
+            }
             if (MenuDaRaid.Aberta is not null && Player.whoAmI == Main.myPlayer)
             {
                 Player.controlUseItem = false;
                 Player.controlUseTile = false;
                 Player.mouseInterface = true;
             }
+        }
+
+        public override void PostUpdate()
+        {
+            if (Vitrine.Ligada && Player.whoAmI == Main.myPlayer) Vitrine.Prender(Player);
         }
 
         // Na vitrine ninguém morre (nem pelas mecânicas que matam na hora, como o buraco negro e o sol)
