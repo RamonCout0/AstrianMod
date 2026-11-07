@@ -20,6 +20,9 @@ namespace AscensaoAstral.Content.Items
     /// <summary>Material: um caco do Éter. Cai do Astharoth.</summary>
     public class FragmentoDoEter : ModItem
     {
+        // Arte provisória: o próprio sprite do Terraria (FragmentNebula), tingido — como o Calamity antigo fazia
+        public override string Texture => "Terraria/Images/Item_" + ItemID.FragmentNebula;
+
         public override void SetStaticDefaults()
         {
             Item.ResearchUnlockCount = 25;
@@ -28,6 +31,7 @@ namespace AscensaoAstral.Content.Items
 
         public override void SetDefaults()
         {
+            Item.color = new Color(200, 150, 255);
             Item.width = 20; Item.height = 20;
             Item.maxStack = Item.CommonMaxStack;
             Item.value = Item.sellPrice(gold: 1);
@@ -40,12 +44,16 @@ namespace AscensaoAstral.Content.Items
     /// <summary>Lâmina do Errante (corpo a corpo): cada golpe abre uma fenda à frente, e dela sai uma meia-lua de éter.</summary>
     public class LaminaDoErrante : ModItem, IArmaComReferencia
     {
+        // Arte provisória: o próprio sprite do Terraria (NightsEdge), tingido — como o Calamity antigo fazia
+        public override string Texture => "Terraria/Images/Item_" + ItemID.NightsEdge;
+
         public int ReferenciaVanilla => ItemID.PossessedHatchet;
         public string ReferenciaCalamity => "Virulence";
         public float Fator => 0.85f; // golpe + meia-lua
 
         public override void SetDefaults()
         {
+            Item.color = new Color(215, 170, 255);
             Item.width = 52; Item.height = 52;
             Item.DamageType = DamageClass.Melee;
             Item.damage = 95;
@@ -132,12 +140,16 @@ namespace AscensaoAstral.Content.Items
     /// <summary>Arco do Arcanjo (à distância): toda flecha vira uma flecha de luz que se abre num leque de penas.</summary>
     public class ArcoDoArcanjo : ModItem, IArmaComReferencia
     {
+        // Arte provisória: o próprio sprite do Terraria (DaedalusStormbow), tingido — como o Calamity antigo fazia
+        public override string Texture => "Terraria/Images/Item_" + ItemID.DaedalusStormbow;
+
         public int ReferenciaVanilla => ItemID.Stynger;
         public string ReferenciaCalamity => "Malevolence";
         public float Fator => 0.7f; // flecha + 3 penas
 
         public override void SetDefaults()
         {
+            Item.color = new Color(255, 230, 170);
             Item.width = 24; Item.height = 54;
             Item.DamageType = DamageClass.Ranged;
             Item.damage = 60;
@@ -225,12 +237,16 @@ namespace AscensaoAstral.Content.Items
     /// <summary>Tomo do Julgamento (mágico): um pilar de luz cai do céu em cima do cursor.</summary>
     public class TomoDoJulgamento : ModItem, IArmaComReferencia
     {
+        // Arte provisória: o próprio sprite do Terraria (SpellTome), tingido — como o Calamity antigo fazia
+        public override string Texture => "Terraria/Images/Item_" + ItemID.SpellTome;
+
         public int ReferenciaVanilla => ItemID.HeatRay;
         public string ReferenciaCalamity => "PlagueStaff";
         public float Fator => 0.8f; // acerta todo mundo na coluna
 
         public override void SetDefaults()
         {
+            Item.color = new Color(255, 225, 150);
             Item.width = 28; Item.height = 30;
             Item.DamageType = DamageClass.Magic;
             Item.damage = 110;
@@ -276,8 +292,12 @@ namespace AscensaoAstral.Content.Items
     /// <summary>Eco do Éter (Expert): ao levar dano, você escorrega para o Éter por um instante e o eco explode.</summary>
     public class EcoDoEter : ModItem
     {
+        // Arte provisória: o próprio sprite do Terraria (CelestialStone), tingido — como o Calamity antigo fazia
+        public override string Texture => "Terraria/Images/Item_" + ItemID.CelestialStone;
+
         public override void SetDefaults()
         {
+            Item.color = new Color(190, 140, 255);
             Item.width = 28; Item.height = 28;
             Item.accessory = true;
             Item.expert = true;
@@ -291,6 +311,8 @@ namespace AscensaoAstral.Content.Items
     /// <summary>O instante no Éter do Eco do Éter: intangível e mais rápido.</summary>
     public class PassoNoEter : ModBuff
     {
+        public override string Texture => "Terraria/Images/Buff_" + BuffID.ShadowDodge;
+
         public override void SetStaticDefaults() => Main.buffNoSave[Type] = true;
 
         public override void Update(Player player, ref int buffIndex)
@@ -306,6 +328,9 @@ namespace AscensaoAstral.Content.Items
     /// <summary>Bolsa do Tesouro do Astharoth (Expert).</summary>
     public class BolsaDoAstharoth : ModItem
     {
+        // Arte provisória: o próprio sprite do Terraria (GolemBossBag), tingido — como o Calamity antigo fazia
+        public override string Texture => "Terraria/Images/Item_" + ItemID.GolemBossBag;
+
         public override void SetStaticDefaults()
         {
             ItemID.Sets.BossBag[Type] = true;
@@ -314,6 +339,7 @@ namespace AscensaoAstral.Content.Items
 
         public override void SetDefaults()
         {
+            Item.color = new Color(200, 150, 255);
             Item.width = 32; Item.height = 32;
             Item.maxStack = Item.CommonMaxStack;
             Item.consumable = true;
