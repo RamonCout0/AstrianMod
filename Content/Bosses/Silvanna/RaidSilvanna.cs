@@ -12,6 +12,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Terraria;
 using Terraria.Audio;
 using Terraria.DataStructures;
+using Terraria.GameContent.ItemDropRules;
 using Terraria.ID;
 using Terraria.ModLoader;
 
@@ -126,6 +127,12 @@ namespace AscensaoAstral.Content.Bosses.Silvanna
             ladoErrado = r.ReadInt32(); ladoAtaque = r.ReadInt32();
             posSilvanna = r.ReadVector2(); alvoSalto = r.ReadVector2(); inicioSalto = r.ReadVector2(); inicioPendulo = r.ReadVector2(); fimPenduloX = r.ReadSingle();
         }
+
+        // Com o Calamity: no nível do Cryogen (25 mil)
+        protected override int VidaComCalamity => 25000;
+
+        public override void ModifyNPCLoot(NPCLoot npcLoot) => Items.LootDosChefes.Silvanna(npcLoot);
+        public override void BossLoot(ref int potionType) => potionType = ItemID.GreaterHealingPotion;
 
         protected override bool JaFoiDerrotado => AstralMundo.DerrotouSilvanna;
 

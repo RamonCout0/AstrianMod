@@ -14,6 +14,11 @@ namespace AscensaoAstral.Common.Raid
     public class Dificuldade : ModSystem
     {
         private static bool calRevengeance, calDeath;
+        /// <summary>Revengeance/Death do Calamity estão ligados (no mundo principal; dentro da raid vem copiado de lá).</summary>
+        public static bool CalRevengeance => calRevengeance;
+        public static bool CalDeath => calDeath;
+        // A dimensão da raid é outro "mundo": o Calamity de lá não sabe a dificuldade. MundoDeRaid copia daqui.
+        public static bool CopiadoRev, CopiadoDeath;
 
         public static NivelRaid Nivel =>
             Main.masterMode || calDeath ? NivelRaid.Mitico :
@@ -59,12 +64,20 @@ namespace AscensaoAstral.Common.Raid
         private static void Atualizar()
         {
             if (relogio++ % 60 != 0) return;
-            calRevengeance = calDeath = false;
+            AtualizarAgora();
+        }
+
+        /// <summary>Lê a dificuldade do Calamity na hora (o chefe chama ao nascer, para a vida sair certa).</summary>
+        public static void AtualizarAgora()
+        {
+            bool naRaid = Raids.DentroDeUmaRaid;
+            calRevengeance = naRaid && CopiadoRev;
+            calDeath = naRaid && CopiadoDeath;
             if (!ModLoader.TryGetMod("CalamityMod", out Mod cal)) return;
             try
             {
-                calRevengeance = cal.Call("GetDifficultyActive", "revengeance") is true;
-                calDeath = cal.Call("GetDifficultyActive", "death") is true;
+                calRevengeance |= cal.Call("GetDifficultyActive", "revengeance") is true;
+                calDeath |= cal.Call("GetDifficultyActive", "death") is true;
             }
             catch { }
         }

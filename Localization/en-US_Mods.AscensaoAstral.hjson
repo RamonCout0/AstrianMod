@@ -29,6 +29,54 @@ Mods: {
 					Depois do Golem
 					'''
 			}
+			GeloEterno: {
+				DisplayName: Eternal Ice
+				Tooltip: "'It won't melt, not even in Hell'"
+			}
+			LancaDeArmotheus: {
+				DisplayName: "Armotheus' Lance"
+				Tooltip: "Thrusts leave frost under the enemy, and the frost becomes a spike"
+			}
+			CajadoDoPingente: {
+				DisplayName: Icicle Staff
+				Tooltip: "A giant icicle forms above the cursor, sticks into the ground and shatters"
+			}
+			LancadorDeAvalanche: {
+				DisplayName: Avalanche Launcher
+				Tooltip: "Uses snowballs\nSnowballs roll along the terrain, growing and piercing enemies"
+			}
+			CoracaoDeArmotheus: {
+				DisplayName: Heart of Armotheus
+				Tooltip: "Immunity to cold and freezing\nTaking damage grants an ice shield for 5 seconds (25 s cooldown)"
+			}
+			BolsaDaSilvanna: {
+				DisplayName: Treasure Bag (Silvanna)
+				Tooltip: "{$CommonItemTooltip.RightClickToOpen}"
+			}
+			FragmentoDoEter: {
+				DisplayName: Ether Fragment
+				Tooltip: "'Weighs nothing, and too much'"
+			}
+			LaminaDoErrante: {
+				DisplayName: "Wanderer's Blade"
+				Tooltip: "Each swing opens a rift ahead that releases an ether crescent"
+			}
+			ArcoDoArcanjo: {
+				DisplayName: "Archangel's Bow"
+				Tooltip: "Turns arrows into arrows of light\nThey split into a fan of feathers"
+			}
+			TomoDoJulgamento: {
+				DisplayName: Tome of Judgment
+				Tooltip: "A pillar of light falls from the sky onto the cursor"
+			}
+			EcoDoEter: {
+				DisplayName: Ether Echo
+				Tooltip: "Taking damage slips you into the Ether for a moment: intangible, and the echo explodes (20 s cooldown)"
+			}
+			BolsaDoAstharoth: {
+				DisplayName: Treasure Bag (Astharoth)
+				Tooltip: "{$CommonItemTooltip.RightClickToOpen}"
+			}
 		}
 
 		Keybinds: {
@@ -79,6 +127,16 @@ Mods: {
 			LancaVoadora.DisplayName: Lança
 			EscudoNoChao.DisplayName: Escudo Astral
 			OrbeEterea.DisplayName: Orbe Etérea
+			EstocadaDeArmotheus.DisplayName: Armotheus' Thrust
+			EspinhoAmigo.DisplayName: Ice Spike
+			PingenteAmigo.DisplayName: Giant Icicle
+			LascaAmiga.DisplayName: Ice Shard
+			BolaAmiga.DisplayName: Snowball
+			FendaDoErrante.DisplayName: Wanderer's Rift
+			CorteAmigo.DisplayName: Ether Crescent
+			FlechaDeLuz.DisplayName: Arrow of Light
+			PenaAmiga.DisplayName: Light Feather
+			PilarAmigo.DisplayName: Pillar of Judgment
 		}
 
 		Buffs: {
@@ -89,6 +147,14 @@ Mods: {
 			BarreiraEterea: {
 				DisplayName: Barreira Etérea
 				Description: Protege do mergulho do Arcanjo
+			}
+			EscudoDeGelo: {
+				DisplayName: Ice Shield
+				Description: +12 defense and 15% less damage taken
+			}
+			PassoNoEter: {
+				DisplayName: Ether Step
+				Description: Intangible and faster
 			}
 		}
 

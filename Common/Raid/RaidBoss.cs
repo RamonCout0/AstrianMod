@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System;
 using System.IO;
+using AscensaoAstral.Common;
 using Microsoft.Xna.Framework;
 using Terraria;
 using Terraria.Audio;
@@ -113,9 +114,16 @@ namespace AscensaoAstral.Common.Raid
         /// <summary>Quem conta como "na raid". O Astharoth inclui também quem está no Éter.</summary>
         public virtual bool JogadorNaRaid(Player p) => p.active && (Raids.DentroDeUmaRaid || Vector2.Distance(p.Center, CentroArena) < 2600f);
 
+        /// <summary>Vida base quando o Calamity está instalado (0 = a mesma de sempre).</summary>
+        protected virtual int VidaComCalamity => 0;
+
         /// <summary>Configuração comum: chame no fim do SetDefaults de cada chefe.</summary>
         protected void ConfigurarRaid()
         {
+            // Com o Calamity: vida base no nível do chefe dele na mesma época, e mais no Revengeance/Death
+            Dificuldade.AtualizarAgora();
+            if (Equilibrio.ComCalamity && VidaComCalamity > 0) NPC.lifeMax = VidaComCalamity;
+            NPC.lifeMax = (int)(NPC.lifeMax * Equilibrio.MultVida);
             NPC.boss = true;
             NPC.noGravity = true;
             NPC.noTileCollide = true;
@@ -498,6 +506,8 @@ namespace AscensaoAstral.Common.Raid
         {
             if (EstaAtordoado)
                 modifiers.SourceDamage *= 2f;
+            if (Equilibrio.ReducaoDeDano > 0f)
+                modifiers.FinalDamage *= 1f - Equilibrio.ReducaoDeDano;
         }
 
         public override void HitEffect(NPC.HitInfo hit)

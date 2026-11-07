@@ -73,7 +73,7 @@ namespace AscensaoAstral.Content.Bosses.Silvanna
         public override string Texture => "AscensaoAstral/Assets/Vazio";
         private const int Ativo = 40;
         private int Idade => (int)Projectile.ai[0] + Ativo - Projectile.timeLeft;
-        private bool Subiu => Idade >= Projectile.ai[0];
+        protected bool Subiu => Idade >= Projectile.ai[0];
 
         public override void SetStaticDefaults() => ProjectileID.Sets.DrawScreenCheckFluff[Type] = 1200;
 

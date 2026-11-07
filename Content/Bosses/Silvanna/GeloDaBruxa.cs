@@ -67,7 +67,7 @@ namespace AscensaoAstral.Content.Bosses.Silvanna
         private const int Cravado = 55;
         private ref float Idade => ref Projectile.localAI[0];
         private ref float TempoCravado => ref Projectile.localAI[1];
-        private bool Caindo => Idade >= Projectile.ai[1] && TempoCravado == 0f;
+        protected bool Caindo => Idade >= Projectile.ai[1] && TempoCravado == 0f;
 
         public override void SetStaticDefaults() => ProjectileID.Sets.DrawScreenCheckFluff[Type] = 2000;
 
@@ -86,8 +86,7 @@ namespace AscensaoAstral.Content.Bosses.Silvanna
                 if (++TempoCravado >= Cravado)
                 {
                     SoundEngine.PlaySound(SoundID.Item27 with { Pitch = -0.2f }, Projectile.Center);
-                    if (Main.netMode != NetmodeID.MultiplayerClient && RaidBoss.Ativo is RaidBoss b)
-                        LascaDeGelo.Leque(b.NPC, Projectile.Top + new Vector2(0f, 30f), 6, 1.2f, 5f, 8.5f, Projectile.damage / 2 + 6);
+                    Estilhacar();
                     for (int i = 0; i < 20; i++)
                         Dust.NewDustPerfect(Projectile.Center + Main.rand.NextVector2Circular(20f, 60f), DustID.Ice, Main.rand.NextVector2Circular(4f, 4f), 0, default, 1.3f);
                     Projectile.Kill();
@@ -115,6 +114,13 @@ namespace AscensaoAstral.Content.Bosses.Silvanna
                     Dust.NewDustPerfect(new Vector2(Projectile.Center.X, Projectile.ai[0]), DustID.Snow, new Vector2(Main.rand.NextFloat(-5f, 5f), -Main.rand.NextFloat(1f, 4f)), 0, default, 1.4f);
             }
             Lighting.AddLight(Projectile.Center, 0.35f, 0.6f, 0.9f);
+        }
+
+        /// <summary>Quebra em lascas (o do chefe machuca jogadores; o do Cajado do Pingente, inimigos).</summary>
+        protected virtual void Estilhacar()
+        {
+            if (Main.netMode != NetmodeID.MultiplayerClient && RaidBoss.Ativo is RaidBoss b)
+                LascaDeGelo.Leque(b.NPC, Projectile.Top + new Vector2(0f, 30f), 6, 1.2f, 5f, 8.5f, Projectile.damage / 2 + 6);
         }
 
         public override bool CanHitPlayer(Player target) => Caindo;
@@ -150,7 +156,9 @@ namespace AscensaoAstral.Content.Bosses.Silvanna
     {
         public override string Texture => "AscensaoAstral/Assets/Vazio";
         private ref float Idade => ref Projectile.localAI[0];
-        private float Raio => MathHelper.Lerp(22f, 60f, Utils.GetLerpValue(0f, 110f, Idade, true));
+        protected float Raio => MathHelper.Lerp(22f, 60f, Utils.GetLerpValue(0f, 110f, Idade, true));
+        /// <summary>O chão nesta coluna (o chefe sabe o da arena; a arma do jogador procura o terreno).</summary>
+        protected virtual float ChaoAqui(float x) => RaidBoss.Ativo is RaidBoss b ? b.Chao(x) : RaidBoss.ChaoEm(x, Projectile.Center.Y - 120f, 30, Projectile.Center.Y + Raio);
 
         public override void SetStaticDefaults() => ProjectileID.Sets.DrawScreenCheckFluff[Type] = 2400;
 
@@ -165,14 +173,14 @@ namespace AscensaoAstral.Content.Bosses.Silvanna
             Idade++;
             float dir = Projectile.ai[0];
             Projectile.velocity.X = dir * MathHelper.Lerp(6f, 10.5f, Utils.GetLerpValue(0f, 80f, Idade, true));
-            float chao = RaidBoss.Ativo is RaidBoss b ? b.Chao(Projectile.Center.X + Projectile.velocity.X) : Projectile.Center.Y + Raio;
+            float chao = ChaoAqui(Projectile.Center.X + Projectile.velocity.X);
             float alvoY = chao - Raio;
             // segue o terreno: sobe a ladeira na hora, desce caindo
             Projectile.velocity.Y = alvoY < Projectile.Center.Y ? alvoY - Projectile.Center.Y : Math.Min(Projectile.velocity.Y + 0.6f, alvoY - Projectile.Center.Y);
             Projectile.rotation += Projectile.velocity.X / Raio;
             if (Main.rand.NextBool())
                 Dust.NewDustPerfect(new Vector2(Projectile.Center.X - dir * Raio * 0.6f, chao - 4f), DustID.Snow, new Vector2(-dir * Main.rand.NextFloat(1f, 3f), -Main.rand.NextFloat(1f, 3f)), 0, default, 1.3f);
-            if ((int)Idade % 20 == 0)
+            if (Projectile.hostile && (int)Idade % 20 == 0) // a do chefe treme o chão; a do lançador do jogador, não
                 ScreenShakeSystem.StartShakeAtPoint(Projectile.Center, 1.5f);
         }
 

@@ -18,7 +18,7 @@ namespace AscensaoAstral.Content.Bosses.Astharoth
         private const int Ativo = 22;
         private const float Largura = 110f;
         private int Idade => (int)Projectile.ai[2] + Ativo - Projectile.timeLeft;
-        private bool Ligado => Idade >= Projectile.ai[2];
+        protected bool Ligado => Idade >= Projectile.ai[2];
 
         public override void SetStaticDefaults() => ProjectileID.Sets.DrawScreenCheckFluff[Type] = 3000;
         public override void SetDefaults()

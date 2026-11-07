@@ -14,6 +14,7 @@ using Terraria;
 using Terraria.Audio;
 using Terraria.DataStructures;
 using Terraria.GameContent;
+using Terraria.GameContent.ItemDropRules;
 using Terraria.ID;
 using Terraria.ModLoader;
 
@@ -196,6 +197,12 @@ namespace AscensaoAstral.Content.Bosses.Astharoth
             SoundEngine.PlaySound(SoundID.DD2_BetsyScream with { Pitch = -0.4f }, de);
             Hud.Aviso("O DRAGÃO DO ÉTER CHEGOU!", new Color(200, 150, 255), 120);
         }
+
+        // Com o Calamity: no nível do Plaguebringer Goliath (70 mil; um pouco abaixo, pela luta ter mecânicas)
+        protected override int VidaComCalamity => 60000;
+
+        public override void ModifyNPCLoot(NPCLoot npcLoot) => Items.LootDosChefes.Astharoth(npcLoot);
+        public override void BossLoot(ref int potionType) => potionType = ItemID.GreaterHealingPotion;
 
         protected override bool JaFoiDerrotado => AstralMundo.DerrotouAstharoth;
 

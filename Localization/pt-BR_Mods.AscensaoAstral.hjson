@@ -13,8 +13,8 @@ Mods: {
 				DisplayName: Chamado da Bruxa
 				Tooltip:
 					'''
-					Começa a Raid da Silvanna
-					Use no bioma da neve, depois da Queen Slime
+					Chama a Silvanna e o Armotheus
+					Use no bioma da neve, depois da Queen Slime (fora da neve ela luta enfurecida)
 					'''
 			}
 			FerramentaDeTeste: {
@@ -22,12 +22,60 @@ Mods: {
 				Tooltip: "[DEBUG] Cada uso avança a história: 1º libera a Astrânia, 2º cria a cratera ao seu lado, depois te leva até ela"
 			}
 			LaminaErrante: {
-				DisplayName: Lâmina Errante
+				DisplayName: Chamado do Errante
 				Tooltip:
 					'''
 					Começa a Raid do Astharoth
 					Depois do Golem
 					'''
+			}
+			GeloEterno: {
+				DisplayName: Gelo Eterno
+				Tooltip: "'Não derrete nem no Inferno'"
+			}
+			LancaDeArmotheus: {
+				DisplayName: Lança de Armotheus
+				Tooltip: "A estocada deixa geada sob o inimigo, e a geada vira espinho"
+			}
+			CajadoDoPingente: {
+				DisplayName: Cajado do Pingente
+				Tooltip: "Um pingente gigante se forma sobre o cursor, crava no chão e estilhaça"
+			}
+			LancadorDeAvalanche: {
+				DisplayName: Lançador de Avalanche
+				Tooltip: "Usa bolas de neve\nAs bolas rolam pelo terreno, crescendo e atravessando inimigos"
+			}
+			CoracaoDeArmotheus: {
+				DisplayName: Coração de Armotheus
+				Tooltip: "Imunidade ao frio e ao congelamento\nAo levar dano, um escudo de gelo te protege por 5 segundos (recarga de 25 s)"
+			}
+			BolsaDaSilvanna: {
+				DisplayName: Bolsa do Tesouro (Silvanna)
+				Tooltip: "{$CommonItemTooltip.RightClickToOpen}"
+			}
+			FragmentoDoEter: {
+				DisplayName: Fragmento do Éter
+				Tooltip: "'Pesa nada e, ao mesmo tempo, demais'"
+			}
+			LaminaDoErrante: {
+				DisplayName: Lâmina do Errante
+				Tooltip: "Cada golpe abre uma fenda à frente, e dela sai uma meia-lua de éter"
+			}
+			ArcoDoArcanjo: {
+				DisplayName: Arco do Arcanjo
+				Tooltip: "Transforma as flechas em flechas de luz\nElas se abrem num leque de penas"
+			}
+			TomoDoJulgamento: {
+				DisplayName: Tomo do Julgamento
+				Tooltip: "Um pilar de luz cai do céu sobre o cursor"
+			}
+			EcoDoEter: {
+				DisplayName: Eco do Éter
+				Tooltip: "Ao levar dano, você escorrega para o Éter por um instante: fica intangível e o eco explode (recarga de 20 s)"
+			}
+			BolsaDoAstharoth: {
+				DisplayName: Bolsa do Tesouro (Astharoth)
+				Tooltip: "{$CommonItemTooltip.RightClickToOpen}"
 			}
 		}
 
@@ -79,16 +127,34 @@ Mods: {
 			LancaVoadora.DisplayName: Lança
 			EscudoNoChao.DisplayName: Escudo Astral
 			OrbeEterea.DisplayName: Orbe Etérea
+			EstocadaDeArmotheus.DisplayName: Estocada de Armotheus
+			EspinhoAmigo.DisplayName: Espinho de Gelo
+			PingenteAmigo.DisplayName: Pingente Gigante
+			LascaAmiga.DisplayName: Lasca de Gelo
+			BolaAmiga.DisplayName: Bola de Neve
+			FendaDoErrante.DisplayName: Fenda do Errante
+			CorteAmigo.DisplayName: Meia-Lua do Éter
+			FlechaDeLuz.DisplayName: Flecha de Luz
+			PenaAmiga.DisplayName: Pena de Luz
+			PilarAmigo.DisplayName: Pilar do Julgamento
 		}
 
 		Buffs: {
 			EscudoAstral: {
 				DisplayName: Escudo Astral
-				Description: Protege da Rajada Solar
+				Description: Protege da Lua de Gelo
 			}
 			BarreiraEterea: {
 				DisplayName: Barreira Etérea
 				Description: Protege do mergulho do Arcanjo
+			}
+			EscudoDeGelo: {
+				DisplayName: Escudo de Gelo
+				Description: +12 de defesa e 15% menos dano
+			}
+			PassoNoEter: {
+				DisplayName: Passo no Éter
+				Description: Intangível e mais rápido
 			}
 		}
 

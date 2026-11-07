@@ -123,6 +123,8 @@ namespace AscensaoAstral.Common.Raid
             SubworldSystem.CopyWorldData("impacto", AstralMundo.ImpactoAconteceu);
             SubworldSystem.CopyWorldData("silvanna", AstralMundo.DerrotouSilvanna);
             SubworldSystem.CopyWorldData("astharoth", AstralMundo.DerrotouAstharoth);
+            SubworldSystem.CopyWorldData("calRev", Dificuldade.CalRevengeance || Dificuldade.CopiadoRev);
+            SubworldSystem.CopyWorldData("calDeath", Dificuldade.CalDeath || Dificuldade.CopiadoDeath);
         }
 
         private static void LerFlags()
@@ -132,6 +134,9 @@ namespace AscensaoAstral.Common.Raid
             // Derrotas só "somam": nunca apaga uma vitória que já existia
             AstralMundo.DerrotouSilvanna |= SubworldSystem.ReadCopiedWorldData<bool>("silvanna");
             AstralMundo.DerrotouAstharoth |= SubworldSystem.ReadCopiedWorldData<bool>("astharoth");
+            Dificuldade.CopiadoRev = SubworldSystem.ReadCopiedWorldData<bool>("calRev");
+            Dificuldade.CopiadoDeath = SubworldSystem.ReadCopiedWorldData<bool>("calDeath");
+            Dificuldade.AtualizarAgora();
         }
 
         // ─── Ferramentas de geração ───
