@@ -18,37 +18,43 @@ using Terraria.ModLoader;
 namespace AscensaoAstral.Content.Bosses.Silvanna
 {
     /// <summary>
-    /// RAID DA SILVANNA (pós Queen Slime, bioma da neve) — a raid que apresenta o conceito.
+    /// SILVANNA E ARMOTHEUS (pós Queen Slime, bioma da neve) — chefe do MUNDO, sem dimensão: luta onde for chamada.
+    /// Fora da neve ela fica enfurecida (ataques 50% mais fortes, pausas pela metade).
+    ///
+    /// IDENTIDADE: a chefe do TERRENO. Tudo dela é gelo físico — quica, rola pelo chão de verdade, crava e estilhaça —
+    /// e os avisos são do mundo (geada se espalhando, sombra no chão, pingente rachando). Os retângulos de aviso,
+    /// cortes no espaço, chuvas de estrela e anéis de projéteis ficam com o Astharoth.
     ///
     ///   Intro       Silvanna surge e arremessa o chapéu (Armotheus)
-    ///   ETAPA 1     Chapéu: Pêndulo U com rastro · Rajada tripla gélida · Varredura do chão (vá até o limite)
-    ///   TRANSIÇÃO   75%: forma verdadeira gira e puxa todos ao centro. Segure-se com o GANCHO e quebre a postura.
-    ///               Encostar = wipe · tempo acabou = wipe
-    ///   ETAPA 2     Cortes horizontais/verticais com brecha · Clones dos cavaleiros (mire na cor ERRADA) · Saltos cortantes
-    ///   TRANSIÇÃO   45%: nevasca; Armotheus vira cavaleiro de gelo e bloqueia o vento na esquerda. Fique ATRÁS dele;
-    ///               ele empurra com a lança até a postura quebrar
-    ///   ÚLTIMA      Cavaleiro: arremesso de lança · investida · empurrão de escudo (atordoa). Silvanna só observa
-    ///   FINAL       15%: ele sobe com a lança carregada. Quebre as estátuas vivas, pegue os escudos. Sem escudo = morte
+    ///   ETAPA 1     Chapéu: Pêndulo · Ricochete (quica até você soltando lascas) · Rasteira (passa rente ao chão; a geada vira espinho)
+    ///   TRANSIÇÃO   75%: o Giro — redemoinho de neve que puxa todos; segure-se com o GANCHO e quebre a postura.
+    ///               Encostar machuca e joga longe; o tempo acabar faz o redemoinho explodir em gelo (a luta segue)
+    ///   ETAPA 2     Forma verdadeira: Pingentes gigantes · Clones · Salto (o impacto racha o chão em espinhos) · Avalanche (Mítico)
+    ///   TRANSIÇÃO   45%: Nevasca; Armotheus vira cavaleiro e segura o vento — fique ATRÁS dele (no Mítico o abrigo encolhe)
+    ///   ÚLTIMA      Cavaleiro: lança · espinhos · deslize glacial · onda do escudo · sopro · prisão
+    ///   FINAL       15%: o Inverno Eterno — ele congela a lua; quebre as estátuas e pegue os escudos antes dela cair
     ///   Fim         Silvanna conversa e vai embora
     /// </summary>
     [AutoloadBossHead]
     public class RaidSilvanna : RaidBoss
     {
         // ─── Estados ───
-        private const int INTRO = 1, PAUSA = 2, PENDULO = 3, RAJADA_TRIPLA = 4, VARREDURA_CHAO = 5, ATORDOADO = 6,
-            T_GIRO = 7, CORTES = 8, CLONES = 9, SALTO = 10, T_NEVASCA = 11, LANCA = 12, INVESTIDA = 13, ESCUDO = 14,
+        // A Silvanna é a chefe do TERRENO: tudo dela é gelo físico — quica, rola, crava no chão e estilhaça.
+        // (Os cortes no espaço, os retângulos de aviso, as chuvas de estrela e os anéis são do Astharoth.)
+        private const int INTRO = 1, PAUSA = 2, PENDULO = 3, RICOCHETE = 4, RASTEIRA = 5, ATORDOADO = 6,
+            T_GIRO = 7, PINGENTES = 8, CLONES = 9, SALTO = 10, T_NEVASCA = 11, LANCA = 12, INVESTIDA = 13, ESCUDO = 14,
             FINAL = 15, DESPEDIDA = 16,
-            ESTRELA_GELO = 17, CHUVA_GELIDA = 18,
-            // Cavaleiro de gelo (etapa final): todos os ataques são de GELO
-            ESPINHOS = 19, ANEL = 20, PRISAO = 21, SOPRO = 22;
+            AVALANCHE = 18,
+            // Cavaleiro de gelo (etapa final)
+            ESPINHOS = 19, PRISAO = 21, SOPRO = 22;
 
         public override IEnumerable<Common.Raid.Vitrine.Item> AtaquesDaVitrine(bool comMecanicas)
         {
-            yield return new(PENDULO, 1, "Pendulo"); yield return new(RAJADA_TRIPLA, 1, "RajadaTripla"); yield return new(VARREDURA_CHAO, 1, "VarreduraChao");
-            yield return new(CORTES, 2, "Cortes"); yield return new(CLONES, 2, "Clones"); yield return new(SALTO, 2, "Salto");
-            yield return new(ESTRELA_GELO, 2, "EstrelaGelo"); yield return new(CHUVA_GELIDA, 2, "ChuvaGelida");
+            yield return new(PENDULO, 1, "Pendulo"); yield return new(RICOCHETE, 1, "Ricochete"); yield return new(RASTEIRA, 1, "Rasteira");
+            yield return new(PINGENTES, 2, "Pingentes"); yield return new(CLONES, 2, "Clones"); yield return new(SALTO, 2, "Salto");
+            yield return new(AVALANCHE, 2, "Avalanche");
             yield return new(LANCA, 3, "Lanca"); yield return new(ESPINHOS, 3, "Espinhos"); yield return new(INVESTIDA, 3, "Investida");
-            yield return new(ANEL, 3, "Anel"); yield return new(PRISAO, 3, "Prisao"); yield return new(ESCUDO, 3, "Escudo"); yield return new(SOPRO, 3, "Sopro");
+            yield return new(PRISAO, 3, "Prisao"); yield return new(ESCUDO, 3, "Escudo"); yield return new(SOPRO, 3, "Sopro");
             if (!comMecanicas) yield break;
             yield return new(T_GIRO, 1, "M_Giro", true); yield return new(T_NEVASCA, 2, "M_Nevasca", true); yield return new(FINAL, 3, "M_Final", true);
         }
@@ -63,13 +69,13 @@ namespace AscensaoAstral.Content.Bosses.Silvanna
 
         // Rotações: cada nível libera mais ataques
         private static int[] RotacaoForma => Dificuldade.Escolher(
-            new[] { CORTES, SALTO },
-            new[] { CORTES, CLONES, SALTO },
-            new[] { CORTES, CLONES, ESTRELA_GELO, SALTO, CHUVA_GELIDA });
+            new[] { PINGENTES, SALTO },
+            new[] { PINGENTES, CLONES, SALTO },
+            new[] { PINGENTES, CLONES, SALTO, AVALANCHE });
         private static int[] RotacaoCavaleiro => Dificuldade.Escolher(
             new[] { LANCA, ESPINHOS, INVESTIDA, ESCUDO },
-            new[] { LANCA, ESPINHOS, INVESTIDA, ANEL, ESCUDO, SOPRO },
-            new[] { LANCA, ESPINHOS, INVESTIDA, ANEL, PRISAO, ESCUDO, SOPRO });
+            new[] { LANCA, ESPINHOS, INVESTIDA, ESCUDO, SOPRO },
+            new[] { LANCA, ESPINHOS, INVESTIDA, PRISAO, ESCUDO, SOPRO });
         private const float PuxaoGiro = 9f, PuxaoComGancho = 0.8f;
         private static readonly Color CorSilvanna = new(120, 210, 230);
 
@@ -89,11 +95,11 @@ namespace AscensaoAstral.Content.Bosses.Silvanna
 
         public override string NomeDoEstado => Estado switch
         {
-            INTRO => "Intro", PAUSA => "Pausa", PENDULO => "Pendulo", RAJADA_TRIPLA => "RajadaTripla", VARREDURA_CHAO => "VarreduraChao",
-            ATORDOADO => "Atordoado", T_GIRO => "T:Giro", CORTES => "Cortes", CLONES => "Clones", SALTO => "Salto",
+            INTRO => "Intro", PAUSA => "Pausa", PENDULO => "Pendulo", RICOCHETE => "Ricochete", RASTEIRA => "Rasteira",
+            ATORDOADO => "Atordoado", T_GIRO => "T:Giro", PINGENTES => "Pingentes", CLONES => "Clones", SALTO => "Salto",
             T_NEVASCA => "T:Nevasca", LANCA => "Lanca", INVESTIDA => "Investida", ESCUDO => "Escudo", FINAL => "Final",
-            DESPEDIDA => "Despedida", ESTRELA_GELO => "EstrelaGelo", CHUVA_GELIDA => "ChuvaGelida",
-            ESPINHOS => "Espinhos", ANEL => "AnelDeGelo", PRISAO => "Prisao", SOPRO => "Sopro", REINICIANDO => "Reiniciando", _ => Estado.ToString()
+            DESPEDIDA => "Despedida", AVALANCHE => "Avalanche",
+            ESPINHOS => "Espinhos", PRISAO => "Prisao", SOPRO => "Sopro", REINICIANDO => "Reiniciando", _ => Estado.ToString()
         };
 
         // ─── Dados extras ───
@@ -127,7 +133,7 @@ namespace AscensaoAstral.Content.Bosses.Silvanna
         protected override Color CorDaParede => Fase >= 2 ? new Color(255, 110, 110) : new Color(120, 210, 255);
         protected override Color CorDasFaiscas => new(170, 230, 255);
 
-        private Vector2 PosOcioso => new(CentroArena.X, ArenaPiso - 110f);
+        private Vector2 PosOcioso => new(CentroArena.X, Chao(CentroArena.X) - 110f);
         private Vector2 PosCavaleiroNoChao => new(NPC.Center.X, ArenaPiso - 62f);
 
         // ─── Setup ───
@@ -144,9 +150,10 @@ namespace AscensaoAstral.Content.Bosses.Silvanna
         {
             NPC.width = 90;
             NPC.height = 90;
-            NPC.damage = 55;
+            // Equilíbrio (ver o documento): entre o Cryogen e os Gêmeos. Expert = 48.000, Master = 72.000
+            NPC.damage = 60;
             NPC.defense = 24;
-            NPC.lifeMax = 42000;
+            NPC.lifeMax = 24000;
             NPC.HitSound = SoundID.NPCHit5;
             NPC.DeathSound = SoundID.NPCDeath7;
             NPC.value = Item.buyPrice(gold: 15);
@@ -181,11 +188,11 @@ namespace AscensaoAstral.Content.Bosses.Silvanna
                 case INTRO: FazerIntro(); break;
                 case PAUSA: FazerPausa(); break;
                 case PENDULO: FazerPendulo(); break;
-                case RAJADA_TRIPLA: FazerRajadaTripla(); break;
-                case VARREDURA_CHAO: FazerVarreduraChao(); break;
+                case RICOCHETE: FazerRicochete(); break;
+                case RASTEIRA: FazerRasteira(); break;
                 case ATORDOADO: FazerAtordoado(); break;
                 case T_GIRO: FazerGiro(); break;
-                case CORTES: FazerCortes(); break;
+                case PINGENTES: FazerPingentes(); break;
                 case CLONES: FazerClones(); break;
                 case SALTO: FazerSalto(); break;
                 case T_NEVASCA: FazerNevasca(); break;
@@ -194,10 +201,8 @@ namespace AscensaoAstral.Content.Bosses.Silvanna
                 case ESCUDO: FazerEscudo(); break;
                 case FINAL: FazerFinal(); break;
                 case DESPEDIDA: FazerDespedida(); break;
-                case ESTRELA_GELO: FazerEstrelaDeGelo(); break;
-                case CHUVA_GELIDA: FazerChuvaGelida(); break;
+                case AVALANCHE: FazerAvalanche(); break;
                 case ESPINHOS: FazerEspinhos(); break;
-                case ANEL: FazerAnel(); break;
                 case PRISAO: FazerPrisao(); break;
                 case SOPRO: FazerSopro(); break;
                 default: IrPara(INTRO); break;
@@ -214,7 +219,7 @@ namespace AscensaoAstral.Content.Bosses.Silvanna
             NPC.dontTakeDamage = true;
             if (Timer == 1)
             {
-                posSilvanna = new Vector2(ArenaDir - 130f, ArenaPiso - 64f);
+                posSilvanna = new Vector2(ArenaDir - 130f, Chao(ArenaDir - 130f) - 64f);
                 NPC.Center = posSilvanna + new Vector2(0f, -70f);
                 NPC.Opacity = 1f;
                 RaidJogador.Foco = posSilvanna;
@@ -249,9 +254,40 @@ namespace AscensaoAstral.Content.Bosses.Silvanna
             }
         }
 
+        // ═══════════════ NO MUNDO DE VERDADE ═══════════════
+        // A Silvanna não tem dimensão: ela luta onde foi chamada, como a Queen Slime ou o Deerclops.
+        // A "arena" é só uma referência que acompanha o alvo (centro e chão), e o chão de cada ataque é o terreno real.
+        private bool avisouFuria;
+
+        /// <summary>Fora da neve ela não se segura: ataques 50% mais fortes e pausas pela metade (como chefes do Terraria fora do bioma).</summary>
+        public bool Enfurecida => NoMundoAberto && !Common.Raid.Vitrine.Ligada && Fase >= 1 && Estado != DESPEDIDA && !Alvo.ZoneSnow;
+
+        private void SeguirOAlvo()
+        {
+            if (!NoMundoAberto || Common.Raid.Vitrine.Ligada) return;
+            float cx = MathHelper.Lerp(CentroArena.X, Alvo.Center.X, 0.06f);
+            float chao = ChaoEm(Alvo.Center.X, Alvo.Bottom.Y - 8f, 40);
+            float piso = MathHelper.Lerp(ArenaPiso, chao, 0.08f);
+            ArenaEsq = cx - LarguraArena / 2f;
+            ArenaDir = cx + LarguraArena / 2f;
+            ArenaPiso = piso;
+            ArenaTopo = piso - AlturaArena;
+        }
+
+        public override void ModifyHitPlayer(Player target, ref Player.HurtModifiers modifiers)
+        {
+            if (Enfurecida) modifiers.SourceDamage *= 1.5f;
+        }
+
         // ─── Pausa: escolhe o próximo ataque, checa stun e transições ───
         private void FazerPausa()
         {
+            SeguirOAlvo();
+            if (Enfurecida && !avisouFuria)
+            {
+                avisouFuria = true;
+                Dialogo.Falar("Silvanna", "Fora da neve? Então ele não tem mais motivo para se segurar.", CorSilvanna, 160);
+            }
             if (Timer == 1 && stunPendente)
             {
                 stunPendente = false;
@@ -263,11 +299,15 @@ namespace AscensaoAstral.Content.Bosses.Silvanna
             }
 
             if (Fase >= 3)
-                MoverAte(new Vector2(MathHelper.Lerp(NPC.Center.X, Alvo.Center.X, 0.02f), ArenaPiso - 62f), VelMover * 0.5f);
+            {
+                float xp = MathHelper.Lerp(NPC.Center.X, Alvo.Center.X, 0.02f);
+                MoverAte(new Vector2(xp, Chao(xp) - 62f), VelMover * 0.5f);
+            }
             else
                 MoverAte(PosOcioso + new Vector2(0f, MathF.Sin(Timer * 0.06f) * 8f), VelMover);
 
             int pausa = Fase == 1 ? 70 : Fase == 2 ? 60 : 50;
+            if (Enfurecida) pausa /= 2;
             if (Timer < pausa)
                 return;
 
@@ -280,7 +320,7 @@ namespace AscensaoAstral.Content.Bosses.Silvanna
             IrPara(Fase switch
             {
                 // Etapa 1 (o chapéu) e 2 (a forma verdadeira): as mecânicas do As Astral
-                1 => (i % 3) switch { 0 => PENDULO, 1 => RAJADA_TRIPLA, _ => VARREDURA_CHAO },
+                1 => (i % 3) switch { 0 => PENDULO, 1 => RICOCHETE, _ => RASTEIRA },
                 2 => RotacaoForma[i % RotacaoForma.Length],
                 // Cavaleiro de gelo: só ataques de gelo (4 no Normal, 6 no Heroico, os 7 no Mítico)
                 _ => RotacaoCavaleiro[i % RotacaoCavaleiro.Length]
@@ -322,19 +362,146 @@ namespace AscensaoAstral.Content.Bosses.Silvanna
             }
         }
 
-        private void FazerRajadaTripla()
+        // ─── Ricochete: o chapéu despenca e QUICA pelo chão até você; cada quique espirra lascas para cima ───
+        private void FazerRicochete()
         {
-            MoverAte(PosOcioso + new Vector2(0f, -60f), VelMover);
-            if ((Timer == 25 || Timer == 45 || Timer == 65) && Servidor)
+            const int Quique = 34;
+            int n = Dificuldade.Escolher(3, 4, 5);
+            if (etapa == 0)
             {
-                Vector2 dir = NPC.DirectionTo(Alvo.Center);
-                for (int k = -1; k <= 1; k++) // leque de 3 que persegue um pouco (ai[1] = 1)
-                    Projectile.NewProjectile(NPC.GetSource_FromAI(), NPC.Center, dir.RotatedBy(k * 0.3f) * 8.5f, ModContent.ProjectileType<Rajada>(), 24, 0f, Main.myPlayer, 0f, 1f);
+                // sobe girando cada vez mais rápido (o aviso)
+                MoverAte(new Vector2(NPC.Center.X, Chao(NPC.Center.X) - 300f), VelMover);
+                NPC.rotation += 0.05f + Timer * 0.006f;
+                if (Timer >= 40)
+                {
+                    etapa = 1;
+                    Timer = 0;
+                    inicioSalto = NPC.Center;
+                    ProximoQuique();
+                }
+                return;
             }
-            if (Timer == 25 || Timer == 45 || Timer == 65)
-                SoundEngine.PlaySound(SoundID.Item28, NPC.Center);
-            if (Timer >= 95)
+            float s = Math.Min(1f, Timer / Quique);
+            Vector2 nova = Vector2.Lerp(inicioSalto, alvoSalto, s) + new Vector2(0f, -MathF.Sin(s * MathHelper.Pi) * 200f);
+            NPC.velocity = nova - NPC.Center;
+            NPC.rotation += 0.35f * Math.Sign(alvoSalto.X - inicioSalto.X + 0.01f);
+            if (Timer >= Quique)
+            {
+                NPC.Center = alvoSalto;
+                NPC.velocity = Vector2.Zero;
+                ScreenShakeSystem.StartShakeAtPoint(NPC.Center, 5f);
+                SoundEngine.PlaySound(SoundID.Item70 with { Pitch = 0.4f, Volume = 0.8f }, NPC.Center);
+                for (int i = 0; i < 12; i++)
+                    Dust.NewDustPerfect(NPC.Bottom, DustID.Snow, new Vector2(Main.rand.NextFloat(-5f, 5f), -Main.rand.NextFloat(1f, 4f)), 0, default, 1.4f);
+                LascaDeGelo.Leque(NPC, NPC.Bottom - new Vector2(0f, 12f), 5, 0.8f, 6.5f, 9.5f, 30);
+                if (etapa >= n)
+                {
+                    NPC.rotation = 0f;
+                    IrPara(PAUSA);
+                    return;
+                }
+                etapa++;
+                Timer = 0;
+                inicioSalto = NPC.Center;
+                ProximoQuique();
+            }
+        }
+
+        private void ProximoQuique()
+        {
+            if (!Servidor) return;
+            float dx = MathHelper.Clamp(Alvo.Center.X - NPC.Center.X, -420f, 420f);
+            if (Math.Abs(dx) < 120f) dx = 120f * (Main.rand.NextBool() ? 1 : -1);
+            float x = NPC.Center.X + dx;
+            alvoSalto = new Vector2(x, Chao(x) - NPC.height * 0.5f);
+            NPC.netUpdate = true;
+        }
+
+        // ─── Rasteira: o chapéu desce rente ao chão e passa rasgando; a geada que ele deixa vira espinho logo depois ───
+        private void FazerRasteira()
+        {
+            if (etapa == 0)
+            {
+                if (Timer == 1 && Servidor) { ladoAtaque = Alvo.Center.X > NPC.Center.X ? 1 : -1; NPC.netUpdate = true; }
+                float x = Alvo.Center.X - ladoAtaque * 650f;
+                NPC.rotation += 0.3f;
+                if ((Timer > 1 && MoverAte(new Vector2(x, Chao(x) - 34f), VelMover * 1.4f)) || Timer > 120)
+                {
+                    etapa = 1;
+                    Timer = 0;
+                    SoundEngine.PlaySound(SoundID.Item30 with { Pitch = -0.2f }, NPC.Center);
+                }
+                return;
+            }
+            if (etapa == 1)
+            {
+                // gira no lugar levantando neve; a geada se espalha pelo caminho (o aviso)
+                NPC.velocity = Vector2.Zero;
+                NPC.rotation += 0.15f + Timer * 0.012f;
+                if (Main.rand.NextBool())
+                    Dust.NewDustPerfect(NPC.Bottom, DustID.Snow, new Vector2(-ladoAtaque * Main.rand.NextFloat(2f, 5f), -Main.rand.NextFloat(1f, 3f)), 0, default, 1.3f);
+                if (Timer >= 45)
+                {
+                    etapa = 2;
+                    Timer = 0;
+                    SoundEngine.PlaySound(SoundID.Item71 with { Pitch = -0.4f }, NPC.Center);
+                }
+                return;
+            }
+            float vx = ladoAtaque * 21f;
+            float alvoY = Chao(NPC.Center.X + vx) - 34f;
+            NPC.velocity = new Vector2(vx, MathHelper.Clamp(alvoY - NPC.Center.Y, -20f, 20f));
+            NPC.rotation += 0.45f * ladoAtaque;
+            if (Timer % 3 == 0 && Servidor) // a geada no caminho vira espinho daqui a pouco
+                Projectile.NewProjectile(NPC.GetSource_FromAI(), new Vector2(NPC.Center.X, Chao(NPC.Center.X)), Vector2.Zero, ModContent.ProjectileType<EspinhoDeGelo>(), 34, 0f, Main.myPlayer,
+                    32, 70f + Main.rand.NextFloat(30f));
+            if (Timer >= 64)
+            {
+                NPC.velocity *= 0.2f;
+                NPC.rotation = 0f;
                 IrPara(PAUSA);
+            }
+        }
+
+        // ═══════════════ ETAPA 2: A FORMA VERDADEIRA ═══════════════
+        /// <summary>Pingentes: pingentes enormes racham lá em cima, despencam, CRAVAM no chão e depois estilhaçam.</summary>
+        private void FazerPingentes()
+        {
+            MoverAte(PosOcioso + new Vector2(0f, -120f), VelMover);
+            int ondas = Dificuldade.Escolher(2, 3, 3);
+            for (int k = 0; k < ondas; k++)
+                if (Timer == 15 + k * 70)
+                {
+                    SoundEngine.PlaySound(SoundID.Item30 with { Pitch = 0.3f }, NPC.Center);
+                    if (Servidor)
+                    {
+                        float[] xs = { Alvo.Center.X + Alvo.velocity.X * 18f, Alvo.Center.X - Main.rand.NextFloat(230f, 330f), Alvo.Center.X + Main.rand.NextFloat(230f, 330f) };
+                        for (int j = 0; j < xs.Length; j++)
+                        {
+                            float chao = Chao(xs[j]);
+                            float topo = Math.Min(chao, Alvo.Center.Y) - 560f;
+                            Projectile.NewProjectile(NPC.GetSource_FromAI(), new Vector2(xs[j], topo + 75f), Vector2.Zero, ModContent.ProjectileType<PingenteGigante>(), 40, 0f, Main.myPlayer,
+                                chao, 50 + j * 10);
+                        }
+                    }
+                }
+            if (Timer >= 15 + ondas * 70 + 80) IrPara(PAUSA);
+        }
+
+        /// <summary>Avalanche: bolas de neve descem rolando pelo terreno de verdade, crescendo — pule por cima.</summary>
+        private void FazerAvalanche()
+        {
+            MoverAte(PosOcioso + new Vector2(0f, -160f), VelMover);
+            int n = Dificuldade.Escolher(2, 3, 4);
+            if (Timer == 1) SoundEngine.PlaySound(SoundID.Item120 with { Pitch = -0.7f }, NPC.Center);
+            for (int k = 0; k < n; k++)
+                if (Timer == 20 + k * 55 && Servidor)
+                {
+                    int lado = (k + contadorAtaque) % 2 == 0 ? 1 : -1; // 1 = vem da esquerda rolando para a direita
+                    float x = Alvo.Center.X - lado * 1100f;
+                    Projectile.NewProjectile(NPC.GetSource_FromAI(), new Vector2(x, Chao(x) - 30f), Vector2.Zero, ModContent.ProjectileType<BolaDeNeve>(), 38, 0f, Main.myPlayer, lado);
+                }
+            if (Timer >= 20 + n * 55 + 200) IrPara(PAUSA);
         }
 
         // ═══════════════ CAVALEIRO DE GELO ═══════════════
@@ -352,27 +519,12 @@ namespace AscensaoAstral.Content.Bosses.Silvanna
                 {
                     float x = NPC.Center.X + lado * (90f + k * 34f);
                     if (x < ArenaEsq + 20f || x > ArenaDir - 20f) break;
-                    Projectile.NewProjectile(NPC.GetSource_FromAI(), new Vector2(x, ArenaPiso), Vector2.Zero, ModContent.ProjectileType<EspinhoDeGelo>(), 32, 0f, Main.myPlayer,
+                    Projectile.NewProjectile(NPC.GetSource_FromAI(), new Vector2(x, Chao(x)), Vector2.Zero, ModContent.ProjectileType<EspinhoDeGelo>(), 34, 0f, Main.myPlayer,
                         30 + k * 3, 170f + (k % 3) * 40f);
                 }
             }
             if (onda) SoundEngine.PlaySound(SoundID.Item28 with { Pitch = -0.6f }, NPC.Center);
             if (Timer >= 230) IrPara(PAUSA);
-        }
-
-        /// <summary>Anel de gelo: anéis que crescem a partir dele, cada um com uma brecha dourada — passe pela brecha.</summary>
-        private void FazerAnel()
-        {
-            MoverAte(new Vector2(CentroArena.X, ArenaPiso - 240f), VelMover);
-            bool anel = Timer == 30 || Timer == 85 || Timer == 140 || Timer == 195;
-            if (anel && Servidor)
-            {
-                float brecha = NPC.AngleTo(Alvo.Center) + Main.rand.NextFloat(-1.4f, 1.4f);
-                Projectile.NewProjectile(NPC.GetSource_FromAI(), NPC.Center, Vector2.Zero, ModContent.ProjectileType<AnelDeGelo>(), 34, 0f, Main.myPlayer,
-                    brecha, Main.rand.NextBool() ? 0.009f : -0.009f, 1500f);
-            }
-            if (anel) SoundEngine.PlaySound(SoundID.Item30 with { Pitch = 0.2f }, NPC.Center);
-            if (Timer >= 300) IrPara(PAUSA);
         }
 
         /// <summary>Prisão de gelo: três círculos marcam onde você está (um atrás do outro). Continue se mexendo.</summary>
@@ -411,72 +563,6 @@ namespace AscensaoAstral.Content.Bosses.Silvanna
             }
             if (Timer == 40) Hud.Aviso("FIQUE ATRÁS DELE!", new Color(170, 230, 255), 90);
             if (Timer >= 40 + SoproGlacial.Aviso + SoproGlacial.Duracao + 15) IrPara(PAUSA);
-        }
-
-        /// <summary>Estrela de gelo: anéis de cristais em volta dela, cada anel girado — passe pelas frestas.</summary>
-        private void FazerEstrelaDeGelo()
-        {
-            MoverAte(new Vector2(CentroArena.X, ArenaTopo + 150f), VelMover);
-            if (Timer >= 35 && Timer <= 125 && Timer % 30 == 5)
-            {
-                SoundEngine.PlaySound(SoundID.Item28 with { Pitch = -0.2f }, NPC.Center);
-                if (Servidor)
-                {
-                    int n = Fase >= 3 ? 14 : 11;
-                    float giro = (Timer / 30f) * (MathHelper.Pi / n);
-                    for (int k = 0; k < n; k++)
-                        Projectile.NewProjectile(NPC.GetSource_FromAI(), NPC.Center, (giro + k * MathHelper.TwoPi / n).ToRotationVector2() * 3.5f,
-                            ModContent.ProjectileType<Rajada>(), 24, 0f, Main.myPlayer, 0f);
-                }
-            }
-            if (Timer >= 190) IrPara(PAUSA);
-        }
-
-        /// <summary>Chuva gélida: estalactites caem na largura toda; cada onda deixa só um buraco seguro.</summary>
-        private void FazerChuvaGelida()
-        {
-            MoverAte(PosOcioso + new Vector2(0f, -120f), VelMover);
-            int ondas = Fase >= 3 ? 3 : 2;
-            for (int k = 0; k < ondas; k++)
-                if (Timer == 20 + k * 75)
-                {
-                    SoundEngine.PlaySound(SoundID.Item30 with { Pitch = -0.3f }, NPC.Center);
-                    QuedaEstelar.Chuva(NPC, ArenaEsq, ArenaDir, ArenaTopo, ArenaPiso, 0f, 26, 55, 56f, 170f);
-                }
-            if (Timer >= 20 + ondas * 75 + 60) IrPara(PAUSA);
-        }
-
-        private void FazerVarreduraChao()
-        {
-            if (etapa == 0)
-            {
-                if (Timer == 1 && Servidor)
-                {
-                    ladoAtaque = Main.rand.NextBool() ? 1 : -1; // 1 = começa na esquerda e varre para a direita
-                    NPC.netUpdate = true;
-                }
-                Vector2 canto = new(ladoAtaque == 1 ? ArenaEsq + 40f : ArenaDir - 40f, ArenaTopo + 50f);
-                if (Timer > 1 && MoverAte(canto, VelMover))
-                {
-                    etapa = 1;
-                    Timer = 0;
-                    SoundEngine.PlaySound(SoundID.Item30, NPC.Center);
-                    Hud.Aviso("CORRA ATÉ O LIMITE!", new Color(140, 220, 255), 80);
-                }
-                return;
-            }
-
-            if (etapa == 1 && Timer >= 70)
-            {
-                if (Servidor)
-                    Projectile.NewProjectile(NPC.GetSource_FromAI(), NPC.Center, Vector2.Zero, ModContent.ProjectileType<VarreduraDoChao>(), 30, 0f, Main.myPlayer, NPC.whoAmI, ladoAtaque);
-                SoundEngine.PlaySound(SoundID.Item120, NPC.Center);
-                etapa = 2;
-                Timer = 0;
-            }
-
-            if (etapa == 2 && Timer >= VarreduraDoChao.Duracao + 20)
-                IrPara(PAUSA);
         }
 
         private void FazerAtordoado()
@@ -542,11 +628,16 @@ namespace AscensaoAstral.Content.Bosses.Silvanna
                 }
             }
 
-            // Encostar no centro = wipe (o servidor vê a posição de todos)
-            if (Servidor)
-                foreach (Player p in Main.ActivePlayers)
-                    if (!p.dead && p.Distance(NPC.Center) < 70f)
-                        WipeGlobal();
+            // Encostar no redemoinho: as lâminas do chapéu cortam e jogam você para fora (cada cliente cuida de si)
+            if (Main.netMode != NetmodeID.Server)
+            {
+                Player eu = Main.LocalPlayer;
+                if (!eu.dead && JogadorNaRaid(eu) && eu.Distance(NPC.Center) < 80f && eu.immuneTime <= 0)
+                {
+                    CastigoLocal(eu, Dificuldade.Escolher(0.25f, 0.35f, 0.5f));
+                    eu.velocity = eu.DirectionFrom(NPC.Center) * 14f + new Vector2(0f, -6f);
+                }
+            }
 
             if (PortaoQuebrado)
             {
@@ -559,42 +650,17 @@ namespace AscensaoAstral.Content.Bosses.Silvanna
                 IrPara(PAUSA);
             }
             else if (Timer >= TempoGiro)
-                WipeGlobal();
-        }
-
-        // ═══════════════ ETAPA 2: A FORMA VERDADEIRA ═══════════════
-        private void FazerCortes()
-        {
-            MoverAte(PosOcioso + new Vector2(0f, -80f), VelMover);
-
-            if ((Timer == 10 || Timer == 80) && Servidor)
             {
-                bool vertical = (Timer == 10) == (contadorAtaque % 2 == 0);
-                if (vertical)
-                {
-                    // 7 colunas, 1 brecha segura
-                    const int colunas = 7;
-                    int brecha = Main.rand.Next(colunas);
-                    float largura = (ArenaDir - ArenaEsq) / colunas;
-                    for (int c = 0; c < colunas; c++)
-                        if (c != brecha)
-                            RetanguloPerigo.Criar(NPC, new Vector2(ArenaEsq + largura * (c + 0.5f), CentroArena.Y), new Vector2(largura * 0.86f, ArenaPiso - ArenaTopo), 55, TipoPerigo.Corte, 32);
-                }
-                else
-                {
-                    // 8 faixas na altura TODA da arena, 2 brechas (antes eram 4 faixas baixas: era só voar por cima)
-                    const int n = 8;
-                    float altura = ArenaPiso - ArenaTopo;
-                    int b1 = Main.rand.Next(n), b2 = (b1 + 3 + Main.rand.Next(3)) % n;
-                    for (int k = 0; k < n; k++)
-                        if (k != b1 && k != b2)
-                            RetanguloPerigo.Criar(NPC, new Vector2(CentroArena.X, ArenaPiso - 40f - k * ((altura - 80f) / (n - 1))), new Vector2(ArenaDir - ArenaEsq, 90f), 55, TipoPerigo.Corte, 32);
-                }
-            }
-            if (Timer == 10 || Timer == 80)
-                SoundEngine.PlaySound(SoundID.Item71, NPC.Center);
-            if (Timer >= 160)
+                // não quebraram a postura a tempo: o redemoinho EXPLODE em gelo e a luta segue
+                if (Main.netMode != NetmodeID.Server && JogadorNaRaid(Main.LocalPlayer))
+                    CastigoLocal(Main.LocalPlayer, Dificuldade.Escolher(0.3f, 0.45f, 0.6f), 40);
+                LascaDeGelo.Leque(NPC, NPC.Center, 14, 1.5f, 8f, 13f, 34);
+                ScreenShakeSystem.StartShake(14f);
+                SoundEngine.PlaySound(SoundID.Item27 with { Pitch = -0.6f, Volume = 1.2f }, NPC.Center);
+                NPC.rotation = 0f;
+                Stagger = 0f;
                 IrPara(PAUSA);
+            }
         }
 
         private Vector2 PosClone(int lado) => new(lado < 0 ? ArenaEsq + 90f : ArenaDir - 90f, ArenaPiso - 90f);
@@ -644,7 +710,8 @@ namespace AscensaoAstral.Content.Bosses.Silvanna
                 inicioSalto = NPC.Center;
                 if (Servidor)
                 {
-                    alvoSalto = new Vector2(MathHelper.Clamp(Alvo.Center.X, ArenaEsq + 60f, ArenaDir - 60f), ArenaPiso - 62f);
+                    float xs = MathHelper.Clamp(Alvo.Center.X, ArenaEsq + 60f, ArenaDir - 60f);
+                    alvoSalto = new Vector2(xs, Chao(xs) - 62f);
                     NPC.netUpdate = true;
                 }
             }
@@ -663,14 +730,24 @@ namespace AscensaoAstral.Content.Bosses.Silvanna
                 NPC.Center = alvoSalto;
                 NPC.velocity = Vector2.Zero;
                 NPC.rotation = 0f;
-                RetanguloPerigo.Criar(NPC, alvoSalto + new Vector2(0f, 20f), new Vector2(300f, 90f), 1, TipoPerigo.Corte, 38);
+                // o impacto racha o chão: espinhos brotam para os dois lados, cada vez mais baixos
+                if (Servidor)
+                    for (int lado = -1; lado <= 1; lado += 2)
+                        for (int k = 0; k < 4; k++)
+                        {
+                            float x = alvoSalto.X + lado * (60f + k * 55f);
+                            Projectile.NewProjectile(NPC.GetSource_FromAI(), new Vector2(x, Chao(x)), Vector2.Zero, ModContent.ProjectileType<EspinhoDeGelo>(), 36, 0f, Main.myPlayer,
+                                2 + k * 5, 130f - k * 22f);
+                        }
                 ScreenShakeSystem.StartShakeAtPoint(alvoSalto, 10f);
                 SoundEngine.PlaySound(SoundID.Item70, NPC.Center);
             }
         }
 
         // ═══════════════ TRANSIÇÃO 2: A NEVASCA ═══════════════
-        private Rectangle Abrigo => new((int)(NPC.Center.X + 40f), (int)ArenaTopo, 190, (int)(ArenaPiso - ArenaTopo));
+        // No Mítico o escudo dele vai cedendo à tempestade: o abrigo encolhe com o tempo (fiquem juntos, colados nele)
+        private int LarguraAbrigo => Estado == T_NEVASCA && etapa >= 1 && Dificuldade.Mitico ? (int)MathHelper.Lerp(190f, 105f, Math.Min(1f, Timer / TempoNevasca)) : 190;
+        private Rectangle Abrigo => new((int)(NPC.Center.X + 40f), (int)ArenaTopo, LarguraAbrigo, (int)(ArenaPiso - ArenaTopo));
 
         private void FazerNevasca()
         {
@@ -682,14 +759,14 @@ namespace AscensaoAstral.Content.Bosses.Silvanna
                     SalvarCheckpoint(T_NEVASCA, new Vector2(ArenaEsq + 260f, ArenaPiso - 60f));
                     LimparPerigos();
                     Fase = 3; // cavaleiro de gelo
-                    posSilvanna = new Vector2(ArenaDir - 130f, ArenaPiso - 64f);
+                    posSilvanna = new Vector2(ArenaDir - 130f, Chao(ArenaDir - 130f) - 64f);
                     Hud.Clarao(0.8f);
                     Hud.Fase("TRANSIÇÃO: A Nevasca", new Color(170, 230, 255));
                     Hud.Aviso("FIQUE ATRÁS DO CAVALEIRO!", new Color(170, 230, 255), 180);
                     Dialogo.Falar("Silvanna", "A tempestade sempre vem. Ele é o único que fica de pé na frente dela.", CorSilvanna, 200);
                     SoundEngine.PlaySound(SoundID.Item120 with { Pitch = -0.4f }, NPC.Center);
                 }
-                if (MoverAte(new Vector2(ArenaEsq + 110f, ArenaPiso - 62f), VelMover * 1.4f))
+                if (MoverAte(new Vector2(ArenaEsq + 110f, Chao(ArenaEsq + 110f) - 62f), VelMover * 1.4f))
                 {
                     AbrirPortao();
                     etapa = 1;
@@ -716,12 +793,6 @@ namespace AscensaoAstral.Content.Bosses.Silvanna
                             eu.Hurt(PlayerDeathReason.ByNPC(NPC.whoAmI), (int)(14 * (1f + frio.Congelamento * 2f)), 1);
                     }
 
-                    // A lança: a cada 110 ticks ele tenta empurrar quem está atrás dele
-                    if (Timer % 110 == 109 && abrigado && Dificuldade.Mitico)
-                    {
-                        eu.velocity.X += 6f;
-                        eu.Hurt(PlayerDeathReason.ByNPC(NPC.whoAmI), 20, 1);
-                    }
                 }
 
                 for (int i = 0; i < 4; i++)
@@ -730,8 +801,8 @@ namespace AscensaoAstral.Content.Bosses.Silvanna
                     Dust.NewDustPerfect(de, DustID.Snow, new Vector2(Main.rand.NextFloat(14f, 22f), Main.rand.NextFloat(-1f, 2f)), 0, default, 1.2f).noGravity = true;
                 }
             }
-            if (Timer % 110 == 109)
-                SoundEngine.PlaySound(SoundID.Item1 with { Pitch = -0.5f }, NPC.Center);
+            if (Timer % 110 == 109) // o escudo range contra o vento
+                SoundEngine.PlaySound(SoundID.Item52 with { Pitch = -0.6f, Volume = 0.6f }, NPC.Center);
 
             if (PortaoQuebrado)
             {
@@ -742,7 +813,13 @@ namespace AscensaoAstral.Content.Bosses.Silvanna
                 IrPara(PAUSA);
             }
             else if (Timer >= TempoNevasca)
-                WipeGlobal();
+            {
+                // a tempestade passa: quem não está atrás do cavaleiro congela de vez
+                if (Main.netMode != NetmodeID.Server && JogadorNaRaid(Main.LocalPlayer) && !Abrigo.Intersects(Main.LocalPlayer.Hitbox))
+                    CastigoLocal(Main.LocalPlayer, Dificuldade.Escolher(0.3f, 0.45f, 0.6f), 90);
+                Stagger = 0f;
+                IrPara(PAUSA);
+            }
         }
 
         // ═══════════════ ÚLTIMA ETAPA: O CAVALEIRO ═══════════════
@@ -773,7 +850,8 @@ namespace AscensaoAstral.Content.Bosses.Silvanna
                     ladoAtaque = Alvo.Center.X > CentroArena.X ? -1 : 1; // começa do lado oposto ao jogador
                     NPC.netUpdate = true;
                 }
-                if (Timer > 1 && MoverAte(new Vector2(ladoAtaque == 1 ? ArenaEsq + 70f : ArenaDir - 70f, ArenaPiso - 62f), VelMover * 1.5f))
+                float xi = ladoAtaque == 1 ? ArenaEsq + 70f : ArenaDir - 70f;
+                if (Timer > 1 && MoverAte(new Vector2(xi, Chao(xi) - 62f), VelMover * 1.5f))
                 {
                     etapa = 1;
                     Timer = 0;
@@ -792,9 +870,10 @@ namespace AscensaoAstral.Content.Bosses.Silvanna
                 return;
             }
 
-            NPC.velocity = new Vector2(ladoAtaque * 24f, 0f);
+            float yi = Chao(NPC.Center.X + ladoAtaque * 24f) - 62f;
+            NPC.velocity = new Vector2(ladoAtaque * 24f, MathHelper.Clamp(yi - NPC.Center.Y, -24f, 24f));
             if (Fase >= 3 && Timer % 4 == 0 && Servidor) // Deslize Glacial: deixa o chão congelado
-                Projectile.NewProjectile(NPC.GetSource_FromAI(), new Vector2(NPC.Center.X, ArenaPiso - 9f), Vector2.Zero, ModContent.ProjectileType<RastroDeGelo>(), 0, 0f, Main.myPlayer);
+                Projectile.NewProjectile(NPC.GetSource_FromAI(), new Vector2(NPC.Center.X, Chao(NPC.Center.X) - 9f), Vector2.Zero, ModContent.ProjectileType<RastroDeGelo>(), 0, 0f, Main.myPlayer);
             bool chegou = ladoAtaque == 1 ? NPC.Center.X >= ArenaDir - 70f : NPC.Center.X <= ArenaEsq + 70f;
             if (chegou || Timer > 90)
             {
@@ -812,7 +891,8 @@ namespace AscensaoAstral.Content.Bosses.Silvanna
         {
             if (etapa == 0)
             {
-                MoverAte(new Vector2(MathHelper.Clamp(NPC.Center.X, ArenaEsq + 160f, ArenaDir - 160f), ArenaPiso - 62f), VelMover);
+                float xe = MathHelper.Clamp(NPC.Center.X, ArenaEsq + 160f, ArenaDir - 160f);
+                MoverAte(new Vector2(xe, Chao(xe) - 62f), VelMover);
                 if (Timer > 30)
                 {
                     etapa = 1;
@@ -825,7 +905,7 @@ namespace AscensaoAstral.Content.Bosses.Silvanna
 
             NPC.velocity *= 0.8f;
             if (Timer == 1 && Servidor)
-                Projectile.NewProjectile(NPC.GetSource_FromAI(), new Vector2(NPC.Center.X + ladoAtaque * 70f, ArenaPiso), Vector2.Zero,
+                Projectile.NewProjectile(NPC.GetSource_FromAI(), new Vector2(NPC.Center.X + ladoAtaque * 70f, Chao(NPC.Center.X + ladoAtaque * 70f)), Vector2.Zero,
                     ModContent.ProjectileType<OndaDeEscudo>(), 34, 0f, Main.myPlayer, ladoAtaque, Dificuldade.Heroico ? 1f : 0f);
             if (Timer == 40)
             {
@@ -836,7 +916,7 @@ namespace AscensaoAstral.Content.Bosses.Silvanna
                 IrPara(PAUSA);
         }
 
-        // ═══════════════ MECÂNICA FINAL: A LANÇA SOLAR ═══════════════
+        // ═══════════════ MECÂNICA FINAL: O INVERNO ETERNO (a lua de gelo) ═══════════════
         private void FazerFinal()
         {
             switch (etapa)
@@ -847,8 +927,8 @@ namespace AscensaoAstral.Content.Bosses.Silvanna
                         fezFinal = true;
                         SalvarCheckpoint(FINAL, new Vector2(CentroArena.X, ArenaPiso - 60f));
                         LimparPerigos();
-                        Hud.Fase("MECÂNICA FINAL: A Lança Solar", new Color(255, 215, 110));
-                        Dialogo.Falar("Silvanna", "Ele vai trazer o sol inteiro para baixo. Achem um escudo.", CorSilvanna, 180);
+                        Hud.Fase("MECÂNICA FINAL: O Inverno Eterno", new Color(170, 230, 255));
+                        Dialogo.Falar("Silvanna", "Ele vai congelar a lua e jogar em cima de vocês. Achem um escudo.", CorSilvanna, 180);
                         AbrirPortao();
                     }
                     NPC.dontTakeDamage = true;
@@ -856,7 +936,7 @@ namespace AscensaoAstral.Content.Bosses.Silvanna
                     {
                         NPC.velocity *= 0.85f;
                         if (Main.rand.NextBool(2))
-                            Dust.NewDustPerfect(NPC.Center + Main.rand.NextVector2Circular(40f, 40f), DustID.GoldFlame, -Vector2.UnitY * 2f, 0, default, 1.5f).noGravity = true;
+                            Dust.NewDustPerfect(NPC.Center + Main.rand.NextVector2Circular(40f, 40f), DustID.IceTorch, -Vector2.UnitY * 2f, 0, default, 1.5f).noGravity = true;
                     }
                     else
                         NPC.velocity = new Vector2(0f, -26f);
@@ -881,7 +961,7 @@ namespace AscensaoAstral.Content.Bosses.Silvanna
                     }
                     break;
 
-                case 2: // a lança solar carrega lá em cima: o sol se forma sobre a arena
+                case 2: // a lua de gelo se forma lá em cima, sobre a arena
                 {
                     const int Carga = 130;
                     float k = Math.Min(1f, Timer / Carga);
@@ -891,10 +971,10 @@ namespace AscensaoAstral.Content.Bosses.Silvanna
                         if (Timer < Carga) ScreenShakeSystem.SetUniversalRumble(k * 4f, MathHelper.TwoPi, null, 0.2f);
                     }
                     if (Timer == 1)
-                        Hud.Aviso("O SOL VAI CAIR — SÓ O ESCUDO SALVA!", new Color(255, 215, 110), 120);
+                        Hud.Aviso("A LUA DE GELO VAI CAIR — SÓ O ESCUDO SALVA!", new Color(170, 230, 255), 120);
                     if (Timer == Carga)
                     {
-                        // A explosão vem do SOL lá em cima (não do chão — senão parece que ele caiu duas vezes)
+                        // A explosão vem da LUA lá em cima (não do chão — senão parece que ele caiu duas vezes)
                         Hud.ClaraoAlvo = 0f;
                         Hud.Clarao(0.6f);
                         ScreenShakeSystem.StartShake(20f);
@@ -904,7 +984,10 @@ namespace AscensaoAstral.Content.Bosses.Silvanna
                         {
                             Player eu = Main.LocalPlayer;
                             if (JogadorNaRaid(eu) && !eu.HasBuff(ModContent.BuffType<EscudoAstral>()))
-                                MatarLocal(eu);
+                            {
+                                if (Dificuldade.Mitico) MatarLocal(eu);
+                                else CastigoLocal(eu, Dificuldade.Escolher(0.5f, 0.75f, 1f), 90);
+                            }
                         }
                         RemoverEstatuasEEscudos();
                     }
@@ -937,9 +1020,9 @@ namespace AscensaoAstral.Content.Bosses.Silvanna
                     if (Main.netMode != NetmodeID.Server)
                         for (int d = 0; d < 4; d++)
                             Dust.NewDustPerfect(NPC.Center + Main.rand.NextVector2Circular(30f, 50f), DustID.IceTorch, new Vector2(Main.rand.NextFloat(-3f, 3f), -6f), 0, default, 2f).noGravity = true;
-                    if (NPC.Center.Y + NPC.velocity.Y >= ArenaPiso - 62f)
+                    if (NPC.Center.Y + NPC.velocity.Y >= Chao(CentroArena.X) - 62f)
                     {
-                        NPC.Center = new Vector2(CentroArena.X, ArenaPiso - 62f);
+                        NPC.Center = new Vector2(CentroArena.X, Chao(CentroArena.X) - 62f);
                         NPC.velocity = Vector2.Zero;
                         IniciarImpacto(NPC.Center + new Vector2(0f, 60f), new Color(170, 225, 255));
                         NPC.dontTakeDamage = false;
@@ -952,24 +1035,41 @@ namespace AscensaoAstral.Content.Bosses.Silvanna
 
         private const int QuedaAviso = 75;
 
-        /// <summary>O sol se formando sobre a arena (Final) e o aviso da queda.</summary>
+        /// <summary>A lua de gelo (Final), o redemoinho do Giro e o aviso da queda.</summary>
         public override void DesenharEfeitosDeMundo(SpriteBatch sb)
         {
             base.DesenharEfeitosDeMundo(sb);
             Texture2D bloom = MiscTexturesRegistry.BloomCircleSmall.Value;
             if (Estado == FINAL && etapa == 2)
             {
+                // A LUA DE GELO: uma esfera de gelo se formando sobre a arena, puxando neve e cristais para ela
                 float k = Timer <= 130 ? Timer / 130f : Math.Max(0f, 1f - (Timer - 130) / 25f); // some depois de explodir
-                Vector2 sol = new Vector2(CentroArena.X, Math.Max(ArenaTopo + 160f, Main.screenPosition.Y + 140f)) - Main.screenPosition;
+                Vector2 lua = new(CentroArena.X, Math.Max(ArenaTopo + 160f, Main.screenPosition.Y + 150f));
                 float t = Main.GlobalTimeWrappedHourly;
-                for (int i = 0; i < 16; i++) // raios sendo puxados para o sol
+                for (int i = 0; i < 18; i++) // neve sendo sugada em espiral
                 {
-                    float ang = i / 16f * MathHelper.TwoPi + t * 0.6f;
-                    float dist = MathHelper.Lerp(900f, 120f, (t * 0.8f + i * 0.37f) % 1f);
-                    sb.Draw(bloom, sol + ang.ToRotationVector2() * dist, null, new Color(255, 210, 120, 0) * k * 0.5f, ang, bloom.Size() / 2f, new Vector2(1.6f, 0.12f), 0, 0f);
+                    float fase = (t * 0.7f + i * 0.37f) % 1f;
+                    float ang = i / 18f * MathHelper.TwoPi + t * 0.8f + fase * 2f;
+                    float dist = MathHelper.Lerp(900f, 90f, fase);
+                    sb.Draw(bloom, lua - Main.screenPosition + ang.ToRotationVector2() * dist, null, new Color(190, 235, 255, 0) * k * 0.5f * (1f - fase * 0.5f), ang + 1.2f, bloom.Size() / 2f, new Vector2(1.2f, 0.08f), 0, 0f);
                 }
-                sb.Draw(bloom, sol, null, new Color(255, 180, 80, 0) * k * 0.6f, 0f, bloom.Size() / 2f, 1f + k * 2.5f, 0, 0f);
-                sb.Draw(bloom, sol, null, new Color(255, 250, 230, 0) * k, 0f, bloom.Size() / 2f, 0.5f + k * 1.2f, 0, 0f);
+                sb.Draw(bloom, lua - Main.screenPosition, null, new Color(110, 190, 255, 0) * k * 0.5f, 0f, bloom.Size() / 2f, 1.2f + k * 2.6f, 0, 0f);
+                Desenho.Orbe(lua, 60f + k * 230f, new Color(120, 200, 255), new Color(235, 250, 255), 1f, 3.1f, k);
+            }
+            if (Estado == T_GIRO && etapa == 1)
+            {
+                // O GIRO: um redemoinho de neve e lâminas de gelo em volta do chapéu (não é buraco negro — isso é do Éter)
+                float t = Main.GlobalTimeWrappedHourly;
+                Vector2 c = NPC.Center - Main.screenPosition;
+                for (int i = 0; i < 28; i++)
+                {
+                    float fase = (t * 0.55f + i * 0.0357f * 7f) % 1f;
+                    float dist = MathHelper.Lerp(620f, 60f, fase);
+                    float ang = i * 2.399f - t * 3f - fase * 4f;
+                    Color cor = (i % 3 == 0 ? new Color(230, 245, 255, 0) : new Color(120, 200, 255, 0)) * (0.25f + 0.5f * fase);
+                    sb.Draw(bloom, c + ang.ToRotationVector2() * dist, null, cor, ang + MathHelper.PiOver2, bloom.Size() / 2f, new Vector2(0.9f + fase, 0.07f), 0, 0f);
+                }
+                sb.Draw(bloom, c, null, new Color(150, 220, 255, 0) * 0.55f, 0f, bloom.Size() / 2f, 1.6f, 0, 0f);
             }
             if (Estado == FINAL && etapa == 3 && Timer < QuedaAviso)
                 DesenharAvisoDeQueda(sb, CentroArena.X, Timer / (float)QuedaAviso, new Color(170, 225, 255));
@@ -982,8 +1082,8 @@ namespace AscensaoAstral.Content.Bosses.Silvanna
             for (int i = 0; i < n; i++)
             {
                 float x = MathHelper.Lerp(ArenaEsq + 150f, ArenaDir - 150f, n == 1 ? 0.5f : i / (float)(n - 1));
-                int estatua = NPC.NewNPC(NPC.GetSource_FromAI(), (int)x, (int)ArenaPiso - 10, ModContent.NPCType<EstatuaViva>());
-                Projectile.NewProjectile(NPC.GetSource_FromAI(), new Vector2(x + 60f, ArenaPiso - 30f), Vector2.Zero,
+                int estatua = NPC.NewNPC(NPC.GetSource_FromAI(), (int)x, (int)Chao(x) - 10, ModContent.NPCType<EstatuaViva>());
+                Projectile.NewProjectile(NPC.GetSource_FromAI(), new Vector2(x + 60f, Chao(x + 60f) - 30f), Vector2.Zero,
                     ModContent.ProjectileType<EscudoNoChao>(), 0, 0f, Main.myPlayer, estatua);
             }
         }
@@ -1074,16 +1174,6 @@ namespace AscensaoAstral.Content.Bosses.Silvanna
             if (NevascaAtiva && JogadorNaRaid(Main.LocalPlayer) && Terraria.Graphics.Effects.Filters.Scene["Blizzard"] is { } nevasca && !nevasca.IsActive())
                 Terraria.Graphics.Effects.Filters.Scene.Activate("Blizzard", Main.LocalPlayer.Center);
 
-            if (Estado == T_GIRO && etapa == 1 && ShaderManager.TryGetFilter("AscensaoAstral.BuracoNegroFilter", out ManagedScreenFilter giro))
-            {
-                giro.SetFocusPosition(NPC.Center);
-                giro.TrySetParameter("zoom", Main.GameViewMatrix.Zoom);
-                giro.TrySetParameter("raioHorizonte", 40f);
-                giro.TrySetParameter("corDisco", new Vector3(0.5f, 0.85f, 1f));
-                giro.SetTexture(MiscTexturesRegistry.TurbulentNoise.Value, 1, SamplerState.LinearWrap);
-                giro.Activate();
-            }
-
             Player local = Main.LocalPlayer;
             if (NevascaAtiva && JogadorNaRaid(local) && ShaderManager.TryGetFilter("AscensaoAstral.NevascaFilter", out ManagedScreenFilter nev))
             {
@@ -1114,7 +1204,7 @@ namespace AscensaoAstral.Content.Bosses.Silvanna
         public bool NevascaAtiva => Estado == T_NEVASCA && etapa >= 1;
 
         public override bool CanHitPlayer(Player target, ref int cooldownSlot)
-            => (Estado == PENDULO && etapa == 1) || (Estado == INVESTIDA && etapa == 2) || (Estado == SALTO);
+            => (Estado == PENDULO && etapa == 1) || (Estado == INVESTIDA && etapa == 2) || (Estado == SALTO) || (Estado == RICOCHETE && etapa >= 1) || (Estado == RASTEIRA && etapa == 2);
 
         public override bool PreDraw(SpriteBatch sb, Vector2 screenPos, Color drawColor)
         {
@@ -1151,24 +1241,44 @@ namespace AscensaoAstral.Content.Bosses.Silvanna
         {
             float pulso = 0.5f + 0.5f * MathF.Sin(Main.GlobalTimeWrappedHourly * 12f);
 
-            if (Estado == VARREDURA_CHAO && etapa == 1)
+            // Os avisos da Silvanna são do MUNDO (geada se espalhando, sombra no chão, a lança brilhando),
+            // nunca retângulos — esses são a assinatura do Astharoth.
+            Texture2D bloom = MiscTexturesRegistry.BloomCircleSmall.Value;
+            if (Estado == RASTEIRA && etapa == 1)
             {
-                // Faixa do chão que vai ser varrida (tudo menos a ponta segura)
-                float seguro = VarreduraDoChao.Seguro;
-                Rectangle r = ladoAtaque == 1
-                    ? new Rectangle((int)ArenaEsq, (int)ArenaPiso - 50, (int)(ArenaDir - ArenaEsq - seguro), 50)
-                    : new Rectangle((int)(ArenaEsq + seguro), (int)ArenaPiso - 50, (int)(ArenaDir - ArenaEsq - seguro), 50);
-                Desenho.RetanguloAviso(r, new Color(120, 210, 255), pulso);
+                // a geada correndo pelo chão à frente do chapéu
+                float alcance = 1350f * Utils.GetLerpValue(0f, 40f, Timer, true);
+                for (float d = 40f; d < alcance; d += 46f)
+                {
+                    float x = NPC.Center.X + ladoAtaque * d;
+                    Vector2 p = new Vector2(x, Chao(x) - 2f) - Main.screenPosition;
+                    Main.spriteBatch.Draw(bloom, p, null, new Color(150, 220, 255, 0) * (0.35f + 0.25f * pulso) * (1f - d / 1500f), 0f, bloom.Size() / 2f, new Vector2(0.7f, 0.12f), 0, 0f);
+                }
             }
 
             if (Estado == INVESTIDA && etapa == 1)
-                Desenho.RetanguloAviso(new Rectangle((int)ArenaEsq, (int)(NPC.Center.Y - 60f), (int)(ArenaDir - ArenaEsq), 120), new Color(200, 240, 255), pulso);
+            {
+                // a ponta da lança acende e um rastro de geada marca o caminho do deslize
+                float k = Utils.GetLerpValue(0f, 45f, Timer, true);
+                Vector2 fim = new(ladoAtaque == 1 ? ArenaDir : ArenaEsq, NPC.Center.Y);
+                Desenho.Risco(NPC.Center + new Vector2(ladoAtaque * 60f, 10f), fim + new Vector2(0f, 10f), 3f + k * 6f, new Color(200, 240, 255) * (0.2f + 0.4f * k));
+                Desenho.Clarao(NPC.Center + new Vector2(ladoAtaque * 120f, -30f), new Color(200, 240, 255), 0.2f + 0.5f * k, Timer * 0.05f);
+            }
 
             if (Estado == LANCA && (int)(Timer - 1) % 60 < 35)
                 Desenho.Risco(NPC.Center, Desenho.CortarNoChao(NPC.Center, NPC.Center + NPC.DirectionTo(Alvo.Center) * 1400f), 10f, new Color(150, 230, 255) * 0.55f);
 
             if (Estado == SALTO)
-                Desenho.RetanguloAviso(new Rectangle((int)(alvoSalto.X - 150f), (int)(alvoSalto.Y - 25f), 300, 90), new Color(255, 80, 80), pulso);
+            {
+                // a SOMBRA dela no chão, crescendo enquanto ela desce (como no King Slime / Deerclops)
+                int t = (int)(Timer - 1) % 70;
+                if (t < 50)
+                {
+                    float k = Utils.GetLerpValue(0f, 50f, t, true);
+                    Vector2 p = new Vector2(alvoSalto.X, Chao(alvoSalto.X)) - Main.screenPosition;
+                    Main.spriteBatch.Draw(bloom, p, null, Color.Black * (0.25f + 0.45f * k), 0f, bloom.Size() / 2f, new Vector2(1.2f + k * 1.4f, 0.22f + k * 0.12f), 0, 0f);
+                }
+            }
 
             if (Estado == ESCUDO && etapa == 1 && Timer < 35)
                 Desenho.Brilho(NPC.Center + new Vector2(ladoAtaque * 50f, 0f), new Color(190, 110, 255), 1.2f + pulso * 0.3f);
@@ -1185,7 +1295,7 @@ namespace AscensaoAstral.Content.Bosses.Silvanna
 
             if (Fase <= 1 || Estado == INTRO)
             {
-                string folha = Estado switch { PENDULO => "Ataque", RAJADA_TRIPLA or VARREDURA_CHAO => "Laser", _ => "Idle" };
+                string folha = Estado switch { PENDULO or RICOCHETE or RASTEIRA => "Ataque", _ => "Idle" };
                 int quadros = folha == "Ataque" ? 7 : 6;
                 tex = ModContent.Request<Texture2D>($"AscensaoAstral/Assets/Sheets/{folha}").Value;
                 recorte = new Rectangle((int)(Main.GlobalTimeWrappedHourly * 10f) % quadros * 100, 0, 100, 100);
@@ -1205,6 +1315,8 @@ namespace AscensaoAstral.Content.Bosses.Silvanna
             else if (FlashDano > 0) cor = Color.Lerp(cor, new Color(255, 120, 120), 0.6f);
 
             Desenho.Brilho(NPC.Center, Fase >= 3 ? new Color(80, 170, 255) : new Color(255, 60, 50), 1.9f * NPC.scale);
+            if (Enfurecida) // aura vermelha pulsando: está fora da neve
+                Desenho.Brilho(NPC.Center, new Color(255, 70, 90), (2.4f + 0.4f * MathF.Sin(Main.GlobalTimeWrappedHourly * 6f)) * NPC.scale);
             SpriteEffects flip = Fase >= 2 && Alvo.Center.X > NPC.Center.X ? SpriteEffects.FlipHorizontally : SpriteEffects.None;
             DesenharPosImagens(sb, tex, recorte, origem, NPC.scale, Fase >= 3 ? new Color(120, 200, 255) : new Color(255, 90, 80), flip);
             sb.Draw(tex, pos, recorte, TintaDeMemoria(cor) * NPC.Opacity, NPC.rotation, origem, NPC.scale, flip, 0f);
@@ -1267,7 +1379,7 @@ namespace AscensaoAstral.Content.Bosses.Silvanna
                     {
                         float x1 = alvo.Center.X, x2 = MathHelper.Clamp(alvo.Center.X + Main.rand.NextFloat(180f, 320f) * (Main.rand.NextBool() ? 1 : -1), ArenaEsq + 40f, ArenaDir - 40f);
                         foreach (float x in new[] { x1, x2 })
-                            Projectile.NewProjectile(NPC.GetSource_FromAI(), de, new Vector2(0f, -24f), ModContent.ProjectileType<LancaDoCeu>(), 28, 0f, Main.myPlayer, x, ArenaTopo, ArenaPiso);
+                            Projectile.NewProjectile(NPC.GetSource_FromAI(), de, new Vector2(0f, -24f), ModContent.ProjectileType<LancaDoCeu>(), 32, 0f, Main.myPlayer, x, Math.Min(ArenaTopo, Chao(x) - 900f), Chao(x));
                     }
                 }
             }
@@ -1304,63 +1416,6 @@ namespace AscensaoAstral.Content.Bosses.Silvanna
 
     // ═══════════════ PROJÉTEIS DA RAID ═══════════════
 
-    /// <summary>Varre o chão de uma parede até quase a outra. A ponta final (Seguro) fica livre: "passe até o limite".</summary>
-    public class VarreduraDoChao : ModProjectile
-    {
-        public override string Texture => "AscensaoAstral/Assets/Vazio";
-        public const int Duracao = 100;
-        public const float Seguro = 90f;
-        private const float Altura = 50f;
-
-        public override void SetStaticDefaults() => ProjectileID.Sets.DrawScreenCheckFluff[Type] = 3000;
-
-        public override void SetDefaults()
-        {
-            Projectile.width = 16;
-            Projectile.height = 16;
-            Projectile.hostile = true;
-            Projectile.tileCollide = false;
-            Projectile.penetrate = -1;
-            Projectile.timeLeft = Duracao;
-        }
-
-        private RaidSilvanna Dono => Main.npc[(int)Projectile.ai[0]].ModNPC as RaidSilvanna;
-
-        private Rectangle Area
-        {
-            get
-            {
-                RaidSilvanna d = Dono;
-                if (d is null) return Rectangle.Empty;
-                float progresso = Utils.GetLerpValue(0f, Duracao * 0.75f, Duracao - Projectile.timeLeft, true);
-                float total = d.ArenaDir - d.ArenaEsq - Seguro;
-                float comprimento = total * progresso;
-                return Projectile.ai[1] == 1
-                    ? new Rectangle((int)d.ArenaEsq, (int)(d.ArenaPiso - Altura), (int)comprimento, (int)Altura)
-                    : new Rectangle((int)(d.ArenaDir - comprimento), (int)(d.ArenaPiso - Altura), (int)comprimento, (int)Altura);
-            }
-        }
-
-        public override void AI()
-        {
-            if (Dono is null || !Dono.NPC.active) Projectile.Kill();
-            ScreenShakeSystem.SetUniversalRumble(1.5f, MathHelper.TwoPi, null, 0.2f);
-        }
-
-        public override bool? Colliding(Rectangle projHitbox, Rectangle targetHitbox) => Area.Intersects(targetHitbox);
-
-        public override void OnHitPlayer(Player target, Player.HurtInfo info) => target.AddBuff(BuffID.Chilled, 180);
-
-        public override bool PreDraw(ref Color lightColor)
-        {
-            Rectangle r = Area;
-            if (r.Width < 4) return false;
-            Desenho.Golpe(Desenho.Estilo.Gelo, new Vector2(r.Left, r.Center.Y), new Vector2(r.Right, r.Center.Y), Altura * 1.1f, new Color(110, 200, 255));
-            return false;
-        }
-    }
-
-    /// <summary>Lança arremessada pelo cavaleiro.</summary>
     public class LancaVoadora : ModProjectile
     {
         public override string Texture => "AscensaoAstral/Assets/Vazio";
@@ -1641,6 +1696,8 @@ namespace AscensaoAstral.Content.Bosses.Silvanna
             float dir = Projectile.ai[0];
             if (Idade < Aviso) { Projectile.velocity = Vector2.Zero; return; }
             Projectile.velocity = new Vector2(dir * Velocidade, 0f);
+            if (RaidBoss.Ativo is RaidBoss bc) // corre colada no terreno de verdade
+                Projectile.Bottom = new Vector2(Projectile.Center.X, MathHelper.Lerp(Projectile.Bottom.Y, bc.Chao(Projectile.Center.X + Projectile.velocity.X), 0.5f));
             if (RaidBoss.Ativo is RaidBoss b && (Projectile.Right.X > b.ArenaDir || Projectile.Left.X < b.ArenaEsq))
             {
                 if (Projectile.ai[1] == 1f && Voltou == 0f) { Voltou = 1f; Projectile.ai[0] = -dir; Projectile.netUpdate = true; ScreenShakeSystem.StartShakeAtPoint(Projectile.Center, 5f); }
@@ -1661,10 +1718,15 @@ namespace AscensaoAstral.Content.Bosses.Silvanna
             if (Idade < Aviso && RaidBoss.Ativo is RaidBoss b)
             {
                 // a pista rente ao chão por onde a onda vai correr
+                // o escudo crava e o chão à frente congela (a pista da onda)
                 float dir = Projectile.ai[0];
-                float x0 = Projectile.Center.X, x1 = dir > 0 ? b.ArenaDir : b.ArenaEsq;
-                Rectangle r = new((int)Math.Min(x0, x1), (int)(chao - Altura), (int)Math.Abs(x1 - x0), (int)Altura);
-                Desenho.RetanguloAviso(r, gelo, 0.5f + 0.5f * MathF.Sin(Idade * 0.5f), Idade / Aviso);
+                float alcance = Math.Abs((dir > 0 ? b.ArenaDir : b.ArenaEsq) - Projectile.Center.X) * (Idade / Aviso);
+                Texture2D bloom = MiscTexturesRegistry.BloomCircleSmall.Value;
+                for (float d = 0f; d < alcance; d += 46f)
+                {
+                    float x = Projectile.Center.X + dir * d;
+                    Main.spriteBatch.Draw(bloom, new Vector2(x, b.Chao(x) - 2f) - Main.screenPosition, null, (gelo with { A = 0 }) * 0.5f * (0.6f + 0.4f * MathF.Sin(Idade * 0.5f)), 0f, bloom.Size() / 2f, new Vector2(0.7f, 0.12f), 0, 0f);
+                }
                 return false;
             }
             // a onda: um paredão de cristal correndo, mais alto na frente

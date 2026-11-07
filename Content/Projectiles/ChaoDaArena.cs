@@ -24,6 +24,7 @@ namespace AscensaoAstral.Content.Projectiles
             {
                 ModContent.ProjectileType<QuedaEstelar>(), ModContent.ProjectileType<Rajada>(), ModContent.ProjectileType<LaminaGuiada>(),
                 ModContent.ProjectileType<PenaDeLuz>(), ModContent.ProjectileType<LancaVoadora>(), ModContent.ProjectileType<CloneDeGelo>(),
+                ModContent.ProjectileType<LascaDeGelo>(),
             };
         }
 
@@ -34,9 +35,19 @@ namespace AscensaoAstral.Content.Projectiles
         public override void PostAI(Projectile projectile)
         {
             if (tipos is null || !tipos.Contains(projectile.type) || RaidBoss.Ativo is not RaidBoss chefe) return;
-            if (projectile.velocity.Y <= 0f || projectile.Center.Y < chefe.ArenaPiso - 2f) return;
-
-            Vector2 impacto = new(projectile.Center.X, chefe.ArenaPiso - 2f);
+            if (projectile.velocity.Y <= 0f) return;
+            Vector2 impacto;
+            if (RaidBoss.NoMundoAberto)
+            {
+                // no mundo de verdade o chão é o terreno: bateu num bloco sólido, estoura ali
+                if (!Collision.SolidCollision(projectile.Center - new Vector2(4f), 8, 8)) return;
+                impacto = projectile.Center;
+            }
+            else
+            {
+                if (projectile.Center.Y < chefe.ArenaPiso - 2f) return;
+                impacto = new(projectile.Center.X, chefe.ArenaPiso - 2f);
+            }
             if (!Main.dedServ)
             {
                 int poeira = projectile.type == ModContent.ProjectileType<PenaDeLuz>() || projectile.type == ModContent.ProjectileType<Rajada>() ? DustID.GoldFlame
@@ -50,6 +61,18 @@ namespace AscensaoAstral.Content.Projectiles
                     SoundEngine.PlaySound(SoundID.Item27 with { Volume = 0.35f, Pitch = 0.3f, MaxInstances = 3 }, impacto);
             }
             projectile.Kill();
+        }
+    }
+
+    /// <summary>Fúria da Silvanna fora da neve: os projéteis dela batem 50% mais forte.</summary>
+    public class FuriaDaBruxa : GlobalProjectile
+    {
+        public override bool AppliesToEntity(Projectile entity, bool lateInstantiation) => lateInstantiation && entity.ModProjectile?.Mod == Mod && entity.hostile;
+
+        public override void ModifyHitPlayer(Projectile projectile, Player target, ref Player.HurtModifiers modifiers)
+        {
+            if (RaidBoss.Ativo is RaidSilvanna s && s.Enfurecida)
+                modifiers.SourceDamage *= 1.5f;
         }
     }
 }

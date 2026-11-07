@@ -39,7 +39,7 @@ namespace AscensaoAstral.Content.Bosses.Astharoth
     public class Astharoth : RaidBoss
     {
         private const int INTRO = 1, PAUSA = 2, CORTE = 3, RAJADAS = 4, ATORDOADO = 5, T_ALMA = 6,
-            DUELO_CORTE = 7, DUELO_INVESTIDA = 8, RASANTE = 9, T_FUSAO = 10, DESPEDIDA = 11,
+            DUELO_CORTE = 7, PASSO_DO_ETER = 8, RASANTE = 9, T_FUSAO = 10, DESPEDIDA = 11,
             ESPIRAL = 12, LAMINAS = 13, FEIXE = 14, CHUVA = 15, // ataques que cobrem o ar (contra quem voa)
             // Etapa final — o ARCANJO tem ataques só dele, de luz
             JULGAMENTO = 16, ASAS = 17, CRUZ_DE_LUZ = 18;
@@ -47,7 +47,7 @@ namespace AscensaoAstral.Content.Bosses.Astharoth
         public override IEnumerable<Common.Raid.Vitrine.Item> AtaquesDaVitrine(bool comMecanicas)
         {
             yield return new(CORTE, 1, "Corte"); yield return new(RAJADAS, 1, "Rajadas"); yield return new(LAMINAS, 1, "Laminas"); yield return new(CHUVA, 1, "Chuva");
-            yield return new(DUELO_CORTE, 2, "DueloCorte"); yield return new(ESPIRAL, 2, "Espiral"); yield return new(DUELO_INVESTIDA, 2, "DueloInvestida");
+            yield return new(DUELO_CORTE, 2, "DueloCorte"); yield return new(ESPIRAL, 2, "Espiral"); yield return new(PASSO_DO_ETER, 2, "PassoDoEter");
             yield return new(FEIXE, 2, "Feixe"); yield return new(RASANTE, 2, "Rasante");
             yield return new(JULGAMENTO, 3, "Julgamento"); yield return new(ASAS, 3, "Asas"); yield return new(CRUZ_DE_LUZ, 3, "CruzDeLuz");
             yield return new(FEIXE, 3, "Feixe_F3"); yield return new(CHUVA, 3, "Chuva_F3");
@@ -76,13 +76,13 @@ namespace AscensaoAstral.Content.Bosses.Astharoth
             new[] { CORTE, RAJADAS, LAMINAS, CHUVA },
             new[] { CORTE, RAJADAS, LAMINAS, CHUVA });
         private static int[] RotacaoAlma => Dificuldade.Escolher(
-            new[] { DUELO_CORTE, DUELO_INVESTIDA, FEIXE },
-            new[] { DUELO_CORTE, ESPIRAL, DUELO_INVESTIDA, FEIXE },
-            new[] { DUELO_CORTE, ESPIRAL, DUELO_INVESTIDA, FEIXE, RASANTE });
+            new[] { DUELO_CORTE, PASSO_DO_ETER, FEIXE },
+            new[] { DUELO_CORTE, ESPIRAL, PASSO_DO_ETER, FEIXE },
+            new[] { DUELO_CORTE, ESPIRAL, PASSO_DO_ETER, FEIXE, RASANTE });
         private static int[] RotacaoArcanjo => Dificuldade.Escolher(
-            new[] { JULGAMENTO, ASAS, FEIXE, CRUZ_DE_LUZ, DUELO_INVESTIDA },
-            new[] { JULGAMENTO, ESPIRAL, ASAS, FEIXE, CRUZ_DE_LUZ, LAMINAS, DUELO_INVESTIDA },
-            new[] { JULGAMENTO, ESPIRAL, ASAS, FEIXE, CRUZ_DE_LUZ, LAMINAS, CHUVA, DUELO_INVESTIDA });
+            new[] { JULGAMENTO, ASAS, FEIXE, CRUZ_DE_LUZ, PASSO_DO_ETER },
+            new[] { JULGAMENTO, ESPIRAL, ASAS, FEIXE, CRUZ_DE_LUZ, LAMINAS, PASSO_DO_ETER },
+            new[] { JULGAMENTO, ESPIRAL, ASAS, FEIXE, CRUZ_DE_LUZ, LAMINAS, CHUVA, PASSO_DO_ETER });
         private static readonly Color CorAstharoth = new(190, 150, 255);
 
         public override float StaggerMax => 2200f;
@@ -102,7 +102,7 @@ namespace AscensaoAstral.Content.Bosses.Astharoth
         public override string NomeDoEstado => Estado switch
         {
             INTRO => "Intro", PAUSA => "Pausa", CORTE => "Corte", RAJADAS => "Rajadas", ATORDOADO => "Atordoado",
-            T_ALMA => "T:Alma", DUELO_CORTE => "DueloCorte", DUELO_INVESTIDA => "DueloInvestida", RASANTE => "Rasante",
+            T_ALMA => "T:Alma", DUELO_CORTE => "DueloCorte", PASSO_DO_ETER => "PassoDoEter", RASANTE => "Rasante",
             T_FUSAO => "T:Fusao", DESPEDIDA => "Despedida", ESPIRAL => "Espiral", LAMINAS => "Laminas", FEIXE => "Feixe",
             CHUVA => "Chuva", JULGAMENTO => "Julgamento", ASAS => "AsasDeLuz", CRUZ_DE_LUZ => "CruzDeLuz", REINICIANDO => "Reiniciando", _ => Estado.ToString()
         };
@@ -221,9 +221,10 @@ namespace AscensaoAstral.Content.Bosses.Astharoth
         {
             NPC.width = 70;
             NPC.height = 120;
+            // Equilíbrio (ver o documento): empata com a Empress of Light. Expert = 96.000, Master = 144.000
             NPC.damage = 80;
             NPC.defense = 40;
-            NPC.lifeMax = 70000;
+            NPC.lifeMax = 48000;
             NPC.HitSound = SoundID.NPCHit4;
             NPC.DeathSound = SoundID.NPCDeath14;
             NPC.value = Item.buyPrice(gold: 25);
@@ -298,7 +299,7 @@ namespace AscensaoAstral.Content.Bosses.Astharoth
                 case RAJADAS: FazerRajadas(); break;
                 case ATORDOADO: FazerAtordoado(); break;
                 case T_ALMA: FazerSeparacao(); break;
-                case DUELO_INVESTIDA: FazerInvestida(); break;
+                case PASSO_DO_ETER: FazerPassoDoEter(); break;
                 case RASANTE: FazerRasante(); break;
                 case T_FUSAO: FazerFusao(); break;
                 case DESPEDIDA: FazerDespedida(); break;
@@ -446,35 +447,53 @@ namespace AscensaoAstral.Content.Bosses.Astharoth
             }
         }
 
-        private void FazerInvestida()
+        /// <summary>
+        /// Passo do Éter: ele SOME, uma fenda se abre no espaço ao seu lado e ele sai dela cortando em meia-lua.
+        /// É o duelo dele: não corre pelo chão (isso é do cavaleiro de gelo) — ele atravessa o espaço.
+        /// Olhe a fenda: o corte vem dela na sua direção. Pule ou atravesse para o outro lado.
+        /// </summary>
+        private void FazerPassoDoEter()
         {
-            if (etapa == 0)
+            const int Ciclo = 48, Abre = 30;
+            bool arcanjo = Fase >= 3;
+            int n = Dificuldade.Escolher(3, 3, 4) + (arcanjo ? 1 : 0);
+            int idx = (int)(Timer - 1) / Ciclo, t = (int)(Timer - 1) % Ciclo;
+            if (idx >= n)
             {
-                if (Timer == 1 && Servidor)
+                NPC.Opacity = 1f;
+                NPC.velocity *= 0.85f;
+                if (Timer >= n * Ciclo + 30) IrPara(PAUSA);
+                return;
+            }
+            if (t == 0)
+            {
+                if (Servidor)
                 {
-                    ladoAtaque = Alvo.Center.X > CentroArena.X ? -1 : 1;
+                    // a primeira fenda abre ATRÁS de você (do lado que você não está olhando); depois vai alternando
+                    ladoAtaque = idx == 0 ? -Alvo.direction : -ladoAtaque;
+                    alvoCorte = new Vector2(MathHelper.Clamp(Alvo.Center.X + ladoAtaque * 240f, ArenaEsq + 60f, ArenaDir - 60f),
+                        MathHelper.Clamp(Alvo.Center.Y - 10f, ArenaTopo + 80f, ArenaPiso - 60f));
                     NPC.netUpdate = true;
                 }
-                if (Timer > 1 && MoverAte(new Vector2(ladoAtaque == 1 ? ArenaEsq + 70f : ArenaDir - 70f, ArenaPiso - 64f), VelMover * 1.5f))
-                {
-                    etapa = 1;
-                    Timer = 0;
-                }
-                return;
+                SoundEngine.PlaySound(SoundID.Item8 with { Pitch = -0.5f }, NPC.Center);
+                for (int i = 0; i < 16; i++)
+                    Dust.NewDustPerfect(NPC.Center + Main.rand.NextVector2Circular(30f, 50f), DustID.PurpleTorch, Main.rand.NextVector2Circular(4f, 4f), 0, default, 1.6f).noGravity = true;
             }
-            if (etapa == 1)
+            if (t < Abre)
             {
                 NPC.velocity = Vector2.Zero;
-                if (Timer >= 40) { etapa = 2; Timer = 0; SoundEngine.PlaySound(SoundID.Roar with { Pitch = 0.5f }, NPC.Center); }
+                NPC.Opacity = Math.Max(0f, NPC.Opacity - 0.15f);
                 return;
             }
-            NPC.velocity = new Vector2(ladoAtaque * 26f, 0f);
-            bool chegou = ladoAtaque == 1 ? NPC.Center.X >= ArenaDir - 70f : NPC.Center.X <= ArenaEsq + 70f;
-            if (chegou || Timer > 90)
+            if (t == Abre)
             {
-                NPC.velocity = Vector2.Zero;
-                IrPara(PAUSA);
+                NPC.Center = alvoCorte;
+                NPC.Opacity = 1f;
+                SoundEngine.PlaySound(SoundID.Item71 with { Pitch = -0.3f }, NPC.Center);
+                if (Servidor)
+                    Projectile.NewProjectile(NPC.GetSource_FromAI(), NPC.Center, new Vector2(-ladoAtaque * 17f, 0f), ModContent.ProjectileType<CorteDoPasso>(), 40, 0f, Main.myPlayer, arcanjo ? 1f : 0f);
             }
+            NPC.velocity = new Vector2(-ladoAtaque * 7f * (1f - (t - Abre) / (float)(Ciclo - Abre)), 0f); // o impulso do corte
         }
 
         // ─── O dragão atravessa: olhe para ele ───
@@ -517,7 +536,7 @@ namespace AscensaoAstral.Content.Bosses.Astharoth
                     float giro = (Timer / 20 % 2 == 0 ? 1f : -1f) * Timer * 0.045f;
                     for (int k = 0; k < n; k++)
                         Projectile.NewProjectile(NPC.GetSource_FromAI(), NPC.Center, (giro + k * MathHelper.TwoPi / n).ToRotationVector2() * 3.8f,
-                            ModContent.ProjectileType<Rajada>(), 32, 0f, Main.myPlayer, Fase >= 3 ? 2f : 1f);
+                            ModContent.ProjectileType<Rajada>(), 34, 0f, Main.myPlayer, Fase >= 3 ? 2f : 1f);
                 }
             }
             if (Timer >= 210) IrPara(PAUSA);
@@ -533,7 +552,7 @@ namespace AscensaoAstral.Content.Bosses.Astharoth
                 if (Servidor)
                     for (int k = -1; k <= 1; k++)
                         Projectile.NewProjectile(NPC.GetSource_FromAI(), NPC.Center, (-Vector2.UnitY).RotatedBy(k * 0.6f) * 11f,
-                            ModContent.ProjectileType<LaminaGuiada>(), 30, 0f, Main.myPlayer, Fase >= 3 ? 2f : 1f, 30 + Math.Abs(k) * 8);
+                            ModContent.ProjectileType<LaminaGuiada>(), 34, 0f, Main.myPlayer, Fase >= 3 ? 2f : 1f, 30 + Math.Abs(k) * 8);
             }
             if (Timer >= 220) IrPara(PAUSA);
         }
@@ -722,7 +741,7 @@ namespace AscensaoAstral.Content.Bosses.Astharoth
                             if (p.dead || !EterEstrutura.Dentro(p)) continue;
                             float chao = EterEstrutura.Y0 * 16f;
                             if (Timer % 70 == 0 && p.Center.X + 260f < EterEstrutura.FimDaPonteX)
-                                RetanguloPerigo.Criar(NPC, new Vector2(p.Center.X + 260f, chao - 180f), new Vector2(60f, 360f), 45, TipoPerigo.Atordoar, 20);
+                                RetanguloPerigo.Criar(NPC, new Vector2(p.Center.X + 260f, chao - 180f), new Vector2(60f, 360f), 45, TipoPerigo.Atordoar, 30);
                             // (as mordidas agora são o próprio DragaoDoEter perseguindo)
                         }
 
@@ -1137,7 +1156,7 @@ namespace AscensaoAstral.Content.Bosses.Astharoth
                 DesenharAvisoDeQueda(sb, CentroArena.X, Utils.GetLerpValue(MergulhoSobe, MergulhoCai, Timer, true), new Color(255, 220, 140));
         }
 
-        public override bool CanHitPlayer(Player target, ref int cooldownSlot) => Estado == DUELO_INVESTIDA && etapa == 2;
+        public override bool CanHitPlayer(Player target, ref int cooldownSlot) => Estado == PASSO_DO_ETER && NPC.Opacity > 0.9f && (int)(Timer - 1) % 48 >= 30;
 
         public override bool PreDraw(SpriteBatch sb, Vector2 screenPos, Color drawColor)
         {
@@ -1188,6 +1207,19 @@ namespace AscensaoAstral.Content.Bosses.Astharoth
         private void DesenharMecanicas()
         {
             float pulso = 0.5f + 0.5f * MathF.Sin(Main.GlobalTimeWrappedHourly * 10f);
+
+            // Passo do Éter: a fenda no espaço de onde ele vai sair (vertical, abrindo)
+            if (Estado == PASSO_DO_ETER)
+            {
+                int t = (int)(Timer - 1) % 48;
+                if (t < 30 && (int)(Timer - 1) / 48 < 5)
+                {
+                    float k = t / 30f;
+                    Color cor = Fase >= 3 ? new Color(255, 215, 140) : new Color(190, 120, 255);
+                    Desenho.Golpe(Desenho.Estilo.Eter, alvoCorte + new Vector2(0f, -90f * (0.4f + 0.6f * k)), alvoCorte + new Vector2(0f, 90f * (0.4f + 0.6f * k)), 4f + 22f * k, cor, 1f + k * 0.5f, 0.5f + 0.5f * k);
+                    Desenho.Clarao(alvoCorte, cor, 0.25f + 0.35f * k * pulso, t * 0.05f);
+                }
+            }
 
             // Marcadores esquerda/direita da separação
             if (Estado == T_ALMA && etapa == 0)

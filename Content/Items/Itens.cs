@@ -67,13 +67,32 @@ namespace AscensaoAstral.Content.Items
         }
     }
 
-    /// <summary>Raid da Silvanna: depois da Queen Slime, no bioma da neve.</summary>
+    /// <summary>
+    /// Chefe da Silvanna: depois da Queen Slime, no bioma da neve. NÃO usa dimensão: como um chefe do Terraria,
+    /// ela aparece aqui mesmo, no mundo (fora da neve ela luta enfurecida).
+    /// </summary>
     public class ChamadoDaBruxa : InvocacaoDeRaid
     {
         protected override int TipoDoChefe => ModContent.NPCType<RaidSilvanna>();
         protected override bool PodeInvocar(Player player) => NPC.downedQueenSlime && player.ZoneSnow;
-        protected override void Entrar(Player player) => Common.Raid.Raids.Entrar<Common.Raid.ArenaDaSilvanna>(player);
+        protected override void Entrar(Player player) { }
         protected override int IndiceDaRaid => 0;
+
+        public override bool CanUseItem(Player player) => !NPC.AnyNPCs(TipoDoChefe) && Common.Raid.RaidBoss.Ativo is null && !Common.Raid.Raids.DentroDeUmaRaid
+            && (AscensaoAstral.DEBUG || PodeInvocar(player));
+
+        public override bool? UseItem(Player player)
+        {
+            if (player.whoAmI == Main.myPlayer)
+            {
+                SoundEngine.PlaySound(SoundID.Roar, player.position);
+                if (Main.netMode != NetmodeID.MultiplayerClient)
+                    NPC.SpawnOnPlayer(player.whoAmI, TipoDoChefe);
+                else
+                    NetMessage.SendData(MessageID.SpawnBossUseLicenseStartEvent, number: player.whoAmI, number2: TipoDoChefe);
+            }
+            return true;
+        }
 
         public override void AddRecipes()
         {

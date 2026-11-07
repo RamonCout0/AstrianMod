@@ -144,4 +144,44 @@ namespace AscensaoAstral.Content.Bosses.Astharoth
             return false;
         }
     }
+
+    /// <summary>
+    /// A meia-lua do Passo do Éter: sai da fenda e corre reto na horizontal, cortando em arco.
+    /// ai[0] = 1 no Arcanjo (dourada). Altura ~220 px: pule por cima ou passe por baixo voando rente ao chão não dá — pule.
+    /// </summary>
+    public class CorteDoPasso : ModProjectile
+    {
+        public override string Texture => "AscensaoAstral/Assets/Vazio";
+        private const float Raio = 110f, Abertura = 1.05f;
+
+        public override void SetStaticDefaults() => ProjectileID.Sets.DrawScreenCheckFluff[Type] = 1600;
+
+        public override void SetDefaults()
+        {
+            Projectile.width = 60; Projectile.height = 200;
+            Projectile.hostile = true; Projectile.tileCollide = false; Projectile.penetrate = -1; Projectile.timeLeft = 55;
+        }
+
+        public override void AI()
+        {
+            Projectile.rotation = Projectile.velocity.ToRotation();
+            Lighting.AddLight(Projectile.Center, Projectile.ai[0] == 1 ? new Vector3(1f, 0.8f, 0.4f) : new Vector3(0.7f, 0.4f, 1f));
+            if (Main.rand.NextBool(2))
+                Dust.NewDustPerfect(Projectile.Center + Main.rand.NextVector2Circular(20f, 90f), Projectile.ai[0] == 1 ? DustID.GoldFlame : DustID.PurpleTorch, -Projectile.velocity * 0.2f, 0, default, 1.3f).noGravity = true;
+        }
+
+        public override bool PreDraw(ref Color lightColor)
+        {
+            Color cor = Projectile.ai[0] == 1 ? new Color(255, 215, 140) : new Color(190, 120, 255);
+            float a = Math.Min(1f, Projectile.timeLeft / 10f) * Math.Min(1f, (55 - Projectile.timeLeft) / 3f + 0.4f);
+            Vector2 centro = Projectile.Center - Projectile.velocity.SafeNormalize(Vector2.UnitX) * Raio * 0.6f;
+            const int n = 20;
+            Vector2[] pts = new Vector2[n];
+            for (int i = 0; i < n; i++)
+                pts[i] = centro + (Projectile.rotation + MathHelper.Lerp(-Abertura, Abertura, i / (float)(n - 1))).ToRotationVector2() * Raio;
+            Desenho.GolpeCurvo(Projectile.ai[0] == 1 ? Desenho.Estilo.Solar : Desenho.Estilo.Eter, pts, t => 34f * MathF.Pow(MathF.Sin(MathHelper.Pi * t), 0.7f), cor, 1.2f, a);
+            Desenho.Brilho(Projectile.Center, cor, 0.7f * a);
+            return false;
+        }
+    }
 }

@@ -61,8 +61,11 @@ Mods: {
 			TiroDoEco.DisplayName: Tiro do Eco
 			EspinhoDeGelo.DisplayName: Espinho de Gelo
 			CloneDeGelo.DisplayName: Clone de Gelo
+			LascaDeGelo.DisplayName: Lasca de Gelo
+			PingenteGigante.DisplayName: Pingente Gigante
+			BolaDeNeve.DisplayName: Bola de Neve
+			CorteDoPasso.DisplayName: Corte do Passo
 			OndaDeEscudo.DisplayName: Onda do Escudo
-			AnelDeGelo.DisplayName: Anel de Gelo
 			PrisaoDeGelo.DisplayName: Prisão de Gelo
 			SoproGlacial.DisplayName: Sopro Glacial
 			RastroDeGelo.DisplayName: Rastro de Gelo
@@ -73,7 +76,6 @@ Mods: {
 			RetanguloPerigo.DisplayName: Corte
 			Rajada.DisplayName: Rajada
 			AlmaDoJogador.DisplayName: Alma
-			VarreduraDoChao.DisplayName: Varredura Gélida
 			LancaVoadora.DisplayName: Lança
 			EscudoNoChao.DisplayName: Escudo Astral
 			OrbeEterea.DisplayName: Orbe Etérea

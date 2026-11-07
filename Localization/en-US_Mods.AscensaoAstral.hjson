@@ -61,8 +61,11 @@ Mods: {
 			TiroDoEco.DisplayName: Echo Shot
 			EspinhoDeGelo.DisplayName: Ice Spike
 			CloneDeGelo.DisplayName: Ice Clone
+			LascaDeGelo.DisplayName: Ice Shard
+			PingenteGigante.DisplayName: Giant Icicle
+			BolaDeNeve.DisplayName: Snowball
+			CorteDoPasso.DisplayName: Ether Step Slash
 			OndaDeEscudo.DisplayName: Shield Wave
-			AnelDeGelo.DisplayName: Ice Ring
 			PrisaoDeGelo.DisplayName: Ice Prison
 			SoproGlacial.DisplayName: Glacial Breath
 			RastroDeGelo.DisplayName: Ice Trail
@@ -73,7 +76,6 @@ Mods: {
 			RetanguloPerigo.DisplayName: Corte
 			Rajada.DisplayName: Rajada
 			AlmaDoJogador.DisplayName: Alma
-			VarreduraDoChao.DisplayName: Varredura Gélida
 			LancaVoadora.DisplayName: Lança
 			EscudoNoChao.DisplayName: Escudo Astral
 			OrbeEterea.DisplayName: Orbe Etérea

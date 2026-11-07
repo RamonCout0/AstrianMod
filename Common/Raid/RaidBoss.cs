@@ -138,6 +138,29 @@ namespace AscensaoAstral.Common.Raid
             NPC.netUpdate = true;
         }
 
+        /// <summary>Luta no mundo de verdade (fora de uma dimensão de raid): chão irregular, sem paredes.</summary>
+        public static bool NoMundoAberto => !Raids.DentroDeUmaRaid;
+
+        /// <summary>
+        /// Altura (em pixels) do primeiro chão sólido (ou plataforma) abaixo de <paramref name="yInicio"/> na coluna
+        /// <paramref name="x"/>. Sem chão dentro de <paramref name="maxBlocos"/>, devolve <paramref name="seNada"/>.
+        /// </summary>
+        public static float ChaoEm(float x, float yInicio, int maxBlocos = 50, float seNada = float.NaN)
+        {
+            int i = (int)(x / 16f), j0 = Math.Max(1, (int)(yInicio / 16f));
+            if (i < 1 || i >= Main.maxTilesX - 1) return float.IsNaN(seNada) ? yInicio : seNada;
+            for (int j = j0; j < Math.Min(Main.maxTilesY - 1, j0 + maxBlocos); j++)
+            {
+                Tile t = Main.tile[i, j];
+                if (t.HasTile && !t.IsActuated && (Main.tileSolid[t.TileType] || Main.tileSolidTop[t.TileType]))
+                    return j * 16f;
+            }
+            return float.IsNaN(seNada) ? yInicio : seNada;
+        }
+
+        /// <summary>Onde fica o chão nesta coluna: dentro da raid é o piso fixo; no mundo aberto, o terreno de verdade.</summary>
+        public float Chao(float x) => NoMundoAberto ? ChaoEm(x, ArenaPiso - 240f, 45, ArenaPiso) : ArenaPiso;
+
         /// <summary>A arena nasce em volta de quem invocou: chão = pés do jogador.</summary>
         protected virtual void DefinirArena(Player p)
         {
@@ -575,6 +598,17 @@ namespace AscensaoAstral.Common.Raid
             wipeAgendado = true;
             NPC.netUpdate = true;
             Hud.Aviso("WIPE!", new Color(255, 60, 60), 90);
+        }
+
+        /// <summary>
+        /// Castigo de mecânica, no padrão do Terraria: em vez de matar todo mundo (wipe), tira uma fatia da vida máxima
+        /// do jogador local (ignora defesa e esquiva). Opcionalmente congela por alguns ticks.
+        /// </summary>
+        protected void CastigoLocal(Player eu, float fracaoDaVida, int congelar = 0)
+        {
+            if (eu.dead || Vitrine.Ligada) return;
+            eu.Hurt(PlayerDeathReason.ByNPC(NPC.whoAmI), Math.Max(1, (int)(eu.statLifeMax2 * fracaoDaVida)), 0, dodgeable: false, armorPenetration: 9999f);
+            if (congelar > 0 && !eu.dead) eu.AddBuff(BuffID.Frozen, congelar);
         }
 
         /// <summary>Morte instantânea só do jogador local (zonas mortais, rajadas solares...).</summary>

@@ -116,9 +116,12 @@ namespace AscensaoAstral.Content.Bosses.Silvanna
             Color c = new(150, 220, 255);
             if (!Subiu)
             {
-                float k = Idade / Projectile.ai[0];
-                Desenho.Brilho(Projectile.Center, c, 0.25f + k * 0.4f);
-                Desenho.RetanguloAviso(new Rectangle((int)Projectile.Center.X - 14, (int)(Projectile.Center.Y - Projectile.ai[1]), 28, (int)Projectile.ai[1]), c, k * 0.6f, k);
+                // geada se formando no chão (rachaduras brilhando) — o aviso é o chão, não um retângulo
+                float k = Idade / Math.Max(1f, Projectile.ai[0]);
+                Texture2D bloom = MiscTexturesRegistry.BloomCircleSmall.Value;
+                Main.spriteBatch.Draw(bloom, Projectile.Center - Main.screenPosition, null, new Color(150, 220, 255, 0) * (0.2f + 0.6f * k), 0f, bloom.Size() / 2f, new Vector2(0.45f, 0.1f + 0.05f * k), 0, 0f);
+                if (k > 0.4f)
+                    Desenho.Ponta(Projectile.Center + new Vector2(0f, 4f), Projectile.Center - new Vector2(0f, 14f * k), 10f, c, Color.White, 0.6f, Desenho.Estilo.Gelo);
                 return false;
             }
             float h = AlturaAgora;
@@ -129,58 +132,6 @@ namespace AscensaoAstral.Content.Bosses.Silvanna
             Desenho.Ponta(baseE + new Vector2(-10f, 0f), baseE + new Vector2(-22f, -h * 0.45f), 14f, c, Color.White, 1f, Desenho.Estilo.Gelo);
             Desenho.Ponta(baseE + new Vector2(10f, 0f), baseE + new Vector2(24f, -h * 0.35f), 12f, c, Color.White, 1f, Desenho.Estilo.Gelo);
             Desenho.Brilho(baseE, c, 0.5f);
-            return false;
-        }
-    }
-
-    /// <summary>
-    /// Anel de gelo que se expande a partir do cavaleiro, com UMA brecha. Passe pela brecha.
-    /// ai[0] = ângulo da brecha, ai[1] = velocidade de giro da brecha, ai[2] = raio máximo.
-    /// </summary>
-    public class AnelDeGelo : ModProjectile
-    {
-        public override string Texture => "AscensaoAstral/Assets/Vazio";
-        private const float Brecha = 0.55f, Espessura = 26f;
-        private int Idade => 160 - Projectile.timeLeft;
-        private float Raio => MathHelper.Lerp(40f, Projectile.ai[2], Utils.GetLerpValue(20, 160, Idade, true));
-        private float AnguloBrecha => Projectile.ai[0] + Projectile.ai[1] * Idade;
-
-        public override void SetStaticDefaults() => ProjectileID.Sets.DrawScreenCheckFluff[Type] = 4000;
-
-        public override void SetDefaults()
-        {
-            Projectile.width = 16; Projectile.height = 16;
-            Projectile.hostile = true; Projectile.tileCollide = false; Projectile.penetrate = -1; Projectile.timeLeft = 160;
-        }
-
-        public override bool CanHitPlayer(Player target) => Idade > 20;
-
-        public override bool? Colliding(Rectangle projHitbox, Rectangle targetHitbox)
-        {
-            Vector2 d = targetHitbox.Center.ToVector2() - Projectile.Center;
-            float dist = d.Length();
-            if (Math.Abs(dist - Raio) > Espessura + 12f) return false;
-            float diferenca = MathHelper.WrapAngle(d.ToRotation() - AnguloBrecha);
-            return Math.Abs(diferenca) > Brecha;
-        }
-
-        public override void OnHitPlayer(Player target, Player.HurtInfo info) => target.AddBuff(BuffID.Chilled, 150);
-
-        public override bool PreDraw(ref Color lightColor)
-        {
-            Color c = new(150, 220, 255);
-            float alfa = Idade < 20 ? Idade / 20f * 0.5f : 1f;
-            int pontos = 90;
-            for (int i = 0; i < pontos; i++)
-            {
-                float ang = i / (float)pontos * MathHelper.TwoPi;
-                if (Math.Abs(MathHelper.WrapAngle(ang - AnguloBrecha)) < Brecha) continue;
-                Vector2 p = Projectile.Center + ang.ToRotationVector2() * Raio;
-                Desenho.Brilho(p, c * alfa, 0.22f);
-                if (i % 3 == 0) Desenho.Brilho(p, Color.White * alfa, 0.07f);
-            }
-            // a brecha brilha dourado para ser fácil de achar
-            Desenho.Brilho(Projectile.Center + AnguloBrecha.ToRotationVector2() * Raio, new Color(255, 220, 140) * alfa, 0.6f);
             return false;
         }
     }

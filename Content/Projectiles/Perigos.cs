@@ -94,6 +94,15 @@ namespace AscensaoAstral.Content.Projectiles
             PrimitiveRenderer.RenderTrail(pts, new PrimitiveSettings(_ => largura * 2f, _ => Color.White, Smoothen: false, Shader: sh), 16);
         }
 
+        /// <summary>Golpe CURVO (meia-lua, arco de espada) passando pelos pontos dados; a largura segue a função (0 → 1 ao longo do arco).</summary>
+        public static void GolpeCurvo(Estilo estilo, Vector2[] pts, Func<float, float> largura, Color cor, float intensidade = 1f, float opacidade = 1f)
+        {
+            if (pts.Length < 2) return;
+            ManagedShader sh = Estilo_(estilo, cor, intensidade, opacidade);
+            if (sh is null) { PrimitiveRenderer.RenderTrail(pts, new PrimitiveSettings(t => largura(t), t => (cor with { A = 0 }) * opacidade), pts.Length); return; }
+            PrimitiveRenderer.RenderTrail(pts, new PrimitiveSettings(t => largura(t) * 2f, _ => Color.White, Smoothen: true, Shader: sh), pts.Length * 2);
+        }
+
         /// <summary>Lança com forma (cabo → guarda → lâmina → ponta) pelo LancaShader. <paramref name="largura"/> = largura da lâmina.</summary>
         public static void Lanca(Vector2 cabo, Vector2 ponta, float largura, Color cor, float intensidade = 1f, float opacidade = 1f)
         {

@@ -101,7 +101,8 @@ namespace AscensaoAstral.Common.Raid
 
             // o jogador fica PARADO no meio da arena (a arena atual do chefe), imortal: só assiste
             Player eu = Main.LocalPlayer;
-            PontoFixo = new Vector2((chefe.ArenaEsq + chefe.ArenaDir) / 2f, chefe.ArenaPiso - eu.height / 2f - 2f);
+            if (PontoFixo is null || !RaidBoss.NoMundoAberto)
+                PontoFixo = new Vector2((chefe.ArenaEsq + chefe.ArenaDir) / 2f, chefe.Chao((chefe.ArenaEsq + chefe.ArenaDir) / 2f) - eu.height / 2f - 2f); // no mundo aberto, o chão de verdade
             Prender(eu);
             eu.immune = true; eu.immuneTime = Math.Max(eu.immuneTime, 30);
             eu.statLife = eu.statLifeMax2;
@@ -206,7 +207,7 @@ namespace AscensaoAstral.Common.Raid
             if (args.Length > 0 && args[0] == "parar") { Vitrine.Parar("pedido"); return; }
             if (args.Length > 0 && args[0] == "pular") { if (RaidBoss.Ativo is RaidBoss c) Vitrine.Pular(c); return; }
             if (Main.netMode != NetmodeID.SinglePlayer) { caller.Reply("A vitrine só funciona em single player.", Color.OrangeRed); return; }
-            if (RaidBoss.Ativo is not RaidBoss chefe) { caller.Reply("Entre numa raid (o chefe precisa estar vivo) e digite /vitrine de novo.", Color.OrangeRed); return; }
+            if (RaidBoss.Ativo is not RaidBoss chefe) { caller.Reply("Invoque o chefe (a Silvanna no mundo, o Astharoth na raid) e digite /vitrine de novo.", Color.OrangeRed); return; }
             bool video = args.Length > 0 && args[0] == "video";
             Vitrine.Iniciar(chefe, !(args.Length > 0 && args[0] == "ataques"), video);
         }

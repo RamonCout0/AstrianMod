@@ -32,7 +32,7 @@ namespace AscensaoAstral.Common.Raid
             {
                 Indice = 0, Nome = "O Chapéu de Armotheus", Local = "Vale Gélido", QuemFala = "Silvanna",
                 Fala = "A tempestade sempre vem. Ele é o único que fica de pé na frente dela.",
-                Dicas = new[] { "No Giro, segure-se com o gancho", "Na Nevasca, fique atrás do cavaleiro: fora dele você congela", "Pegue um escudo antes da Lança Solar" },
+                Dicas = new[] { "No Giro, segure-se com o gancho", "Na Nevasca, fique atrás do cavaleiro: fora dele você congela", "Pegue um escudo antes da lua de gelo cair" },
                 Retrato = "AscensaoAstral/Assets/Sheets/Idle", Quadro = new Rectangle(0, 0, 100, 100), EscalaRetrato = 2.3f,
                 Cor = new Color(130, 210, 255), JaVencida = () => AstralMundo.DerrotouSilvanna,
                 Entrar = p => Raids.Entrar<ArenaDaSilvanna>(p)

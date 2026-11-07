@@ -34,7 +34,8 @@ namespace AscensaoAstral.Common.Raid
             int atual = chefe?.NPC.whoAmI ?? -1;
 
             // A cada 2 s (e no começo da raid) tira os inimigos comuns de perto
-            if (chefe is not null && (atual != ultimoChefe || Main.GameUpdateCount % 120 == 0))
+            // (no mundo aberto — a Silvanna — ninguém some: só param de nascer monstros novos, como num chefe do Terraria)
+            if (chefe is not null && !RaidBoss.NoMundoAberto && (atual != ultimoChefe || Main.GameUpdateCount % 120 == 0))
             {
                 foreach (NPC n in Main.ActiveNPCs)
                 {
