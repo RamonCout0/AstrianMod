@@ -123,6 +123,7 @@ namespace AscensaoAstral.Common.Raid
             SubworldSystem.CopyWorldData("impacto", AstralMundo.ImpactoAconteceu);
             SubworldSystem.CopyWorldData("silvanna", AstralMundo.DerrotouSilvanna);
             SubworldSystem.CopyWorldData("astharoth", AstralMundo.DerrotouAstharoth);
+            SubworldSystem.CopyWorldData("inverno", AstralMundo.DerrotouInverno);
             SubworldSystem.CopyWorldData("calRev", Dificuldade.CalRevengeance || Dificuldade.CopiadoRev);
             SubworldSystem.CopyWorldData("calDeath", Dificuldade.CalDeath || Dificuldade.CopiadoDeath);
         }
@@ -134,6 +135,7 @@ namespace AscensaoAstral.Common.Raid
             // Derrotas só "somam": nunca apaga uma vitória que já existia
             AstralMundo.DerrotouSilvanna |= SubworldSystem.ReadCopiedWorldData<bool>("silvanna");
             AstralMundo.DerrotouAstharoth |= SubworldSystem.ReadCopiedWorldData<bool>("astharoth");
+            AstralMundo.DerrotouInverno |= SubworldSystem.ReadCopiedWorldData<bool>("inverno");
             Dificuldade.CopiadoRev = SubworldSystem.ReadCopiedWorldData<bool>("calRev");
             Dificuldade.CopiadoDeath = SubworldSystem.ReadCopiedWorldData<bool>("calDeath");
             Dificuldade.AtualizarAgora();
@@ -180,7 +182,10 @@ namespace AscensaoAstral.Common.Raid
         }
     }
 
-    /// <summary>Raid da Silvanna: um vale de neve, 150 × 80 blocos de arena.</summary>
+    /// <summary>
+    /// A REVANCHE da Silvanna (o Inverno Eterno, pós-Moon Lord): um vale de neve, 150 × 80 blocos de arena.
+    /// A primeira luta dela é no mundo aberto; esta dimensão só abre pelo botão "Desafiar" da Silvanna NPC.
+    /// </summary>
     public class ArenaDaSilvanna : MundoDeRaid
     {
         public const int LarguraArena = 150, AlturaAr = 80, Chao = 25;

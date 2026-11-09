@@ -16,6 +16,8 @@ namespace AscensaoAstral.Common
         string ReferenciaCalamity { get; }
         /// <summary>Quanto do DPS da referência ela entrega (1 = igual; menos se ela tem efeito extra, como espinhos).</summary>
         float Fator { get; }
+        /// <summary>Invocações e armas de lacaio: o dano não depende do tempo de uso (compara direto).</summary>
+        bool SemTempo => false;
     }
 
     /// <summary>
@@ -61,7 +63,8 @@ namespace AscensaoAstral.Common
                     Item nossa = new(mi.Type);
                     if (refe.damage <= 0 || refe.useTime <= 0) continue;
                     // mesmo DPS que a referência, ajustado pelo tempo de uso de cada uma
-                    int dano = (int)Math.Round(refe.damage * r.Fator * nossa.useTime / (float)refe.useTime);
+                    float tempo = r.SemTempo ? 1f : nossa.useTime / (float)refe.useTime;
+                    int dano = (int)Math.Round(refe.damage * r.Fator * tempo);
                     danoCalculado[mi.Type] = Math.Max(1, dano);
                     if (ContentSamples.ItemsByType.TryGetValue(mi.Type, out Item amostra))
                         amostra.SetDefaults(mi.Type);

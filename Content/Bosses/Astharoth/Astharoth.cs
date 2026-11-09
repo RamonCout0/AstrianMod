@@ -201,6 +201,15 @@ namespace AscensaoAstral.Content.Bosses.Astharoth
         // Com o Calamity: no nível do Plaguebringer Goliath (70 mil; um pouco abaixo, pela luta ter mecânicas)
         protected override int VidaComCalamity => 60000;
 
+        public override void SetBestiary(Terraria.GameContent.Bestiary.BestiaryDatabase database, Terraria.GameContent.Bestiary.BestiaryEntry bestiaryEntry)
+        {
+            bestiaryEntry.Info.AddRange(new Terraria.GameContent.Bestiary.IBestiaryInfoElement[]
+            {
+                Terraria.GameContent.Bestiary.BestiaryDatabaseNPCsPopulator.CommonTags.SpawnConditions.Biomes.Sky,
+                new Terraria.GameContent.Bestiary.FlavorTextBestiaryInfoElement("Mods.AscensaoAstral.Bestiario.Astharoth")
+            });
+        }
+
         public override void ModifyNPCLoot(NPCLoot npcLoot) => Items.LootDosChefes.Astharoth(npcLoot);
         public override void BossLoot(ref int potionType) => potionType = ItemID.GreaterHealingPotion;
 

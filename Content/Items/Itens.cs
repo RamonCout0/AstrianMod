@@ -78,6 +78,12 @@ namespace AscensaoAstral.Content.Items
         protected override void Entrar(Player player) { }
         protected override int IndiceDaRaid => 0;
 
+        public override void SetDefaults()
+        {
+            base.SetDefaults();
+            Item.consumable = !AscensaoAstral.DEBUG; // como os itens de invocação do Terraria (no modo de teste não gasta)
+        }
+
         public override bool CanUseItem(Player player) => !NPC.AnyNPCs(TipoDoChefe) && Common.Raid.RaidBoss.Ativo is null && !Common.Raid.Raids.DentroDeUmaRaid
             && (AscensaoAstral.DEBUG || PodeInvocar(player));
 

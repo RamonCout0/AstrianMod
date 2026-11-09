@@ -27,13 +27,15 @@ namespace AscensaoAstral.Common
         public static bool ImpactoAconteceu;
         public static bool DerrotouSilvanna;
         public static bool DerrotouAstharoth;
+        /// <summary>Venceu a revanche da Silvanna (o Inverno Eterno, pós-Moon Lord).</summary>
+        public static bool DerrotouInverno;
         public static bool EterConstruido;   // o Éter (ponte + arena no céu) ficou de pé? Se o jogo fechar no meio, desmonta ao carregar
         public static Point Cratera;
 
         /// <summary>5 no Hardmode + 4 pós-Moon Lord + 1 intermediário + 1 endgame.</summary>
         public const int TotalDeChefes = 11;
 
-        public static int ChefesDerrotados => (DerrotouSilvanna ? 1 : 0) + (DerrotouAstharoth ? 1 : 0);
+        public static int ChefesDerrotados => (DerrotouSilvanna ? 1 : 0) + (DerrotouAstharoth ? 1 : 0) + (DerrotouInverno ? 1 : 0);
 
         /// <summary>0 = Astra lá longe, 1 = todos derrotados (o planeta se despedaça).</summary>
         public static float ProgressoAstra => ChefesDerrotados / (float)TotalDeChefes;
@@ -41,7 +43,7 @@ namespace AscensaoAstral.Common
         // ─── Salvar / carregar / rede ───
         public override void ClearWorld()
         {
-            AstraniaLiberada = ImpactoAconteceu = DerrotouSilvanna = DerrotouAstharoth = EterConstruido = false;
+            AstraniaLiberada = ImpactoAconteceu = DerrotouSilvanna = DerrotouAstharoth = DerrotouInverno = EterConstruido = false;
             Cratera = Point.Zero;
             impactoVisto = false;
             primeiroTick = true;
@@ -53,6 +55,7 @@ namespace AscensaoAstral.Common
             tag["impacto"] = ImpactoAconteceu;
             tag["silvanna"] = DerrotouSilvanna;
             tag["astharoth"] = DerrotouAstharoth;
+            tag["inverno"] = DerrotouInverno;
             tag["eter"] = EterConstruido;
             tag["crateraX"] = Cratera.X;
             tag["crateraY"] = Cratera.Y;
@@ -64,13 +67,14 @@ namespace AscensaoAstral.Common
             ImpactoAconteceu = tag.GetBool("impacto");
             DerrotouSilvanna = tag.GetBool("silvanna");
             DerrotouAstharoth = tag.GetBool("astharoth");
+            DerrotouInverno = tag.GetBool("inverno");
             EterConstruido = tag.GetBool("eter");
             Cratera = new Point(tag.GetInt("crateraX"), tag.GetInt("crateraY"));
         }
 
         public override void NetSend(BinaryWriter writer)
         {
-            writer.Write(new BitsByte(AstraniaLiberada, ImpactoAconteceu, DerrotouSilvanna, DerrotouAstharoth, EterConstruido));
+            writer.Write(new BitsByte(AstraniaLiberada, ImpactoAconteceu, DerrotouSilvanna, DerrotouAstharoth, EterConstruido, DerrotouInverno));
         }
 
         public override void NetReceive(BinaryReader reader)
@@ -81,6 +85,7 @@ namespace AscensaoAstral.Common
             DerrotouSilvanna = b[2];
             DerrotouAstharoth = b[3];
             EterConstruido = b[4];
+            DerrotouInverno = b[5];
         }
 
         public static void SincronizarMundo()

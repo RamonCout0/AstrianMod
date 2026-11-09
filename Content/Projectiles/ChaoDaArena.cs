@@ -71,8 +71,10 @@ namespace AscensaoAstral.Content.Projectiles
 
         public override void ModifyHitPlayer(Projectile projectile, Player target, ref Player.HurtModifiers modifiers)
         {
-            if (RaidBoss.Ativo is RaidSilvanna s && s.Enfurecida)
-                modifiers.SourceDamage *= 1.5f;
+            if (RaidBoss.Ativo is not RaidSilvanna s) return;
+            if (s.Enfurecida) modifiers.SourceDamage *= 1.5f;
+            // revanche (pós-Moon Lord): os mesmos ataques com dano de fim de jogo; com o Calamity, no nível da Providence
+            if (RaidSilvanna.Revanche) modifiers.SourceDamage *= Common.Equilibrio.ComCalamity ? 3.2f : 2.4f;
         }
     }
 }

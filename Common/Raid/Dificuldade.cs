@@ -21,7 +21,7 @@ namespace AscensaoAstral.Common.Raid
         public static bool CopiadoRev, CopiadoDeath;
 
         public static NivelRaid Nivel =>
-            Main.masterMode || calDeath ? NivelRaid.Mitico :
+            Main.masterMode || calDeath || Content.Bosses.Silvanna.RaidSilvanna.Revanche ? NivelRaid.Mitico : // a revanche é sempre com tudo
             Main.expertMode || calRevengeance ? NivelRaid.Heroico : NivelRaid.Normal;
 
         public static bool Heroico => Nivel >= NivelRaid.Heroico;

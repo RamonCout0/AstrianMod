@@ -373,22 +373,59 @@ namespace AscensaoAstral.Content.Items
         }
     }
 
-    /// <summary>Regras de drop dos dois chefes, no padrão do Cryogen/Golem: uma arma garantida por luta.</summary>
+    /// <summary>
+    /// Regras de drop dos dois chefes, no padrão do Cryogen/Golem: uma arma garantida por luta (uma por classe;
+    /// com o Calamity entra a de Rogue), máscara 1/7 no Clássico, troféu 10%, relíquia no Master (e no
+    /// Revengeance, como o Calamity faz), pet 25% no Master.
+    /// </summary>
     public static class LootDosChefes
     {
-        public static IItemDropRule ArmasDaSilvanna(int chance) => ItemDropRule.OneFromOptionsNotScalingWithLuck(chance,
-            ModContent.ItemType<LancaDeArmotheus>(), ModContent.ItemType<CajadoDoPingente>(), ModContent.ItemType<LancadorDeAvalanche>());
+        private static int[] Com(int[] armas, string rogue)
+        {
+            if (!ModContent.TryFind("AscensaoAstral", rogue, out ModItem r)) return armas;
+            int[] mais = new int[armas.Length + 1];
+            armas.CopyTo(mais, 0);
+            mais[^1] = r.Type;
+            return mais;
+        }
 
-        public static IItemDropRule ArmasDoAstharoth(int chance) => ItemDropRule.OneFromOptionsNotScalingWithLuck(chance,
-            ModContent.ItemType<LaminaDoErrante>(), ModContent.ItemType<ArcoDoArcanjo>(), ModContent.ItemType<TomoDoJulgamento>());
+        public static IItemDropRule ArmasDaSilvanna(int chance) => ItemDropRule.OneFromOptionsNotScalingWithLuck(chance, Com(new[] {
+            ModContent.ItemType<LancaDeArmotheus>(), ModContent.ItemType<CajadoDoPingente>(), ModContent.ItemType<LancadorDeAvalanche>(),
+            ModContent.ItemType<CajadoDosCavaleiros>() }, "PingenteDeArremesso"));
+
+        public static IItemDropRule ArmasDoAstharoth(int chance) => ItemDropRule.OneFromOptionsNotScalingWithLuck(chance, Com(new[] {
+            ModContent.ItemType<LaminaDoErrante>(), ModContent.ItemType<ArcoDoArcanjo>(), ModContent.ItemType<TomoDoJulgamento>(),
+            ModContent.ItemType<CajadoDoDragao>() }, "AdagaDoErrante"));
+
+        private static void Colecionaveis(NPCLoot npcLoot, IItemDropRuleCondition quando, int mascara, int trofeu, int relicario, int pet)
+        {
+            LeadingConditionRule luta = new(quando);
+            luta.OnSuccess(ItemDropRule.ByCondition(new Conditions.NotExpert(), mascara, 7));
+            luta.OnSuccess(ItemDropRule.Common(trofeu, 10));
+            luta.OnSuccess(ItemDropRule.MasterModeCommonDrop(relicario));
+            luta.OnSuccess(ItemDropRule.ByCondition(new NoRevengeanceSemMaster(), relicario));
+            luta.OnSuccess(ItemDropRule.MasterModeDropOnAllPlayers(pet, 4));
+            npcLoot.Add(luta);
+        }
 
         public static void Silvanna(NPCLoot npcLoot)
         {
-            npcLoot.Add(ItemDropRule.BossBag(ModContent.ItemType<BolsaDaSilvanna>()));
+            // A primeira luta (pós-Queen Slime)
+            LeadingConditionRule normal = new(new NaoERevanche());
+            normal.OnSuccess(ItemDropRule.BossBag(ModContent.ItemType<BolsaDaSilvanna>()));
             LeadingConditionRule classico = new(new Conditions.NotExpert());
             classico.OnSuccess(ArmasDaSilvanna(1));
             classico.OnSuccess(ItemDropRule.Common(ModContent.ItemType<GeloEterno>(), 1, 8, 15));
-            npcLoot.Add(classico);
+            normal.OnSuccess(classico);
+            npcLoot.Add(normal);
+            Colecionaveis(npcLoot, new SempreVerdade(), ModContent.ItemType<ChapeuDeArmotheus>(), ModContent.ItemType<TrofeuDaSilvanna>(),
+                ModContent.ItemType<RelicariaDaSilvanna>(), ModContent.ItemType<CartolaDeArmotheus>());
+            // A revanche (Inverno Eterno, pós-Moon Lord): loot próprio
+            LeadingConditionRule revanche = new(new ERevanche());
+            revanche.OnSuccess(ItemDropRule.Common(ModContent.ItemType<CoroaDoInvernoEterno>()));
+            revanche.OnSuccess(ItemDropRule.Common(ModContent.ItemType<EssenciaDoInverno>(), 1, 18, 26));
+            revanche.OnSuccess(ItemDropRule.Common(ModContent.ItemType<GeloEterno>(), 1, 30, 40));
+            npcLoot.Add(revanche);
         }
 
         public static void Astharoth(NPCLoot npcLoot)
@@ -398,7 +435,31 @@ namespace AscensaoAstral.Content.Items
             classico.OnSuccess(ArmasDoAstharoth(1));
             classico.OnSuccess(ItemDropRule.Common(ModContent.ItemType<FragmentoDoEter>(), 1, 10, 18));
             npcLoot.Add(classico);
+            Colecionaveis(npcLoot, new SempreVerdade(), ModContent.ItemType<ElmoDoErrante>(), ModContent.ItemType<TrofeuDoAstharoth>(),
+                ModContent.ItemType<RelicariaDoAstharoth>(), ModContent.ItemType<OvoDoEter>());
         }
+    }
+
+    public class SempreVerdade : IItemDropRuleCondition
+    {
+        public bool CanDrop(DropAttemptInfo info) => true;
+        public bool CanShowItemDropInUI() => true;
+        public string GetConditionDescription() => null;
+    }
+
+    /// <summary>A luta é a revanche da Silvanna (o Inverno Eterno, dentro da dimensão)?</summary>
+    public class ERevanche : IItemDropRuleCondition
+    {
+        public bool CanDrop(DropAttemptInfo info) => RaidSilvanna.Revanche;
+        public bool CanShowItemDropInUI() => true;
+        public string GetConditionDescription() => "Na revanche (Inverno Eterno)";
+    }
+
+    public class NaoERevanche : IItemDropRuleCondition
+    {
+        public bool CanDrop(DropAttemptInfo info) => !RaidSilvanna.Revanche;
+        public bool CanShowItemDropInUI() => true;
+        public string GetConditionDescription() => null;
     }
 
     /// <summary>Efeitos dos acessórios de Expert dos dois chefes.</summary>

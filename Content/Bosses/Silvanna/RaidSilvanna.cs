@@ -129,12 +129,33 @@ namespace AscensaoAstral.Content.Bosses.Silvanna
         }
 
         // Com o Calamity: no nível do Cryogen (25 mil)
-        protected override int VidaComCalamity => 25000;
+        protected override int VidaComCalamity => Revanche ? 220000 : 25000; // revanche: depois da Providence
+
+        /// <summary>
+        /// A REVANCHE: depois do Moon Lord (com o Calamity, depois da Providence), a Silvanna NPC aceita o desafio.
+        /// É a mesma luta, dentro da dimensão dela, com Armotheus sem se segurar: tudo no Mítico, números de fim de jogo.
+        /// </summary>
+        public static bool Revanche => Raids.Atual is ArenaDaSilvanna;
+
+        public override void ModifyTypeName(ref string typeName)
+        {
+            base.ModifyTypeName(ref typeName);
+            if (Revanche) typeName = "Armotheus, o Inverno Eterno";
+        }
+
+        public override void SetBestiary(Terraria.GameContent.Bestiary.BestiaryDatabase database, Terraria.GameContent.Bestiary.BestiaryEntry bestiaryEntry)
+        {
+            bestiaryEntry.Info.AddRange(new Terraria.GameContent.Bestiary.IBestiaryInfoElement[]
+            {
+                Terraria.GameContent.Bestiary.BestiaryDatabaseNPCsPopulator.CommonTags.SpawnConditions.Biomes.Snow,
+                new Terraria.GameContent.Bestiary.FlavorTextBestiaryInfoElement("Mods.AscensaoAstral.Bestiario.Silvanna")
+            });
+        }
 
         public override void ModifyNPCLoot(NPCLoot npcLoot) => Items.LootDosChefes.Silvanna(npcLoot);
         public override void BossLoot(ref int potionType) => potionType = ItemID.GreaterHealingPotion;
 
-        protected override bool JaFoiDerrotado => AstralMundo.DerrotouSilvanna;
+        protected override bool JaFoiDerrotado => !Revanche && AstralMundo.DerrotouSilvanna; // na revanche ela está viva e lutando de verdade
 
         protected override bool ConfinarAgora => Estado != INTRO && Estado != DESPEDIDA && Estado != REINICIANDO;
         protected override Color CorDaParede => Fase >= 2 ? new Color(255, 110, 110) : new Color(120, 210, 255);
@@ -161,6 +182,13 @@ namespace AscensaoAstral.Content.Bosses.Silvanna
             NPC.damage = 60;
             NPC.defense = 24;
             NPC.lifeMax = 24000;
+            if (Revanche) // pós-Moon Lord: perto do Moon Lord inteiro no Expert (sem o Calamity)
+            {
+                NPC.damage = 150;
+                NPC.defense = 70;
+                NPC.lifeMax = 130000;
+                NPC.value = Item.buyPrice(gold: 40);
+            }
             NPC.HitSound = SoundID.NPCHit5;
             NPC.DeathSound = SoundID.NPCDeath7;
             NPC.value = Item.buyPrice(gold: 15);
@@ -233,8 +261,16 @@ namespace AscensaoAstral.Content.Bosses.Silvanna
                 RaidJogador.ForcaFoco = 0.85f;
                 NPC.netUpdate = true;
             }
-            if (Timer == 20) Dialogo.Falar("Silvanna", "Então foi você quem arrancou a Astrânia da terra...", CorSilvanna, 170);
-            if (Timer == 200) Dialogo.Falar("Silvanna", "Armotheus. Mostre a essa pessoa o tamanho do erro dela.", CorSilvanna, 150);
+            if (Revanche)
+            {
+                if (Timer == 20) Dialogo.Falar("Silvanna", "Você derrubou a Lua. Então acabou a desculpa para ele se segurar.", CorSilvanna, 170);
+                if (Timer == 200) Dialogo.Falar("Silvanna", "Armotheus. Tudo. O inverno inteiro.", CorSilvanna, 150);
+            }
+            else
+            {
+                if (Timer == 20) Dialogo.Falar("Silvanna", "Então foi você quem arrancou a Astrânia da terra...", CorSilvanna, 170);
+                if (Timer == 200) Dialogo.Falar("Silvanna", "Armotheus. Mostre a essa pessoa o tamanho do erro dela.", CorSilvanna, 150);
+            }
 
             if (Timer >= 330 && Timer < 400)
             {
@@ -315,6 +351,7 @@ namespace AscensaoAstral.Content.Bosses.Silvanna
 
             int pausa = Fase == 1 ? 70 : Fase == 2 ? 60 : 50;
             if (Enfurecida) pausa /= 2;
+            if (Revanche) pausa = pausa * 3 / 5;
             if (Timer < pausa)
                 return;
 
@@ -1147,8 +1184,16 @@ namespace AscensaoAstral.Content.Bosses.Silvanna
                 RaidJogador.ForcaFoco = 0.7f;
                 Hud.Clarao(0.5f);
             }
-            if (Timer == 20) Dialogo.Falar("Silvanna", "...Chega, Armotheus. Você já mostrou o que precisava.", CorSilvanna, 180);
-            if (Timer == 210) Dialogo.Falar("Silvanna", "A Astrânia não é sua, nem minha. É de algo que está vindo. Prepare-se.", CorSilvanna, 200);
+            if (Revanche)
+            {
+                if (Timer == 20) Dialogo.Falar("Silvanna", "...Ele nunca perdeu com tudo. Até hoje.", CorSilvanna, 180);
+                if (Timer == 210) Dialogo.Falar("Silvanna", "Leve isto. Onde você vai, vai precisar de um inverno do seu lado.", CorSilvanna, 200);
+            }
+            else
+            {
+                if (Timer == 20) Dialogo.Falar("Silvanna", "...Chega, Armotheus. Você já mostrou o que precisava.", CorSilvanna, 180);
+                if (Timer == 210) Dialogo.Falar("Silvanna", "A Astrânia não é sua, nem minha. É de algo que está vindo. Prepare-se.", CorSilvanna, 200);
+            }
 
             if (Timer > 420)
                 posSilvanna += new Vector2(3f, -7f); // ela vai embora voando
@@ -1165,6 +1210,14 @@ namespace AscensaoAstral.Content.Bosses.Silvanna
         public override void OnKill()
         {
             MundoDeRaid.Vencida = true;
+            if (Revanche)
+            {
+                AstralMundo.DerrotouInverno = true;
+                AstralMundo.SincronizarMundo();
+                AstralMundo.Mensagem("O inverno se curva a você.", new Color(170, 230, 255));
+                RaidJogador.Foco = null;
+                return;
+            }
             AstralMundo.DerrotouSilvanna = true;
             AstralMundo.SincronizarMundo();
             AstralMundo.Mensagem("Lá em cima, Astra parece um pouco maior...", new Color(130, 190, 255));

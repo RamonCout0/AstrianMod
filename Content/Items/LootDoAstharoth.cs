@@ -110,7 +110,10 @@ namespace AscensaoAstral.Content.Items
         {
             SoundEngine.PlaySound(SoundID.Item60 with { Pitch = 0.3f, Volume = 0.7f }, Projectile.Center);
             if (Projectile.owner == Main.myPlayer)
-                Projectile.NewProjectile(Projectile.GetSource_FromThis(), Projectile.Center, Projectile.velocity, ModContent.ProjectileType<CorteAmigo>(), Projectile.damage, Projectile.knockBack, Projectile.owner);
+            {
+                int i = Projectile.NewProjectile(Projectile.GetSource_FromThis(), Projectile.Center, Projectile.velocity, ModContent.ProjectileType<CorteAmigo>(), Projectile.damage, Projectile.knockBack, Projectile.owner);
+                Main.projectile[i].DamageType = Projectile.DamageType; // a Adaga (Rogue) também abre fendas
+            }
         }
 
         public override bool PreDraw(ref Color lightColor)

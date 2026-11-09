@@ -77,6 +77,62 @@ Mods: {
 				DisplayName: Bolsa do Tesouro (Astharoth)
 				Tooltip: "{$CommonItemTooltip.RightClickToOpen}"
 			}
+			ChapeuDeArmotheus: {
+				DisplayName: "Chapéu de Armotheus"
+				Tooltip: "Visual\n'Ele fica emburrado quando você usa'"
+			}
+			ElmoDoErrante: {
+				DisplayName: "Elmo do Errante"
+				Tooltip: "Visual"
+			}
+			TrofeuDaSilvanna: {
+				DisplayName: "Troféu da Silvanna"
+				Tooltip: ""
+			}
+			TrofeuDoAstharoth: {
+				DisplayName: "Troféu do Astharoth"
+				Tooltip: ""
+			}
+			RelicariaDaSilvanna: {
+				DisplayName: "Relíquia da Silvanna"
+				Tooltip: ""
+			}
+			RelicariaDoAstharoth: {
+				DisplayName: "Relíquia do Astharoth"
+				Tooltip: ""
+			}
+			CartolaDeArmotheus: {
+				DisplayName: "Cartola de Armotheus"
+				Tooltip: "Invoca um Mini Armotheus"
+			}
+			OvoDoEter: {
+				DisplayName: "Ovo do Éter"
+				Tooltip: "Invoca um Mini Dragão do Éter"
+			}
+			CajadoDosCavaleiros: {
+				DisplayName: "Cajado dos Cavaleiros do Céu"
+				Tooltip: "Invoca um cavaleiro de gelo que arremessa lanças nos inimigos"
+			}
+			CajadoDoDragao: {
+				DisplayName: "Cajado do Dragão do Éter"
+				Tooltip: "Invoca um dragãozinho do Éter que dá botes nos inimigos"
+			}
+			PingenteDeArremesso: {
+				DisplayName: "Pingente de Arremesso"
+				Tooltip: "Crava onde bater e estilhaça em lascas"
+			}
+			AdagaDoErrante: {
+				DisplayName: "Adaga do Errante"
+				Tooltip: "Onde acerta, abre uma fenda que solta uma meia-lua de éter"
+			}
+			EssenciaDoInverno: {
+				DisplayName: "Essência do Inverno"
+				Tooltip: "'O frio que sobrou do Inverno Eterno'"
+			}
+			CoroaDoInvernoEterno: {
+				DisplayName: "Coroa do Inverno Eterno"
+				Tooltip: "10% a mais de dano e 5% a mais de chance de crítico\nImunidade ao frio e ao congelamento\nA cada 2 segundos, uma lasca de gelo vai até o inimigo mais perto"
+			}
 		}
 
 		Keybinds: {
@@ -93,6 +149,7 @@ Mods: {
 			RaidSilvanna.DisplayName: Armotheus
 			EstatuaViva.DisplayName: Estátua Viva
 			Astharoth.DisplayName: Astharoth, o Guerreiro Errante
+			SilvannaNPC.DisplayName: Silvanna
 			DragaoDoEter.DisplayName: Dragão do Éter
 		}
 
@@ -137,6 +194,13 @@ Mods: {
 			FlechaDeLuz.DisplayName: Flecha de Luz
 			PenaAmiga.DisplayName: Pena de Luz
 			PilarAmigo.DisplayName: Pilar do Julgamento
+			MiniArmotheus.DisplayName: "Mini Armotheus"
+			MiniDragao.DisplayName: "Mini Dragão do Éter"
+			CavaleiroDoCeu.DisplayName: "Cavaleiro do Céu"
+			LancaAmiga.DisplayName: "Lança"
+			DragaoLacaio.DisplayName: "Dragãozinho do Éter"
+			PingenteArremessado.DisplayName: "Pingente"
+			AdagaArremessada.DisplayName: "Adaga do Errante"
 		}
 
 		Buffs: {
@@ -156,11 +220,39 @@ Mods: {
 				DisplayName: Passo no Éter
 				Description: Intangível e mais rápido
 			}
+			BuffMiniArmotheus: {
+				DisplayName: "Mini Armotheus"
+				Description: "Ele te segue quicando"
+			}
+			BuffMiniDragao: {
+				DisplayName: "Mini Dragão do Éter"
+				Description: "Um dragãozinho te acompanha"
+			}
+			BuffCavaleiroDoCeu: {
+				DisplayName: "Cavaleiro do Céu"
+				Description: "O cavaleiro de gelo luta por você"
+			}
+			BuffDragaoLacaio: {
+				DisplayName: "Dragãozinho do Éter"
+				Description: "O dragãozinho luta por você"
+			}
 		}
 
 		Tiles: {
 			AstraniaTile.MapEntry: Astrânia
 			PonteEterea.MapEntry: Ponte Etérea
+		}
+
+		Bestiario: {
+			Silvanna: "Uma bruxa do gelo e o chapéu que pensa sozinho. Ela não queria a Astrânia: queria saber quem foi forte o bastante para arrancá-la da terra."
+			Astharoth: "Um guerreiro que vaga entre este mundo e o Éter. Corta o espaço como quem abre uma porta, e acredita que toda alma tem duas metades."
+		}
+
+		BossChecklist: {
+			RaidSilvanna.Invocar: "Use o Chamado da Bruxa no bioma da neve, depois da Queen Slime. Fora da neve ela luta enfurecida."
+			Astharoth.Invocar: "Use o Chamado do Errante depois do Golem para abrir a raid."
+			InvernoEterno.Invocar: "Fale com a Silvanna e escolha Desafiar depois do Moon Lord (com o Calamity, depois da Providence)."
+			InvernoEterno.Nome: "Silvanna: o Inverno Eterno"
 		}
 	}
 }

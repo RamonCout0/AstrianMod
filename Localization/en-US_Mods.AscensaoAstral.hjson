@@ -77,6 +77,62 @@ Mods: {
 				DisplayName: Treasure Bag (Astharoth)
 				Tooltip: "{$CommonItemTooltip.RightClickToOpen}"
 			}
+			ChapeuDeArmotheus: {
+				DisplayName: "Armotheus' Hat"
+				Tooltip: "Vanity\n'He sulks when you wear it'"
+			}
+			ElmoDoErrante: {
+				DisplayName: "Wanderer's Helm"
+				Tooltip: "Vanity"
+			}
+			TrofeuDaSilvanna: {
+				DisplayName: "Silvanna Trophy"
+				Tooltip: ""
+			}
+			TrofeuDoAstharoth: {
+				DisplayName: "Astharoth Trophy"
+				Tooltip: ""
+			}
+			RelicariaDaSilvanna: {
+				DisplayName: "Silvanna Relic"
+				Tooltip: ""
+			}
+			RelicariaDoAstharoth: {
+				DisplayName: "Astharoth Relic"
+				Tooltip: ""
+			}
+			CartolaDeArmotheus: {
+				DisplayName: "Armotheus' Top Hat"
+				Tooltip: "Summons a Mini Armotheus"
+			}
+			OvoDoEter: {
+				DisplayName: "Ether Egg"
+				Tooltip: "Summons a Mini Ether Dragon"
+			}
+			CajadoDosCavaleiros: {
+				DisplayName: "Staff of the Sky Knights"
+				Tooltip: "Summons an ice knight that throws lances at enemies"
+			}
+			CajadoDoDragao: {
+				DisplayName: "Ether Dragon Staff"
+				Tooltip: "Summons a little Ether dragon that lunges at enemies"
+			}
+			PingenteDeArremesso: {
+				DisplayName: "Throwing Icicle"
+				Tooltip: "Sticks where it lands and shatters into shards"
+			}
+			AdagaDoErrante: {
+				DisplayName: "Wanderer's Dagger"
+				Tooltip: "Opens a rift where it hits, releasing an ether crescent"
+			}
+			EssenciaDoInverno: {
+				DisplayName: "Essence of Winter"
+				Tooltip: "'The cold left over from the Eternal Winter'"
+			}
+			CoroaDoInvernoEterno: {
+				DisplayName: "Crown of the Eternal Winter"
+				Tooltip: "10% increased damage and 5% increased critical strike chance\nImmunity to cold and freezing\nEvery 2 seconds, an ice shard flies at the nearest enemy"
+			}
 		}
 
 		Keybinds: {
@@ -93,6 +149,7 @@ Mods: {
 			RaidSilvanna.DisplayName: Armotheus
 			EstatuaViva.DisplayName: Estátua Viva
 			Astharoth.DisplayName: Astharoth, o Guerreiro Errante
+			SilvannaNPC.DisplayName: Silvanna
 			DragaoDoEter.DisplayName: Aether Dragon
 		}
 
@@ -137,6 +194,13 @@ Mods: {
 			FlechaDeLuz.DisplayName: Arrow of Light
 			PenaAmiga.DisplayName: Light Feather
 			PilarAmigo.DisplayName: Pillar of Judgment
+			MiniArmotheus.DisplayName: "Mini Armotheus"
+			MiniDragao.DisplayName: "Mini Ether Dragon"
+			CavaleiroDoCeu.DisplayName: "Sky Knight"
+			LancaAmiga.DisplayName: "Lance"
+			DragaoLacaio.DisplayName: "Little Ether Dragon"
+			PingenteArremessado.DisplayName: "Icicle"
+			AdagaArremessada.DisplayName: "Wanderer's Dagger"
 		}
 
 		Buffs: {
@@ -156,11 +220,39 @@ Mods: {
 				DisplayName: Ether Step
 				Description: Intangible and faster
 			}
+			BuffMiniArmotheus: {
+				DisplayName: "Mini Armotheus"
+				Description: "He follows you, bouncing"
+			}
+			BuffMiniDragao: {
+				DisplayName: "Mini Ether Dragon"
+				Description: "A little dragon keeps you company"
+			}
+			BuffCavaleiroDoCeu: {
+				DisplayName: "Sky Knight"
+				Description: "The ice knight fights for you"
+			}
+			BuffDragaoLacaio: {
+				DisplayName: "Little Ether Dragon"
+				Description: "The little dragon fights for you"
+			}
 		}
 
 		Tiles: {
 			AstraniaTile.MapEntry: Astrânia
 			PonteEterea.MapEntry: Ponte Etérea
+		}
+
+		Bestiario: {
+			Silvanna: "An ice witch and the hat that thinks for itself. She never wanted the Astrania: she wanted to know who was strong enough to tear it from the ground."
+			Astharoth: "A warrior wandering between this world and the Ether. He cuts through space like opening a door, and believes every soul has two halves."
+		}
+
+		BossChecklist: {
+			RaidSilvanna.Invocar: "Use the Witch's Call in the snow biome, after Queen Slime. Outside the snow she fights enraged."
+			Astharoth.Invocar: "Use the Wanderer's Call after Golem to open the raid."
+			InvernoEterno.Invocar: "Talk to Silvanna and choose Challenge after the Moon Lord (with Calamity, after Providence)."
+			InvernoEterno.Nome: "Silvanna: the Eternal Winter"
 		}
 	}
 }
