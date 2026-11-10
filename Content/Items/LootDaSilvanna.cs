@@ -21,13 +21,13 @@ namespace AscensaoAstral.Content.Items
     public class GeloEterno : ModItem
     {
         // Arte provisória: o próprio sprite do Terraria (FrostCore), tingido — como o Calamity antigo fazia
-        public override string Texture => "Terraria/Images/Item_" + ItemID.FrostCore;
+        public override string Texture => Arte.Item(this, ItemID.FrostCore);
 
         public override void SetStaticDefaults() => Item.ResearchUnlockCount = 25;
 
         public override void SetDefaults()
         {
-            Item.color = new Color(200, 235, 255);
+            Item.color = Arte.Tinta(this, new Color(200, 235, 255));
             Item.width = 20; Item.height = 20;
             Item.maxStack = Item.CommonMaxStack;
             Item.value = Item.sellPrice(silver: 40);
@@ -41,7 +41,7 @@ namespace AscensaoAstral.Content.Items
     public class LancaDeArmotheus : ModItem, IArmaComReferencia
     {
         // Arte provisória: o próprio sprite do Terraria (NorthPole), tingido — como o Calamity antigo fazia
-        public override string Texture => "Terraria/Images/Item_" + ItemID.NorthPole;
+        public override string Texture => Arte.Item(this, ItemID.NorthPole);
 
         public int ReferenciaVanilla => ItemID.AdamantiteGlaive;
         public string ReferenciaCalamity => "Avalanche";
@@ -49,7 +49,7 @@ namespace AscensaoAstral.Content.Items
 
         public override void SetDefaults()
         {
-            Item.color = new Color(200, 235, 255);
+            Item.color = Arte.Tinta(this, new Color(200, 235, 255));
             Item.width = 40; Item.height = 40;
             Item.DamageType = DamageClass.Melee;
             Item.damage = 52;
@@ -159,7 +159,7 @@ namespace AscensaoAstral.Content.Items
     public class CajadoDoPingente : ModItem, IArmaComReferencia
     {
         // Arte provisória: o próprio sprite do Terraria (BlizzardStaff), tingido — como o Calamity antigo fazia
-        public override string Texture => "Terraria/Images/Item_" + ItemID.BlizzardStaff;
+        public override string Texture => Arte.Item(this, ItemID.BlizzardStaff);
 
         public int ReferenciaVanilla => ItemID.FrostStaff;
         public string ReferenciaCalamity => "SnowstormStaff";
@@ -169,7 +169,7 @@ namespace AscensaoAstral.Content.Items
 
         public override void SetDefaults()
         {
-            Item.color = new Color(210, 240, 255);
+            Item.color = Arte.Tinta(this, new Color(210, 240, 255));
             Item.width = 40; Item.height = 40;
             Item.DamageType = DamageClass.Magic;
             Item.damage = 60;
@@ -241,7 +241,7 @@ namespace AscensaoAstral.Content.Items
     public class LancadorDeAvalanche : ModItem, IArmaComReferencia
     {
         // Arte provisória: o próprio sprite do Terraria (SnowballCannon), tingido — como o Calamity antigo fazia
-        public override string Texture => "Terraria/Images/Item_" + ItemID.SnowballCannon;
+        public override string Texture => Arte.Item(this, ItemID.SnowballCannon);
 
         public int ReferenciaVanilla => ItemID.AdamantiteRepeater;
         public string ReferenciaCalamity => "HoarfrostBow";
@@ -249,7 +249,7 @@ namespace AscensaoAstral.Content.Items
 
         public override void SetDefaults()
         {
-            Item.color = new Color(200, 230, 255);
+            Item.color = Arte.Tinta(this, new Color(200, 230, 255));
             Item.width = 50; Item.height = 24;
             Item.DamageType = DamageClass.Ranged;
             Item.damage = 48;
@@ -301,11 +301,11 @@ namespace AscensaoAstral.Content.Items
     public class CoracaoDeArmotheus : ModItem
     {
         // Arte provisória: o próprio sprite do Terraria (LifeCrystal), tingido — como o Calamity antigo fazia
-        public override string Texture => "Terraria/Images/Item_" + ItemID.LifeCrystal;
+        public override string Texture => Arte.Item(this, ItemID.LifeCrystal);
 
         public override void SetDefaults()
         {
-            Item.color = new Color(120, 200, 255);
+            Item.color = Arte.Tinta(this, new Color(120, 200, 255));
             Item.width = 28; Item.height = 28;
             Item.accessory = true;
             Item.expert = true;
@@ -326,7 +326,7 @@ namespace AscensaoAstral.Content.Items
     /// <summary>Escudo de gelo do Coração de Armotheus: defesa e redução de dano por pouco tempo.</summary>
     public class EscudoDeGelo : ModBuff
     {
-        public override string Texture => "Terraria/Images/Buff_" + BuffID.IceBarrier;
+        public override string Texture => Arte.Buff(this, BuffID.IceBarrier);
 
         public override void SetStaticDefaults() => Main.buffNoSave[Type] = true;
 
@@ -344,7 +344,7 @@ namespace AscensaoAstral.Content.Items
     public class BolsaDaSilvanna : ModItem
     {
         // Arte provisória: o próprio sprite do Terraria (QueenSlimeBossBag), tingido — como o Calamity antigo fazia
-        public override string Texture => "Terraria/Images/Item_" + ItemID.QueenSlimeBossBag;
+        public override string Texture => Arte.Item(this, ItemID.QueenSlimeBossBag);
 
         public override void SetStaticDefaults()
         {
@@ -354,7 +354,7 @@ namespace AscensaoAstral.Content.Items
 
         public override void SetDefaults()
         {
-            Item.color = new Color(150, 215, 255);
+            Item.color = Arte.Tinta(this, new Color(150, 215, 255));
             Item.width = 32; Item.height = 32;
             Item.maxStack = Item.CommonMaxStack;
             Item.consumable = true;

@@ -34,7 +34,8 @@ namespace AscensaoAstral.Content.Bosses.Astharoth
         {
             if (Idade == (int)Projectile.ai[2])
             {
-                ScreenShakeSystem.StartShakeAtPoint(new Vector2(Projectile.Center.X, Projectile.ai[1]), 5f);
+                if (Projectile.hostile) // o do chefe treme a tela; o do Tomo do Julgamento (do jogador), não
+                    ScreenShakeSystem.StartShakeAtPoint(new Vector2(Projectile.Center.X, Projectile.ai[1]), 5f);
                 for (int i = 0; i < 20; i++)
                     Dust.NewDustPerfect(new Vector2(Projectile.Center.X + Main.rand.NextFloat(-50f, 50f), Projectile.ai[1]), DustID.GoldFlame, new Vector2(Main.rand.NextFloat(-4f, 4f), -Main.rand.NextFloat(4f, 12f)), 0, default, 1.8f).noGravity = true;
             }

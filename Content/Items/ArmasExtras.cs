@@ -123,7 +123,19 @@ namespace AscensaoAstral.Content.Items
             return melhor;
         }
 
-        protected Vector2 PosicaoDeDescanso(float altura) => Dono.Center + new Vector2(-Dono.direction * (44f + Projectile.minionPos * 36f), -altura);
+        /// <summary>Qual lacaio deste tipo eu sou (0, 1, 2...): cada um descansa num lugar, sem empilhar.</summary>
+        protected int Indice
+        {
+            get
+            {
+                int n = 0;
+                foreach (Projectile p in Main.ActiveProjectiles)
+                    if (p.owner == Projectile.owner && p.type == Projectile.type && p.whoAmI < Projectile.whoAmI) n++;
+                return n;
+            }
+        }
+
+        protected Vector2 PosicaoDeDescanso(float altura) => Dono.Center + new Vector2(-Dono.direction * (44f + Indice * 36f), -altura);
     }
 
     // ─── Silvanna: Cajado dos Cavaleiros do Céu ───
@@ -134,20 +146,20 @@ namespace AscensaoAstral.Content.Items
         public string ReferenciaCalamity => "";
         public float Fator => 1.05f; // a lança atravessa 3 inimigos, mas tem recarga
         public bool SemTempo => true;
-        public override string Texture => "Terraria/Images/Item_" + ItemID.FrostStaff;
+        public override string Texture => Arte.Item(this, ItemID.FrostStaff);
         protected override int Lacaio => ModContent.ProjectileType<CavaleiroDoCeu>();
         protected override int BuffDoLacaio => ModContent.BuffType<BuffCavaleiroDoCeu>();
 
         public override void SetDefaults()
         {
             Base(30, ItemRarityID.Pink, 5);
-            Item.color = new Color(170, 220, 255);
+            Item.color = Arte.Tinta(this, new Color(170, 220, 255));
         }
     }
 
     public class BuffCavaleiroDoCeu : BuffDeLacaio
     {
-        public override string Texture => "Terraria/Images/Buff_" + BuffID.FlinxMinion;
+        public override string Texture => Arte.Buff(this, BuffID.FlinxMinion);
         protected override int Lacaio => ModContent.ProjectileType<CavaleiroDoCeu>();
     }
 
@@ -169,7 +181,7 @@ namespace AscensaoAstral.Content.Items
         public override void AI()
         {
             if (!Vivo()) return;
-            Vector2 casa = PosicaoDeDescanso(70f) + new Vector2(0f, MathF.Sin(Main.GlobalTimeWrappedHourly * 2f + Projectile.minionPos) * 6f);
+            Vector2 casa = PosicaoDeDescanso(70f) + new Vector2(0f, MathF.Sin(Main.GlobalTimeWrappedHourly * 2f + Indice) * 6f);
             if (Projectile.Distance(casa) > 2000f) Projectile.Center = casa;
             Projectile.velocity = (casa - Projectile.Center) * 0.1f;
             NPC alvo = AcharAlvo(900f);
@@ -191,9 +203,10 @@ namespace AscensaoAstral.Content.Items
 
         public override bool PreDraw(ref Color lightColor)
         {
-            Texture2D tex = ModContent.Request<Texture2D>("AscensaoAstral/Assets/Sheets/VerdadeiraForma").Value;
+            bool proprio = Arte.Tem("CavaleiroDoCeu");
+            Texture2D tex = Arte.Textura("CavaleiroDoCeu", "AscensaoAstral/Assets/Sheets/VerdadeiraForma");
             Desenho.Brilho(Projectile.Center, new Color(120, 200, 255), 0.6f);
-            Main.EntitySpriteDraw(tex, Projectile.Center - Main.screenPosition, null, new Color(190, 230, 255) * 0.9f, 0f, tex.Size() / 2f, 0.42f,
+            Main.EntitySpriteDraw(tex, Projectile.Center - Main.screenPosition, null, proprio ? Color.White : new Color(190, 230, 255) * 0.9f, 0f, tex.Size() / 2f, proprio ? 1f : 0.42f,
                 Projectile.spriteDirection > 0 ? SpriteEffects.FlipHorizontally : SpriteEffects.None);
             if (Recarga > 20f || Recarga == 0f) // a lança na mão, apontada
             {
@@ -226,24 +239,24 @@ namespace AscensaoAstral.Content.Items
 
     public class CajadoDoDragao : CajadoDeLacaio, IArmaComReferencia
     {
-        public int ReferenciaVanilla => ItemID.XenoStaff;
+        public int ReferenciaVanilla => ItemID.DeadlySphereStaff;
         public string ReferenciaCalamity => "InfectedRemote";
         public float Fator => 1f;
         public bool SemTempo => true;
-        public override string Texture => "Terraria/Images/Item_" + ItemID.StardustDragonStaff;
+        public override string Texture => Arte.Item(this, ItemID.StardustDragonStaff);
         protected override int Lacaio => ModContent.ProjectileType<DragaoLacaio>();
         protected override int BuffDoLacaio => ModContent.BuffType<BuffDragaoLacaio>();
 
         public override void SetDefaults()
         {
             Base(60, ItemRarityID.Yellow, 10);
-            Item.color = new Color(215, 170, 255);
+            Item.color = Arte.Tinta(this, new Color(215, 170, 255));
         }
     }
 
     public class BuffDragaoLacaio : BuffDeLacaio
     {
-        public override string Texture => "Terraria/Images/Buff_" + BuffID.StardustDragonMinion;
+        public override string Texture => Arte.Buff(this, BuffID.StardustDragonMinion);
         protected override int Lacaio => ModContent.ProjectileType<DragaoLacaio>();
     }
 
@@ -264,7 +277,7 @@ namespace AscensaoAstral.Content.Items
             }
             else
             {
-                Vector2 casa = PosicaoDeDescanso(60f) + (Main.GlobalTimeWrappedHourly * 2f + Projectile.minionPos).ToRotationVector2() * 30f;
+                Vector2 casa = PosicaoDeDescanso(60f) + (Main.GlobalTimeWrappedHourly * 2f + Indice).ToRotationVector2() * 30f;
                 if (Projectile.Distance(casa) > 2000f) Projectile.Center = casa;
                 Projectile.velocity = Vector2.Lerp(Projectile.velocity, (casa - Projectile.Center) * 0.08f, 0.15f);
             }
@@ -289,15 +302,20 @@ namespace AscensaoAstral.Content.Items
     public static class Rogue
     {
         private static DamageClass classe;
+        /// <summary>A classe Rogue do Calamity (essas armas só carregam com ele instalado).</summary>
         public static DamageClass Classe
         {
             get
             {
-                if (classe is null && !(ModLoader.HasMod("CalamityMod") && ModContent.TryFind("CalamityMod", "RogueDamageClass", out classe)))
-                    classe = DamageClass.Throwing;
-                return classe;
+                if (classe is not null) return classe;
+                // só guarda quando achar: se o Calamity ainda não tiver carregado, tenta de novo na próxima vez
+                if (ModLoader.HasMod("CalamityMod") && ModContent.TryFind("CalamityMod", "RogueDamageClass", out DamageClass rogue))
+                    return classe = rogue;
+                return DamageClass.Throwing;
             }
         }
+
+        internal static void Esquecer() => classe = null;
     }
 
     public abstract class ArmaRogue : ModItem
@@ -311,7 +329,7 @@ namespace AscensaoAstral.Content.Items
         public int ReferenciaVanilla => ItemID.ShadowFlameKnife;
         public string ReferenciaCalamity => "Icebreaker";
         public float Fator => 0.8f;
-        public override string Texture => "Terraria/Images/Item_" + ItemID.FrostDaggerfish;
+        public override string Texture => Arte.Item(this, ItemID.FrostDaggerfish);
 
         public override void SetDefaults()
         {
@@ -329,7 +347,7 @@ namespace AscensaoAstral.Content.Items
             Item.UseSound = SoundID.Item1;
             Item.rare = ItemRarityID.Pink;
             Item.value = Item.sellPrice(gold: 5);
-            Item.color = new Color(190, 230, 255);
+            Item.color = Arte.Tinta(this, new Color(190, 230, 255));
             Item.damage = Equilibrio.Dano(Type, Item.damage);
         }
     }
@@ -396,9 +414,9 @@ namespace AscensaoAstral.Content.Items
     public class AdagaDoErrante : ArmaRogue, IArmaComReferencia
     {
         public int ReferenciaVanilla => ItemID.ShadowFlameKnife;
-        public string ReferenciaCalamity => "FuelCellBundle";
+        public string ReferenciaCalamity => "TheSyringe";
         public float Fator => 0.85f;
-        public override string Texture => "Terraria/Images/Item_" + ItemID.MagicDagger;
+        public override string Texture => Arte.Item(this, ItemID.MagicDagger);
 
         public override void SetDefaults()
         {
@@ -416,14 +434,14 @@ namespace AscensaoAstral.Content.Items
             Item.UseSound = SoundID.Item1;
             Item.rare = ItemRarityID.Yellow;
             Item.value = Item.sellPrice(gold: 10);
-            Item.color = new Color(215, 170, 255);
+            Item.color = Arte.Tinta(this, new Color(215, 170, 255));
             Item.damage = Equilibrio.Dano(Type, Item.damage);
         }
     }
 
     public class AdagaArremessada : ModProjectile
     {
-        public override string Texture => "Terraria/Images/Item_" + ItemID.MagicDagger;
+        public override string Texture => "AscensaoAstral/Assets/Vazio"; // desenha o sprite do próprio item (AdagaDoErrante)
 
         public override bool IsLoadingEnabled(Mod mod) => ModLoader.HasMod("CalamityMod");
 
@@ -454,8 +472,11 @@ namespace AscensaoAstral.Content.Items
 
         public override bool PreDraw(ref Color lightColor)
         {
-            Texture2D t = ModContent.Request<Texture2D>(Texture).Value;
-            Main.EntitySpriteDraw(t, Projectile.Center - Main.screenPosition, null, new Color(215, 170, 255), Projectile.rotation, t.Size() / 2f, 1f, 0);
+            int item = ModContent.ItemType<AdagaDoErrante>();
+            Main.instance.LoadItem(item);
+            Texture2D t = Terraria.GameContent.TextureAssets.Item[item].Value;
+            Color cor = Arte.Tem(nameof(AdagaDoErrante)) ? Color.White : new Color(215, 170, 255);
+            Main.EntitySpriteDraw(t, Projectile.Center - Main.screenPosition, null, cor, Projectile.rotation, t.Size() / 2f, 1f, 0);
             return false;
         }
     }

@@ -1172,7 +1172,7 @@ namespace AscensaoAstral.Content.Bosses.Astharoth
                 DesenharAvisoDeQueda(sb, CentroArena.X, Utils.GetLerpValue(MergulhoSobe, MergulhoCai, Timer, true), new Color(255, 220, 140));
         }
 
-        public override bool CanHitPlayer(Player target, ref int cooldownSlot) => Estado == PASSO_DO_ETER && NPC.Opacity > 0.9f && (int)(Timer - 1) % 48 >= 30;
+        public override bool CanHitPlayer(Player target, ref int cooldownSlot) => Estado == PASSO_DO_ETER && NPC.Opacity > 0.9f && (int)(Timer - 1) % 48 >= 30 && NPC.velocity.Length() > 1.5f; // só durante o impulso do corte
 
         public override bool PreDraw(SpriteBatch sb, Vector2 screenPos, Color drawColor)
         {

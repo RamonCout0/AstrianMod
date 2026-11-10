@@ -43,7 +43,11 @@ namespace AscensaoAstral.Common
         private static readonly Dictionary<int, int> danoCalculado = new();
 
         public override void Load() => ComCalamity = ModLoader.HasMod("CalamityMod");
-        public override void Unload() => danoCalculado.Clear();
+        public override void Unload()
+        {
+            danoCalculado.Clear();
+            Content.Items.Rogue.Esquecer();
+        }
 
         /// <summary>Chame no fim do SetDefaults da arma: troca o dano provisório pelo calculado pela referência.</summary>
         public static int Dano(int tipo, int provisorio) => danoCalculado.TryGetValue(tipo, out int d) ? d : provisorio;

@@ -100,14 +100,29 @@ namespace AscensaoAstral.Common.Raid
         public Rectangle RetanguloArena => new((int)ArenaEsq, (int)ArenaTopo, (int)(ArenaDir - ArenaEsq), (int)(ArenaPiso - ArenaTopo));
         public bool Reiniciando => Estado == REINICIANDO;
 
+        // Muita coisa pergunta "tem chefe?" várias vezes por tick (cada projétil, o céu, a HUD...). Procurar entre os
+        // NPCs toda vez é desperdício: guardamos a resposta e só procuramos de novo uma vez por tick.
+        private static RaidBoss ativoGuardado;
+        private static uint tickDoGuardado = uint.MaxValue;
+
         public static RaidBoss Ativo
         {
             get
             {
+                if (ativoGuardado is not null && ativoGuardado.NPC.active && ativoGuardado.NPC.ModNPC == ativoGuardado
+                    && Main.npc[ativoGuardado.NPC.whoAmI] == ativoGuardado.NPC) // (ao trocar de mundo, o NPC antigo deixa de estar na lista)
+                    return ativoGuardado;
+                if (tickDoGuardado == Main.GameUpdateCount && ativoGuardado is null)
+                    return null;
+                tickDoGuardado = Main.GameUpdateCount;
+                ativoGuardado = null;
                 foreach (NPC n in Main.ActiveNPCs)
                     if (n.ModNPC is RaidBoss b)
-                        return b;
-                return null;
+                    {
+                        ativoGuardado = b;
+                        break;
+                    }
+                return ativoGuardado;
             }
         }
 
@@ -139,6 +154,7 @@ namespace AscensaoAstral.Common.Raid
 
         public override void OnSpawn(IEntitySource source)
         {
+            tickDoGuardado = uint.MaxValue; // nasceu um chefe: quem perguntar "tem chefe?" procura de novo já
             Player p = Main.player[Player.FindClosest(NPC.position, NPC.width, NPC.height)];
             EhMemoria = JaFoiDerrotado;
             DefinirArena(p);
@@ -157,13 +173,21 @@ namespace AscensaoAstral.Common.Raid
         {
             int i = (int)(x / 16f), j0 = Math.Max(1, (int)(yInicio / 16f));
             if (i < 1 || i >= Main.maxTilesX - 1) return float.IsNaN(seNada) ? yInicio : seNada;
-            for (int j = j0; j < Math.Min(Main.maxTilesY - 1, j0 + maxBlocos); j++)
-            {
-                Tile t = Main.tile[i, j];
-                if (t.HasTile && !t.IsActuated && (Main.tileSolid[t.TileType] || Main.tileSolidTop[t.TileType]))
+            // Se a busca começa DENTRO de um bloco (teto de caverna, parede), primeiro sai dele para o ar:
+            // senão o "chão" seria o teto, e os espinhos nasceriam lá em cima.
+            int fim = Math.Min(Main.maxTilesY - 1, j0 + maxBlocos);
+            int j = j0;
+            while (j < fim && Solido(i, j, false)) j++;
+            for (; j < fim; j++)
+                if (Solido(i, j, true))
                     return j * 16f;
-            }
             return float.IsNaN(seNada) ? yInicio : seNada;
+        }
+
+        private static bool Solido(int i, int j, bool contaPlataforma)
+        {
+            Tile t = Main.tile[i, j];
+            return t.HasTile && !t.IsActuated && (Main.tileSolid[t.TileType] && !Main.tileSolidTop[t.TileType] || contaPlataforma && Main.tileSolidTop[t.TileType]);
         }
 
         /// <summary>Onde fica o chão nesta coluna: dentro da raid é o piso fixo; no mundo aberto, o terreno de verdade.</summary>

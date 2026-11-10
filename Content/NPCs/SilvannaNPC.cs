@@ -143,8 +143,7 @@ namespace AscensaoAstral.Content.NPCs
             if (NPC.AnyNPCs(tipo) || RaidBoss.Ativo is not null) return;
             int x = (Main.spawnTileX + 8) * 16;
             int y = (int)RaidBoss.ChaoEm(x, (Main.spawnTileY - 30) * 16, 80, Main.spawnTileY * 16) - 40;
-            NPC.NewNPC(new EntitySource_WorldEvent(), x, y, tipo);
-            AstralMundo.Mensagem("Silvanna se mudou para perto do ponto de partida do mundo.", new Color(120, 210, 230));
+            NPC.NewNPC(new EntitySource_WorldEvent(), x, y, tipo); // (NPCs que não são da cidade não ficam salvos: ela reaparece a cada carregamento)
         }
     }
 }
@@ -156,7 +155,7 @@ namespace AscensaoAstral.Content.Items
     /// <summary>Material de fim de jogo: o frio que sobrou do Inverno Eterno.</summary>
     public class EssenciaDoInverno : ModItem
     {
-        public override string Texture => "Terraria/Images/Item_" + ItemID.FragmentStardust;
+        public override string Texture => Arte.Item(this, ItemID.FragmentStardust);
 
         public override void SetStaticDefaults()
         {
@@ -166,7 +165,7 @@ namespace AscensaoAstral.Content.Items
 
         public override void SetDefaults()
         {
-            Item.color = new Color(170, 230, 255);
+            Item.color = Arte.Tinta(this, new Color(170, 230, 255));
             Item.width = 22; Item.height = 22;
             Item.maxStack = Item.CommonMaxStack;
             Item.value = Item.sellPrice(gold: 2);
@@ -182,11 +181,11 @@ namespace AscensaoAstral.Content.Items
     /// </summary>
     public class CoroaDoInvernoEterno : ModItem
     {
-        public override string Texture => "Terraria/Images/Item_" + ItemID.GoldCrown;
+        public override string Texture => Arte.Item(this, ItemID.GoldCrown);
 
         public override void SetDefaults()
         {
-            Item.color = new Color(170, 230, 255);
+            Item.color = Arte.Tinta(this, new Color(170, 230, 255));
             Item.width = 28; Item.height = 24;
             Item.accessory = true;
             Item.rare = ItemRarityID.Red;

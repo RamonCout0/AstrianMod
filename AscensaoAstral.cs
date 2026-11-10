@@ -5,8 +5,11 @@ namespace AscensaoAstral
 {
     public class AscensaoAstral : Mod
     {
-        /// <summary>Mostra a linha verde de diagnóstico dos chefes no HUD. Desligue para lançar o mod.</summary>
-        public const bool DEBUG = true;
+        /// <summary>
+        /// Modo de teste (itens de debug, /vitrine, linha de diagnóstico, invocação sem pré-requisito).
+        /// Vem da configuração do mod (Common/Configuracao.cs) e fica DESLIGADO por padrão — nada para lembrar antes de publicar.
+        /// </summary>
+        public static bool DEBUG => Terraria.ModLoader.ModContent.GetInstance<Common.Configuracao>()?.ModoDeTeste ?? false;
 
         // Pacotes do mod: 0 = pedido para levar o grupo para a dimensão da raid
         public override void HandlePacket(BinaryReader reader, int whoAmI)

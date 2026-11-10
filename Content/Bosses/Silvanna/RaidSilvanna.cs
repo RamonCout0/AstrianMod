@@ -184,7 +184,7 @@ namespace AscensaoAstral.Content.Bosses.Silvanna
             NPC.lifeMax = 24000;
             if (Revanche) // pós-Moon Lord: perto do Moon Lord inteiro no Expert (sem o Calamity)
             {
-                NPC.damage = 150;
+                NPC.damage = 110;
                 NPC.defense = 70;
                 NPC.lifeMax = 130000;
                 NPC.value = Item.buyPrice(gold: 40);
@@ -543,6 +543,8 @@ namespace AscensaoAstral.Content.Bosses.Silvanna
                 {
                     int lado = (k + contadorAtaque) % 2 == 0 ? 1 : -1; // 1 = vem da esquerda rolando para a direita
                     float x = Alvo.Center.X - lado * 1100f;
+                    if (!NoMundoAberto) x = lado == 1 ? ArenaEsq + 40f : ArenaDir - 40f; // na dimensão (revanche): sai da parede da arena
+                    x = MathHelper.Clamp(x, 800f, Main.maxTilesX * 16f - 800f);
                     Projectile.NewProjectile(NPC.GetSource_FromAI(), new Vector2(x, Chao(x) - 30f), Vector2.Zero, ModContent.ProjectileType<BolaDeNeve>(), 38, 0f, Main.myPlayer, lado);
                 }
             if (Timer >= 20 + n * 55 + 200) IrPara(PAUSA);
@@ -985,7 +987,7 @@ namespace AscensaoAstral.Content.Bosses.Silvanna
                     else
                         NPC.velocity = new Vector2(0f, -26f);
 
-                    if (NPC.Center.Y < ArenaTopo - 500f)
+                    if (NPC.Center.Y < AlturaDoCeu(500f))
                     {
                         NPC.velocity = Vector2.Zero;
                         GerarEstatuasEEscudos();
@@ -1037,7 +1039,7 @@ namespace AscensaoAstral.Content.Bosses.Silvanna
                     }
                     if (Timer >= Carga + 50)
                     {
-                        NPC.Center = new Vector2(CentroArena.X, ArenaTopo - 700f);
+                        NPC.Center = new Vector2(CentroArena.X, AlturaDoCeu(700f));
                         NPC.velocity = Vector2.Zero;
                         etapa = 3;
                         Timer = 0;
@@ -1048,7 +1050,7 @@ namespace AscensaoAstral.Content.Bosses.Silvanna
                 case 3: // ele cai do céu como uma estrela cadente
                     if (Timer < QuedaAviso)
                     {
-                        NPC.Center = new Vector2(CentroArena.X, ArenaTopo - 700f);
+                        NPC.Center = new Vector2(CentroArena.X, AlturaDoCeu(700f));
                         NPC.velocity = Vector2.Zero;
                         if (Timer == 1) SoundEngine.PlaySound(SoundID.Item9 with { Pitch = 0.8f, Volume = 1.2f });
                         if (Timer == QuedaAviso - 25) SoundEngine.PlaySound(SoundID.Item163 with { Pitch = -0.3f });
@@ -1078,6 +1080,8 @@ namespace AscensaoAstral.Content.Bosses.Silvanna
         }
 
         private const int QuedaAviso = 75;
+        /// <summary>Para onde ele sobe no Final — sem nunca sair pelo teto do mundo (luta lá no alto, perto do espaço).</summary>
+        private float AlturaDoCeu(float acima) => Math.Max(ArenaTopo - acima, 60f * 16f);
 
         /// <summary>A lua de gelo (Final), o redemoinho do Giro e o aviso da queda.</summary>
         public override void DesenharEfeitosDeMundo(SpriteBatch sb)
@@ -1221,6 +1225,8 @@ namespace AscensaoAstral.Content.Bosses.Silvanna
             AstralMundo.DerrotouSilvanna = true;
             AstralMundo.SincronizarMundo();
             AstralMundo.Mensagem("Lá em cima, Astra parece um pouco maior...", new Color(130, 190, 255));
+            if (!EhMemoria) // só na primeira vitória
+                AstralMundo.Mensagem("Silvanna foi morar perto do ponto de partida do mundo.", CorSilvanna);
             Dialogo.FalaDoEco("Ela não era nossa inimiga... mas também não estava do nosso lado. Fique atento.");
             RaidJogador.Foco = null;
         }
@@ -1364,7 +1370,11 @@ namespace AscensaoAstral.Content.Bosses.Silvanna
             {
                 tex = ModContent.Request<Texture2D>("AscensaoAstral/Assets/Sheets/VerdadeiraForma").Value;
                 if (Fase >= 3)
-                    tinta = new Color(170, 225, 255); // cavaleiro de gelo (provisório: forma verdadeira tingida)
+                {
+                    // cavaleiro de gelo: Assets/Sprites/Cavaleiro.png se existir; senão, a forma verdadeira tingida de azul
+                    if (Arte.Tem("Cavaleiro")) tex = Arte.Textura("Cavaleiro", null);
+                    else tinta = new Color(170, 225, 255);
+                }
             }
 
             Vector2 origem = recorte.HasValue ? new Vector2(50f) : tex.Size() / 2f;
@@ -1453,7 +1463,8 @@ namespace AscensaoAstral.Content.Bosses.Silvanna
 
         private void DesenharCavaleirosDoCeu(SpriteBatch sb, Vector2 screenPos)
         {
-            Texture2D tex = ModContent.Request<Texture2D>("AscensaoAstral/Assets/Sheets/VerdadeiraForma").Value;
+            bool proprio = Arte.Tem("CavaleiroDoCeu");
+            Texture2D tex = Arte.Textura("CavaleiroDoCeu", "AscensaoAstral/Assets/Sheets/VerdadeiraForma");
             int fase = relogioCeu % CicloCavaleiro;
             int quem = relogioCeu / CicloCavaleiro % 5;
             for (int i = 0; i < 5; i++)
@@ -1469,7 +1480,7 @@ namespace AscensaoAstral.Content.Bosses.Silvanna
                         Desenho.Lanca(p + new Vector2(14f, 14f), p + new Vector2(14f, -60f - brilho * 30f), 14f + brilho * 6f, new Color(140, 210, 255), 1f + brilho * 0.5f);
                 }
                 Color cor = Color.Lerp(new Color(110, 150, 210) * 0.45f, new Color(225, 245, 255), brilho);
-                sb.Draw(tex, p - screenPos, null, cor, 0f, tex.Size() / 2f, 0.6f, Fase >= 3 && i % 2 == 1 ? SpriteEffects.FlipHorizontally : SpriteEffects.None, 0f);
+                sb.Draw(tex, p - screenPos, null, cor, 0f, tex.Size() / 2f, proprio ? 1f : 0.6f, Fase >= 3 && i % 2 == 1 ? SpriteEffects.FlipHorizontally : SpriteEffects.None, 0f);
             }
         }
     }

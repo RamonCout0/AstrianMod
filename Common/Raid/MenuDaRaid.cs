@@ -30,11 +30,12 @@ namespace AscensaoAstral.Common.Raid
         {
             new InfoDaRaid
             {
-                Indice = 0, Nome = "O Chapéu de Armotheus", Local = "Vale Gélido", QuemFala = "Silvanna",
-                Fala = "A tempestade sempre vem. Ele é o único que fica de pé na frente dela.",
+                // A REVANCHE (a primeira luta dela é no mundo aberto, sem menu). Aparece na tela de carregamento.
+                Indice = 0, Nome = "Silvanna: o Inverno Eterno", Local = "Vale Gélido", QuemFala = "Silvanna",
+                Fala = "Você derrubou a Lua. Então acabou a desculpa para ele se segurar.",
                 Dicas = new[] { "No Giro, segure-se com o gancho", "Na Nevasca, fique atrás do cavaleiro: fora dele você congela", "Pegue um escudo antes da lua de gelo cair" },
                 Retrato = "AscensaoAstral/Assets/Sheets/Idle", Quadro = new Rectangle(0, 0, 100, 100), EscalaRetrato = 2.3f,
-                Cor = new Color(130, 210, 255), JaVencida = () => AstralMundo.DerrotouSilvanna,
+                Cor = new Color(130, 210, 255), JaVencida = () => false, // na revanche ela é ela mesma, nunca uma Memória
                 Entrar = p => Raids.Entrar<ArenaDaSilvanna>(p)
             },
             new InfoDaRaid

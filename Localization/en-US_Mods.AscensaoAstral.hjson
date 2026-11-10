@@ -254,5 +254,15 @@ Mods: {
 			InvernoEterno.Invocar: "Talk to Silvanna and choose Challenge after the Moon Lord (with Calamity, after Providence)."
 			InvernoEterno.Nome: "Silvanna: the Eternal Winter"
 		}
+
+		Configs: {
+			Configuracao: {
+				DisplayName: "Ascensão Astral"
+				ModoDeTeste: {
+					Label: "Test mode"
+					Tooltip: "Enables the test items (Test Tool, Bot Controller), the /vitrine command and the diagnostics line. Summoning items are not consumed and ignore their requirements. Leave off for normal play."
+				}
+			}
+		}
 	}
 }

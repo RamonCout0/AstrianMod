@@ -254,5 +254,15 @@ Mods: {
 			InvernoEterno.Invocar: "Fale com a Silvanna e escolha Desafiar depois do Moon Lord (com o Calamity, depois da Providence)."
 			InvernoEterno.Nome: "Silvanna: o Inverno Eterno"
 		}
+
+		Configs: {
+			Configuracao: {
+				DisplayName: "Ascensão Astral"
+				ModoDeTeste: {
+					Label: "Modo de teste"
+					Tooltip: "Liga os itens de teste (Ferramenta de Teste, Controle do Bot), o comando /vitrine e a linha de diagnóstico. Os itens de invocação deixam de ser gastos e ignoram os pré-requisitos. Deixe desligado para jogar de verdade."
+				}
+			}
+		}
 	}
 }

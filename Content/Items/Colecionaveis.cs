@@ -2,6 +2,7 @@ using System;
 using AscensaoAstral.Common.Raid;
 using AscensaoAstral.Content.Projectiles;
 using Luminance.Assets;
+using AscensaoAstral.Common;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Terraria;
@@ -18,45 +19,55 @@ using Terraria.Enums;
 namespace AscensaoAstral.Content.Items
 {
     // ═══════════════ COLECIONÁVEIS DOS CHEFES (máscara 1/7, troféu 10%, relíquia no Master, pet 25% no Master) ═══════════════
-    // Arte provisória: tudo usa o próprio Terraria (tingido) ou é desenhado em código. Troque pelos seus sprites
-    // apagando a linha "Texture =>" e colocando um PNG com o nome da classe na mesma pasta.
+    // Arte provisória: tudo usa o próprio Terraria (tingido) ou é desenhado em código. Para trocar, solte o PNG
+    // com o nome certo em Assets/Sprites/ (veja o LEIA-ME de lá): o código acha sozinho.
 
     // ─── Máscaras (visual) ───
 
     /// <summary>Chapéu de Armotheus: a máscara da Silvanna (por enquanto, a aparência do Chapéu de Mago).</summary>
-    public class ChapeuDeArmotheus : ModItem
+    public class ChapeuDeArmotheus : MascaraDeChefe
     {
-        public override string Texture => "Terraria/Images/Item_" + ItemID.WizardHat;
+        protected override int Visual => ItemID.WizardHat;
+        protected override Color TintaProvisoria => new(170, 210, 255);
+    }
+
+    /// <summary>
+    /// Base das máscaras. Sem arte própria, copia a aparência de um chapéu do Terraria. Com
+    /// Assets/Sprites/&lt;Nome&gt;.png (ícone) e Assets/Sprites/&lt;Nome&gt;_Head.png (folha de 20 quadros na cabeça,
+    /// igual às máscaras do Terraria), passa a usar a sua.
+    /// </summary>
+    public abstract class MascaraDeChefe : ModItem
+    {
+        protected abstract int Visual { get; }
+        protected abstract Color TintaProvisoria { get; }
+        public override string Texture => Arte.Item(this, Visual);
+
+        public override void Load()
+        {
+            if (Main.netMode != NetmodeID.Server && Arte.Tem(Mod, Name + "_Head"))
+                EquipLoader.AddEquipTexture(Mod, $"{Mod.Name}/{Arte.Pasta}{Name}_Head", EquipType.Head, this);
+        }
 
         public override void SetDefaults()
         {
-            Item.CloneDefaults(ItemID.WizardHat); // copia o visual na cabeça (headSlot)
+            Item.CloneDefaults(Visual); // copia o visual na cabeça (headSlot) do chapéu do Terraria
+            int proprio = EquipLoader.GetEquipSlot(Mod, Name, EquipType.Head);
+            if (proprio >= 0) Item.headSlot = proprio;
             Item.vanity = true;
             Item.defense = 0;
             Item.rare = ItemRarityID.Blue;
             Item.value = Item.sellPrice(gold: 1);
-            Item.color = new Color(170, 210, 255);
+            Item.color = Arte.Tinta(this, TintaProvisoria);
         }
 
         public override void UpdateEquip(Player player) { } // só visual
     }
 
     /// <summary>Elmo do Errante: a máscara do Astharoth (por enquanto, a aparência do Grande Elmo do Escudeiro).</summary>
-    public class ElmoDoErrante : ModItem
+    public class ElmoDoErrante : MascaraDeChefe
     {
-        public override string Texture => "Terraria/Images/Item_" + ItemID.SquireGreatHelm;
-
-        public override void SetDefaults()
-        {
-            Item.CloneDefaults(ItemID.SquireGreatHelm);
-            Item.vanity = true;
-            Item.defense = 0;
-            Item.rare = ItemRarityID.Blue;
-            Item.value = Item.sellPrice(gold: 1);
-            Item.color = new Color(210, 170, 255);
-        }
-
-        public override void UpdateEquip(Player player) { }
+        protected override int Visual => ItemID.SquireGreatHelm;
+        protected override Color TintaProvisoria => new(210, 170, 255);
     }
 
     // ─── Troféus (quadro 3×3 na parede, desenhado em código com o ícone do chefe) ───
@@ -85,6 +96,12 @@ namespace AscensaoAstral.Content.Items
             Vector2 zero = Main.drawToScreen ? Vector2.Zero : new Vector2(Main.offScreenRange);
             Vector2 p = new Vector2(i * 16, j * 16) - Main.screenPosition + zero;
             Color luz = Lighting.GetColor(i + 1, j + 1);
+            string proprio = estilo == 0 ? "QuadroDaSilvanna" : "QuadroDoAstharoth"; // Assets/Sprites/Quadro*.png (48×48): o troféu inteiro
+            if (Arte.Tem(proprio))
+            {
+                spriteBatch.Draw(Arte.Textura(proprio, null), p, luz);
+                return false;
+            }
             Texture2D px = TextureAssets.MagicPixel.Value;
             Rectangle um = new(0, 0, 1, 1);
             Color moldura = new Color(150, 110, 60).MultiplyRGB(luz), fundo = (estilo == 0 ? new Color(40, 70, 110) : new Color(60, 35, 95)).MultiplyRGB(luz);
@@ -102,7 +119,7 @@ namespace AscensaoAstral.Content.Items
     {
         protected abstract int Estilo { get; }
         protected abstract int Visual { get; }
-        public override string Texture => "Terraria/Images/Item_" + Visual;
+        public override string Texture => Arte.Item(this, Visual);
 
         public override void SetDefaults()
         {
@@ -149,15 +166,16 @@ namespace AscensaoAstral.Content.Items
         {
             Tile t = Main.tile[i, j];
             if (t.TileFrameX % 54 == 0 && t.TileFrameY % 72 == 0)
-                Main.instance.TilesRenderer.AddSpecialPoint(i, j, TileDrawing.TileCounterType.CustomNonSolid);
+                Main.instance.TilesRenderer.AddSpecialLegacyPoint(i, j);
             return false; // tudo é desenhado em SpecialDraw (o relicário flutua, precisa de redesenho a cada quadro)
         }
 
         public override void SpecialDraw(int i, int j, SpriteBatch spriteBatch)
         {
             Tile t = Main.tile[i, j];
-            int estilo = t.TileFrameY / 72;
-            bool virado = t.TileFrameX >= 54;
+            // (como nas relíquias do Terraria: a coluna é o estilo — qual chefe — e a linha é o lado para onde olha)
+            int estilo = t.TileFrameX / 54;
+            bool virado = t.TileFrameY >= 72;
             Vector2 zero = Main.drawToScreen ? Vector2.Zero : new Vector2(Main.offScreenRange);
             Vector2 canto = new Vector2(i * 16, j * 16) - Main.screenPosition + zero;
             Color luz = Lighting.GetColor(i + 1, j + 3);
@@ -174,7 +192,8 @@ namespace AscensaoAstral.Content.Items
             // o chefe em miniatura, dourado, flutuando (como as relíquias do Master)
             float t0 = Main.GlobalTimeWrappedHourly;
             Vector2 centro = canto + new Vector2(24f, 18f + MathF.Sin(t0 * MathHelper.TwoPi / 5f) * 4f);
-            Texture2D tex = ModContent.Request<Texture2D>(estilo == 0 ? "AscensaoAstral/Assets/Sheets/Bruxa" : "AscensaoAstral/Content/Bosses/Astharoth/Astharoth").Value;
+            // a peça que flutua: Assets/Sprites/ReliquiaDaSilvanna.png / ReliquiaDoAstharoth.png, ou o próprio chefe em miniatura
+            Texture2D tex = estilo == 0 ? Arte.Textura("ReliquiaDaSilvanna", "AscensaoAstral/Assets/Sheets/Bruxa") : Arte.Textura("ReliquiaDoAstharoth", "AscensaoAstral/Content/Bosses/Astharoth/Astharoth");
             float esc = 46f / Math.Max(tex.Width, tex.Height);
             SpriteEffects flip = virado ? SpriteEffects.FlipHorizontally : SpriteEffects.None;
             Color dourado = new(255, 225, 140);
@@ -189,7 +208,7 @@ namespace AscensaoAstral.Content.Items
     {
         protected abstract int Estilo { get; }
         protected abstract int Visual { get; }
-        public override string Texture => "Terraria/Images/Item_" + Visual;
+        public override string Texture => Arte.Item(this, Visual);
 
         public override void SetDefaults()
         {
@@ -212,7 +231,7 @@ namespace AscensaoAstral.Content.Items
         protected abstract Color Tinta { get; }
         protected abstract int Pet { get; }
         protected abstract int Buff { get; }
-        public override string Texture => "Terraria/Images/Item_" + Visual;
+        public override string Texture => Arte.Item(this, Visual);
 
         public override void SetDefaults()
         {
@@ -221,7 +240,7 @@ namespace AscensaoAstral.Content.Items
             Item.rare = ItemRarityID.Master;
             Item.master = true;
             Item.value = Item.sellPrice(gold: 5);
-            Item.color = Tinta;
+            Item.color = Arte.Tinta(this, Tinta);
         }
 
         public override bool? UseItem(Player player)
@@ -265,13 +284,13 @@ namespace AscensaoAstral.Content.Items
 
     public class BuffMiniArmotheus : BuffDePet
     {
-        public override string Texture => "Terraria/Images/Buff_" + BuffID.Wisp;
+        public override string Texture => Arte.Buff(this, BuffID.Wisp);
         protected override int Pet => ModContent.ProjectileType<MiniArmotheus>();
     }
 
     public class BuffMiniDragao : BuffDePet
     {
-        public override string Texture => "Terraria/Images/Buff_" + BuffID.ShadowOrb;
+        public override string Texture => Arte.Buff(this, BuffID.ShadowOrb);
         protected override int Pet => ModContent.ProjectileType<MiniDragao>();
     }
 
@@ -327,9 +346,16 @@ namespace AscensaoAstral.Content.Items
 
         public override bool PreDraw(ref Color lightColor)
         {
+            float quique = Math.Abs(MathF.Sin(Main.GlobalTimeWrappedHourly * 4f)) * 6f;
+            if (Arte.Tem("MiniArmotheus")) // Assets/Sprites/MiniArmotheus.png: um quadro só, no tamanho final
+            {
+                Texture2D meu = Arte.Textura("MiniArmotheus", null);
+                Main.EntitySpriteDraw(meu, Projectile.Center - Main.screenPosition - new Vector2(0f, quique), null, Color.Lerp(lightColor, Color.White, 0.5f),
+                    Projectile.rotation, meu.Size() / 2f, 1f, Projectile.spriteDirection > 0 ? SpriteEffects.FlipHorizontally : SpriteEffects.None);
+                return false;
+            }
             Texture2D tex = ModContent.Request<Texture2D>("AscensaoAstral/Assets/Sheets/Idle").Value;
             int q = (int)(Main.GlobalTimeWrappedHourly * 8f) % 6;
-            float quique = Math.Abs(MathF.Sin(Main.GlobalTimeWrappedHourly * 4f)) * 6f;
             Main.EntitySpriteDraw(tex, Projectile.Center - Main.screenPosition - new Vector2(0f, quique), new Rectangle(q * 100, 0, 100, 100),
                 Color.Lerp(lightColor, Color.White, 0.5f), Projectile.rotation, new Vector2(50f), 0.42f, Projectile.spriteDirection > 0 ? SpriteEffects.FlipHorizontally : SpriteEffects.None);
             return false;

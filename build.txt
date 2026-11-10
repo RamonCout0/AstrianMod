@@ -3,3 +3,4 @@ author = Ramon
 version = 0.1.0
 modReferences = Luminance, SubworldLibrary
 buildIgnore = Ferramentas/*, Capturas/*, *.md, .gitignore, .git/*
+sortAfter = CalamityMod, BossChecklist

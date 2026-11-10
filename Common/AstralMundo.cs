@@ -110,6 +110,12 @@ namespace AscensaoAstral.Common
             if (!AstraniaLiberada && Main.hardMode && WorldGen.altarCount > 0)
                 LiberarAstrania();
 
+            // O Eco Estelar não é NPC da cidade, então o mundo não salva ele: sem isto, ele sumia para sempre ao
+            // recarregar o mundo (e quem ainda não tinha se fundido nunca mais conseguia). Ele sempre volta para a cratera.
+            if (ImpactoAconteceu && Cratera != Point.Zero && !Raids.DentroDeUmaRaid && Main.GameUpdateCount % 300 == 0
+                && !NPC.AnyNPCs(ModContent.NPCType<EcoEstelar>()))
+                NPC.NewNPC(new EntitySource_WorldEvent(), Cratera.X * 16, (Cratera.Y + 6) * 16, ModContent.NPCType<EcoEstelar>());
+
             // Se o jogo fechou com o Éter de pé e não há luta acontecendo, desmonta
             if (EterConstruido && RaidBoss.Ativo is null)
                 EterEstrutura.Demolir();

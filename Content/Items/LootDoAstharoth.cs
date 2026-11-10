@@ -21,7 +21,7 @@ namespace AscensaoAstral.Content.Items
     public class FragmentoDoEter : ModItem
     {
         // Arte provisória: o próprio sprite do Terraria (FragmentNebula), tingido — como o Calamity antigo fazia
-        public override string Texture => "Terraria/Images/Item_" + ItemID.FragmentNebula;
+        public override string Texture => Arte.Item(this, ItemID.FragmentNebula);
 
         public override void SetStaticDefaults()
         {
@@ -31,7 +31,7 @@ namespace AscensaoAstral.Content.Items
 
         public override void SetDefaults()
         {
-            Item.color = new Color(200, 150, 255);
+            Item.color = Arte.Tinta(this, new Color(200, 150, 255));
             Item.width = 20; Item.height = 20;
             Item.maxStack = Item.CommonMaxStack;
             Item.value = Item.sellPrice(gold: 1);
@@ -45,7 +45,7 @@ namespace AscensaoAstral.Content.Items
     public class LaminaDoErrante : ModItem, IArmaComReferencia
     {
         // Arte provisória: o próprio sprite do Terraria (NightsEdge), tingido — como o Calamity antigo fazia
-        public override string Texture => "Terraria/Images/Item_" + ItemID.NightsEdge;
+        public override string Texture => Arte.Item(this, ItemID.NightsEdge);
 
         public int ReferenciaVanilla => ItemID.PossessedHatchet;
         public string ReferenciaCalamity => "Virulence";
@@ -53,7 +53,7 @@ namespace AscensaoAstral.Content.Items
 
         public override void SetDefaults()
         {
-            Item.color = new Color(215, 170, 255);
+            Item.color = Arte.Tinta(this, new Color(215, 170, 255));
             Item.width = 52; Item.height = 52;
             Item.DamageType = DamageClass.Melee;
             Item.damage = 95;
@@ -144,15 +144,15 @@ namespace AscensaoAstral.Content.Items
     public class ArcoDoArcanjo : ModItem, IArmaComReferencia
     {
         // Arte provisória: o próprio sprite do Terraria (DaedalusStormbow), tingido — como o Calamity antigo fazia
-        public override string Texture => "Terraria/Images/Item_" + ItemID.DaedalusStormbow;
+        public override string Texture => Arte.Item(this, ItemID.DaedalusStormbow);
 
-        public int ReferenciaVanilla => ItemID.Stynger;
+        public int ReferenciaVanilla => ItemID.PulseBow; // (o Stynger tem dano baixo por tiro: o dano dele está na explosão)
         public string ReferenciaCalamity => "Malevolence";
         public float Fator => 0.7f; // flecha + 3 penas
 
         public override void SetDefaults()
         {
-            Item.color = new Color(255, 230, 170);
+            Item.color = Arte.Tinta(this, new Color(255, 230, 170));
             Item.width = 24; Item.height = 54;
             Item.DamageType = DamageClass.Ranged;
             Item.damage = 60;
@@ -241,7 +241,7 @@ namespace AscensaoAstral.Content.Items
     public class TomoDoJulgamento : ModItem, IArmaComReferencia
     {
         // Arte provisória: o próprio sprite do Terraria (SpellTome), tingido — como o Calamity antigo fazia
-        public override string Texture => "Terraria/Images/Item_" + ItemID.SpellTome;
+        public override string Texture => Arte.Item(this, ItemID.SpellTome);
 
         public int ReferenciaVanilla => ItemID.HeatRay;
         public string ReferenciaCalamity => "PlagueStaff";
@@ -249,7 +249,7 @@ namespace AscensaoAstral.Content.Items
 
         public override void SetDefaults()
         {
-            Item.color = new Color(255, 225, 150);
+            Item.color = Arte.Tinta(this, new Color(255, 225, 150));
             Item.width = 28; Item.height = 30;
             Item.DamageType = DamageClass.Magic;
             Item.damage = 110;
@@ -296,11 +296,11 @@ namespace AscensaoAstral.Content.Items
     public class EcoDoEter : ModItem
     {
         // Arte provisória: o próprio sprite do Terraria (CelestialStone), tingido — como o Calamity antigo fazia
-        public override string Texture => "Terraria/Images/Item_" + ItemID.CelestialStone;
+        public override string Texture => Arte.Item(this, ItemID.CelestialStone);
 
         public override void SetDefaults()
         {
-            Item.color = new Color(190, 140, 255);
+            Item.color = Arte.Tinta(this, new Color(190, 140, 255));
             Item.width = 28; Item.height = 28;
             Item.accessory = true;
             Item.expert = true;
@@ -314,7 +314,7 @@ namespace AscensaoAstral.Content.Items
     /// <summary>O instante no Éter do Eco do Éter: intangível e mais rápido.</summary>
     public class PassoNoEter : ModBuff
     {
-        public override string Texture => "Terraria/Images/Buff_" + BuffID.ShadowDodge;
+        public override string Texture => Arte.Buff(this, BuffID.ShadowDodge);
 
         public override void SetStaticDefaults() => Main.buffNoSave[Type] = true;
 
@@ -332,7 +332,7 @@ namespace AscensaoAstral.Content.Items
     public class BolsaDoAstharoth : ModItem
     {
         // Arte provisória: o próprio sprite do Terraria (GolemBossBag), tingido — como o Calamity antigo fazia
-        public override string Texture => "Terraria/Images/Item_" + ItemID.GolemBossBag;
+        public override string Texture => Arte.Item(this, ItemID.GolemBossBag);
 
         public override void SetStaticDefaults()
         {
@@ -342,7 +342,7 @@ namespace AscensaoAstral.Content.Items
 
         public override void SetDefaults()
         {
-            Item.color = new Color(200, 150, 255);
+            Item.color = Arte.Tinta(this, new Color(200, 150, 255));
             Item.width = 32; Item.height = 32;
             Item.maxStack = Item.CommonMaxStack;
             Item.consumable = true;

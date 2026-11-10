@@ -74,7 +74,7 @@ namespace AscensaoAstral.Content.Projectiles
             if (RaidBoss.Ativo is not RaidSilvanna s) return;
             if (s.Enfurecida) modifiers.SourceDamage *= 1.5f;
             // revanche (pós-Moon Lord): os mesmos ataques com dano de fim de jogo; com o Calamity, no nível da Providence
-            if (RaidSilvanna.Revanche) modifiers.SourceDamage *= Common.Equilibrio.ComCalamity ? 3.2f : 2.4f;
+            if (RaidSilvanna.Revanche) modifiers.SourceDamage *= Common.Equilibrio.ComCalamity ? 2f : 1.5f; // Expert: ~180–240 (o raio do Moon Lord dá 300)
         }
     }
 }
