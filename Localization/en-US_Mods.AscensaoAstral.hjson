@@ -141,6 +141,7 @@ Mods: {
 
 		Keybinds: {
 			UltimateDaFusao.DisplayName: Fusion Ultimate
+			ContraAtaque.DisplayName: Counterattack
 		}
 
 		Subworlds: {
@@ -159,6 +160,7 @@ Mods: {
 		}
 
 		Projectiles: {
+			GolpeDeContra.DisplayName: Counterattack
 			SentinelaProjetil.DisplayName: Sentinel Projectile
 			PilarSolar.DisplayName: Solar Pillar
 			PenaDeLuz.DisplayName: Light Feather

@@ -27,7 +27,7 @@ namespace AscensaoAstral.Common.Raid
     {
         public const int REINICIANDO = 999;
         protected const float StaggerRatio = 0.6f;
-        protected const float StaggerDecaimento = 1.2f;
+        protected const float StaggerDecaimento = 0.0005f; // fração da barra que esvazia por tick sem levar dano (~3%/s)
 
         // ─── Estado sincronizado (ai[] já vai pela rede sozinho) ───
         public int Estado
@@ -284,6 +284,7 @@ namespace AscensaoAstral.Common.Raid
             }
             if (Vitrine.Ligada && Main.netMode == NetmodeID.SinglePlayer)
                 Vitrine.Controlar(this);
+            AtualizarCounter();
             ExecutarEstado();
             ConfinarJogadorLocal();
             AtualizarImpacto();
@@ -490,6 +491,117 @@ namespace AscensaoAstral.Common.Raid
             }
         }
 
+        // ─── Counter (contra-ataque) ───
+        // O chefe abre uma JANELA antes de certos golpes: toca o "tudun", fica azul e solta um estouro de luz.
+        // Quem acertar o Contra-ataque (tecla própria, Common/ContraAtaque.cs) dentro dela cancela o golpe e o atordoa.
+        // O servidor decide; os clientes só tocam os efeitos quando veem a janela abrir ou o contador de acertos subir.
+        public int JanelaCounter;
+        public int CountersSofridos;
+        public bool JanelaAberta => JanelaCounter > 0;
+        private int janelaVista, countersVistos, segundaBatida, estouro, estouroForte;
+
+        /// <summary>Abre a janela do counter por N ticks (chame no servidor, no tick em que o golpe começa a carregar).</summary>
+        protected void AbrirJanelaDeCounter(int ticks)
+        {
+            JanelaCounter = ticks;
+            NPC.netUpdate = true;
+        }
+
+        /// <summary>Um contra-ataque acertou (roda no servidor, ou direto no singleplayer).</summary>
+        public void ReceberCounter(int quem)
+        {
+            if (!JanelaAberta || !Servidor) return;
+            JanelaCounter = 0;
+            CountersSofridos++;
+            AoSofrerCounter(quem);
+            NPC.netUpdate = true;
+        }
+
+        /// <summary>O que o chefe faz quando leva o counter (padrão: nada; o Astharoth fica atordoado).</summary>
+        protected virtual void AoSofrerCounter(int quem) { }
+
+        /// <summary>Som do counter: troque soltando Assets/Sons/Counter.ogg no mod (sem arquivo, usa sons do Terraria).</summary>
+        private static void TocarBatida(Vector2 onde, bool segunda)
+        {
+            if (ModContent.HasAsset("AscensaoAstral/Assets/Sons/Counter"))
+            {
+                if (!segunda) SoundEngine.PlaySound(new SoundStyle("AscensaoAstral/Assets/Sons/Counter"), onde);
+                return;
+            }
+            SoundEngine.PlaySound((segunda ? SoundID.Item29 with { Pitch = -0.45f, Volume = 1.1f } : SoundID.Item29 with { Pitch = 0.15f, Volume = 0.9f }), onde);
+        }
+
+        private void AtualizarCounter()
+        {
+            if (JanelaCounter > 0)
+                JanelaCounter--;
+            if (Main.netMode == NetmodeID.Server)
+                return;
+
+            // abriu: "tu-dun" + estouro azul
+            if (JanelaCounter > 0 && janelaVista == 0)
+            {
+                TocarBatida(NPC.Center, false);
+                segundaBatida = 9;
+                estouro = 22;
+                for (int i = 0; i < 36; i++)
+                {
+                    Vector2 v = (MathHelper.TwoPi * i / 36f).ToRotationVector2() * Main.rand.NextFloat(6f, 9f);
+                    Dust d = Dust.NewDustPerfect(NPC.Center, DustID.IceTorch, v, 0, default, 2f);
+                    d.noGravity = true;
+                }
+            }
+            janelaVista = JanelaCounter;
+            if (segundaBatida > 0 && --segundaBatida == 0)
+                TocarBatida(NPC.Center, true);
+            if (estouro > 0) estouro--;
+            if (estouroForte > 0) estouroForte--;
+
+            // acertaram: estouro grande, tremor e o aviso
+            if (CountersSofridos != countersVistos)
+            {
+                if (CountersSofridos > countersVistos)
+                {
+                    estouroForte = 30;
+                    SoundEngine.PlaySound(SoundID.Item14 with { Pitch = 0.2f }, NPC.Center);
+                    SoundEngine.PlaySound(SoundID.NPCHit4 with { Pitch = -0.4f }, NPC.Center);
+                    Luminance.Core.Graphics.ScreenShakeSystem.StartShakeAtPoint(NPC.Center, 10f);
+                    CombatText.NewText(NPC.Hitbox, new Color(120, 200, 255), "CONTRA-ATAQUE!", true);
+                    for (int i = 0; i < 70; i++)
+                    {
+                        Dust d = Dust.NewDustPerfect(NPC.Center, i % 2 == 0 ? DustID.IceTorch : DustID.Electric, Main.rand.NextVector2Circular(14f, 14f), 0, default, 2.2f);
+                        d.noGravity = true;
+                    }
+                }
+                countersVistos = CountersSofridos;
+            }
+        }
+
+        /// <summary>Brilho azul da janela e os estouros. Chame no começo do PreDraw do chefe.</summary>
+        protected void DesenharCounter()
+        {
+            if (JanelaAberta)
+            {
+                float pulso = 0.8f + 0.2f * MathF.Sin(Main.GlobalTimeWrappedHourly * 30f);
+                Content.Projectiles.Desenho.Brilho(NPC.Center, new Color(80, 170, 255) * pulso, 2.2f);
+                Content.Projectiles.Desenho.Brilho(NPC.Center, new Color(200, 235, 255) * 0.6f, 1.1f);
+            }
+            if (estouro > 0)
+            {
+                float t = 1f - estouro / 22f;
+                Content.Projectiles.Desenho.Brilho(NPC.Center, new Color(90, 180, 255) * (1f - t), 1.5f + 5f * t);
+            }
+            if (estouroForte > 0)
+            {
+                float t = 1f - estouroForte / 30f;
+                Content.Projectiles.Desenho.Brilho(NPC.Center, new Color(220, 245, 255) * (1f - t), 2f + 9f * t);
+                Content.Projectiles.Desenho.Brilho(NPC.Center, new Color(60, 150, 255) * (1f - t), 3f + 6f * t);
+            }
+        }
+
+        /// <summary>Tinta azul do corpo enquanto a janela está aberta.</summary>
+        protected Color TintaDeCounter(Color c) => JanelaAberta ? Color.Lerp(c, new Color(110, 190, 255), 0.7f) : c;
+
         // ─── Stagger ───
         private void AtualizarStagger()
         {
@@ -506,7 +618,7 @@ namespace AscensaoAstral.Common.Raid
                 if (perda > 0f)
                     Stagger = Math.Min(StaggerMax, Stagger + perda * StaggerRatio);
                 else
-                    Stagger = Math.Max(0f, Stagger - StaggerDecaimento);
+                    Stagger = Math.Max(0f, Stagger - StaggerMax * StaggerDecaimento);
 
                 if (Stagger >= StaggerMax)
                     stunPendente = true;
@@ -666,6 +778,7 @@ namespace AscensaoAstral.Common.Raid
             Estado = novo;
             Timer = 0;
             etapa = 0;
+            JanelaCounter = 0;
             NPC.netUpdate = true;
         }
 
@@ -721,6 +834,7 @@ namespace AscensaoAstral.Common.Raid
             w.Write(etapa); w.Write(contadorAtaque); w.Write(stunPendente); w.Write(wipeAgendado);
             w.Write(ArenaEsq); w.Write(ArenaDir); w.Write(ArenaTopo); w.Write(ArenaPiso);
             w.Write(checkpointEstado); w.Write(checkpointVida); w.WriteVector2(PontoDeRetorno); w.Write(vidaCongelada);
+            w.Write(JanelaCounter); w.Write(CountersSofridos);
             EscreverExtra(w);
         }
 
@@ -730,6 +844,7 @@ namespace AscensaoAstral.Common.Raid
             etapa = r.ReadInt32(); contadorAtaque = r.ReadInt32(); stunPendente = r.ReadBoolean(); wipeAgendado = r.ReadBoolean();
             ArenaEsq = r.ReadSingle(); ArenaDir = r.ReadSingle(); ArenaTopo = r.ReadSingle(); ArenaPiso = r.ReadSingle();
             checkpointEstado = r.ReadInt32(); checkpointVida = r.ReadInt32(); PontoDeRetorno = r.ReadVector2(); vidaCongelada = r.ReadSingle();
+            JanelaCounter = r.ReadInt32(); CountersSofridos = r.ReadInt32();
             LerExtra(r);
         }
 

@@ -80,8 +80,9 @@ namespace AscensaoAstral.Content.Bosses.Silvanna
         private const float PuxaoGiro = 9f, PuxaoComGancho = 0.8f;
         private static readonly Color CorSilvanna = new(120, 210, 230);
 
-        public override float StaggerMax => 1500f;
-        public override float MetaStagger => Estado == T_GIRO || Estado == T_NEVASCA ? 1600f : StaggerMax;
+        // A barra acompanha a vida (Expert, Calamity, revanche): ~15% da vida em dano quebra a postura.
+        public override float StaggerMax => NPC.lifeMax * 0.09f;
+        public override float MetaStagger => Estado == T_GIRO || Estado == T_NEVASCA ? NPC.lifeMax * 0.067f : StaggerMax;
         public override bool PortaoAtivo => (Estado == T_GIRO || Estado == T_NEVASCA || Estado == FINAL) && etapa >= 1;
         public override bool MostrarBarraDeQuebra => Estado != FINAL && Estado != INTRO && Estado != DESPEDIDA;
         public override bool EstaAtordoado => Estado == ATORDOADO;

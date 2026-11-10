@@ -141,6 +141,7 @@ Mods: {
 
 		Keybinds: {
 			UltimateDaFusao.DisplayName: Ultimate da Fusão
+			ContraAtaque.DisplayName: Contra-ataque
 		}
 
 		Subworlds: {
@@ -159,6 +160,7 @@ Mods: {
 		}
 
 		Projectiles: {
+			GolpeDeContra.DisplayName: Contra-ataque
 			SentinelaProjetil.DisplayName: Projétil da Sentinela
 			PilarSolar.DisplayName: Pilar Solar
 			PenaDeLuz.DisplayName: Pena de Luz

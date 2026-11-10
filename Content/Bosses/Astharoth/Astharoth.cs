@@ -43,11 +43,12 @@ namespace AscensaoAstral.Content.Bosses.Astharoth
             DUELO_CORTE = 7, PASSO_DO_ETER = 8, RASANTE = 9, T_FUSAO = 10, DESPEDIDA = 11,
             ESPIRAL = 12, LAMINAS = 13, FEIXE = 14, CHUVA = 15, // ataques que cobrem o ar (contra quem voa)
             // Etapa final — o ARCANJO tem ataques só dele, de luz
-            JULGAMENTO = 16, ASAS = 17, CRUZ_DE_LUZ = 18;
+            JULGAMENTO = 16, ASAS = 17, CRUZ_DE_LUZ = 18,
+            GOLPE_PESADO = 19; // golpe com janela de counter (fica azul)
 
         public override IEnumerable<Common.Raid.Vitrine.Item> AtaquesDaVitrine(bool comMecanicas)
         {
-            yield return new(CORTE, 1, "Corte"); yield return new(RAJADAS, 1, "Rajadas"); yield return new(LAMINAS, 1, "Laminas"); yield return new(CHUVA, 1, "Chuva");
+            yield return new(GOLPE_PESADO, 1, "GolpePesado"); yield return new(CORTE, 1, "Corte"); yield return new(RAJADAS, 1, "Rajadas"); yield return new(LAMINAS, 1, "Laminas"); yield return new(CHUVA, 1, "Chuva");
             yield return new(DUELO_CORTE, 2, "DueloCorte"); yield return new(ESPIRAL, 2, "Espiral"); yield return new(PASSO_DO_ETER, 2, "PassoDoEter");
             yield return new(FEIXE, 2, "Feixe"); yield return new(RASANTE, 2, "Rasante");
             yield return new(JULGAMENTO, 3, "Julgamento"); yield return new(ASAS, 3, "Asas"); yield return new(CRUZ_DE_LUZ, 3, "CruzDeLuz");
@@ -73,20 +74,23 @@ namespace AscensaoAstral.Content.Bosses.Astharoth
 
         // Rotações: cada nível libera mais ataques
         private static int[] RotacaoDuelo => Dificuldade.Escolher(
-            new[] { CORTE, RAJADAS, LAMINAS },
-            new[] { CORTE, RAJADAS, LAMINAS, CHUVA },
-            new[] { CORTE, RAJADAS, LAMINAS, CHUVA });
+            new[] { CORTE, GOLPE_PESADO, RAJADAS, LAMINAS },
+            new[] { CORTE, GOLPE_PESADO, RAJADAS, LAMINAS, CHUVA },
+            new[] { CORTE, GOLPE_PESADO, RAJADAS, LAMINAS, CHUVA });
         private static int[] RotacaoAlma => Dificuldade.Escolher(
-            new[] { DUELO_CORTE, PASSO_DO_ETER, FEIXE },
-            new[] { DUELO_CORTE, ESPIRAL, PASSO_DO_ETER, FEIXE },
-            new[] { DUELO_CORTE, ESPIRAL, PASSO_DO_ETER, FEIXE, RASANTE });
+            new[] { DUELO_CORTE, PASSO_DO_ETER, GOLPE_PESADO, FEIXE },
+            new[] { DUELO_CORTE, ESPIRAL, PASSO_DO_ETER, GOLPE_PESADO, FEIXE },
+            new[] { DUELO_CORTE, ESPIRAL, PASSO_DO_ETER, GOLPE_PESADO, FEIXE, RASANTE });
         private static int[] RotacaoArcanjo => Dificuldade.Escolher(
-            new[] { JULGAMENTO, ASAS, FEIXE, CRUZ_DE_LUZ, PASSO_DO_ETER },
+            new[] { JULGAMENTO, ASAS, GOLPE_PESADO, FEIXE, CRUZ_DE_LUZ, PASSO_DO_ETER },
             new[] { JULGAMENTO, ESPIRAL, ASAS, FEIXE, CRUZ_DE_LUZ, LAMINAS, PASSO_DO_ETER },
             new[] { JULGAMENTO, ESPIRAL, ASAS, FEIXE, CRUZ_DE_LUZ, LAMINAS, CHUVA, PASSO_DO_ETER });
         private static readonly Color CorAstharoth = new(190, 150, 255);
 
-        public override float StaggerMax => 2200f;
+        // A barra acompanha a vida (Expert, Calamity, Revengeance): ~13% da vida em dano quebra a postura.
+        public override float StaggerMax => NPC.lifeMax * 0.08f;
+        // No portão da Fusão a meta continua a de antes (proporcional à vida base)
+        public override float MetaStagger => PortaoAtivo ? NPC.lifeMax * 0.046f : StaggerMax;
         public override bool PortaoAtivo => Estado == T_FUSAO && etapa >= 1 && etapa <= 2;
         public override bool EstaAtordoado => Estado == ATORDOADO;
         public override bool MostrarBarraDeQuebra => Estado != T_FUSAO && Estado != INTRO && Estado != DESPEDIDA;
@@ -105,7 +109,7 @@ namespace AscensaoAstral.Content.Bosses.Astharoth
             INTRO => "Intro", PAUSA => "Pausa", CORTE => "Corte", RAJADAS => "Rajadas", ATORDOADO => "Atordoado",
             T_ALMA => "T:Alma", DUELO_CORTE => "DueloCorte", PASSO_DO_ETER => "PassoDoEter", RASANTE => "Rasante",
             T_FUSAO => "T:Fusao", DESPEDIDA => "Despedida", ESPIRAL => "Espiral", LAMINAS => "Laminas", FEIXE => "Feixe",
-            CHUVA => "Chuva", JULGAMENTO => "Julgamento", ASAS => "AsasDeLuz", CRUZ_DE_LUZ => "CruzDeLuz", REINICIANDO => "Reiniciando", _ => Estado.ToString()
+            CHUVA => "Chuva", JULGAMENTO => "Julgamento", ASAS => "AsasDeLuz", CRUZ_DE_LUZ => "CruzDeLuz", GOLPE_PESADO => "GolpePesado", REINICIANDO => "Reiniciando", _ => Estado.ToString()
         };
 
         // ─── Dados extras ───
@@ -326,6 +330,7 @@ namespace AscensaoAstral.Content.Bosses.Astharoth
                 case JULGAMENTO: FazerJulgamento(); break;
                 case ASAS: FazerAsas(); break;
                 case CRUZ_DE_LUZ: FazerCruzDeLuz(); break;
+                case GOLPE_PESADO: FazerGolpePesado(); break;
                 default: IrPara(INTRO); break;
             }
 
@@ -461,6 +466,52 @@ namespace AscensaoAstral.Content.Bosses.Astharoth
                 Stagger = 0f;
                 IrPara(PAUSA);
             }
+        }
+
+        /// <summary>
+        /// GOLPE PESADO (counter): ele crava o pé perto de você, ergue a lâmina e FICA AZUL com o "tudun".
+        /// Acerte o Contra-ataque nessa janela e o golpe é cancelado; ele fica atordoado. Se ninguém acertar,
+        /// sai um corte em meia-lua forte na sua direção (dois no Mítico, um para cada lado).
+        /// </summary>
+        private void FazerGolpePesado()
+        {
+            const int Chega = 40, Janela = 45, Solta = Chega + Janela;
+            if (Timer < Chega)
+            {
+                if (Timer == 1 && Servidor)
+                {
+                    ladoAtaque = Alvo.Center.X > NPC.Center.X ? 1 : -1;
+                    NPC.netUpdate = true;
+                }
+                float x = MathHelper.Clamp(Alvo.Center.X - ladoAtaque * 170f, ArenaEsq + 60f, ArenaDir - 60f);
+                MoverAte(new Vector2(x, ArenaPiso - 64f), VelMover * 1.3f);
+                return;
+            }
+            NPC.velocity *= 0.8f;
+            if (Timer == Chega && Servidor)
+                AbrirJanelaDeCounter(Janela);
+            if (Timer == Solta)
+            {
+                SoundEngine.PlaySound(SoundID.Item71 with { Pitch = -0.6f, Volume = 1.2f }, NPC.Center);
+                ScreenShakeSystem.StartShakeAtPoint(NPC.Center, 8f);
+                if (Servidor)
+                {
+                    int dir = Alvo.Center.X > NPC.Center.X ? 1 : -1;
+                    float arcanjo = Fase >= 3 ? 1f : 0f;
+                    Projectile.NewProjectile(NPC.GetSource_FromAI(), NPC.Center, new Vector2(dir * 20f, 0f), ModContent.ProjectileType<CorteDoPasso>(), 55, 0f, Main.myPlayer, arcanjo);
+                    if (Dificuldade.Mitico)
+                        Projectile.NewProjectile(NPC.GetSource_FromAI(), NPC.Center, new Vector2(-dir * 20f, 0f), ModContent.ProjectileType<CorteDoPasso>(), 55, 0f, Main.myPlayer, arcanjo);
+                }
+            }
+            if (Timer >= Solta + 45)
+                IrPara(PAUSA);
+        }
+
+        protected override void AoSofrerCounter(int quem)
+        {
+            Stagger = 0f;
+            stunPendente = false;
+            IrPara(ATORDOADO);
         }
 
         /// <summary>
@@ -1177,6 +1228,7 @@ namespace AscensaoAstral.Content.Bosses.Astharoth
         public override bool PreDraw(SpriteBatch sb, Vector2 screenPos, Color drawColor)
         {
             DesenharMecanicas();
+            DesenharCounter();
 
             Texture2D tex = TextureAssets.Npc[Type].Value;
             bool orbitando = Estado == T_FUSAO && etapa == 1;
@@ -1191,6 +1243,7 @@ namespace AscensaoAstral.Content.Bosses.Astharoth
             Color tinta = Fase >= 3 ? new Color(255, 235, 170) : Color.White;
             Color cor = NPC.GetAlpha(Color.Lerp(drawColor, Color.White, 0.85f)).MultiplyRGB(tinta);
             if (EstaAtordoado) cor = Color.Lerp(cor, new Color(255, 255, 60), 0.55f);
+            else if (JanelaAberta) cor = TintaDeCounter(cor);
             else if (FlashDano > 0) cor = Color.Lerp(cor, new Color(255, 120, 120), 0.6f);
             if (orbitando) // indo para o fundo ele vira só luz
                 cor = Color.Lerp(new Color(255, 235, 190, 0), cor, prof) * prof;

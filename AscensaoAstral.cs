@@ -11,7 +11,7 @@ namespace AscensaoAstral
         /// </summary>
         public static bool DEBUG => Terraria.ModLoader.ModContent.GetInstance<Common.Configuracao>()?.ModoDeTeste ?? false;
 
-        // Pacotes do mod: 0 = pedido para levar o grupo para a dimensão da raid
+        // Pacotes do mod: 0 = pedido para levar o grupo para a dimensão da raid; 3 = contra-ataque acertou
         public override void HandlePacket(BinaryReader reader, int whoAmI)
         {
             byte tipo = reader.ReadByte();
@@ -21,6 +21,12 @@ namespace AscensaoAstral
                 Common.Raid.MenuDaRaid.ReceberPronto(reader, whoAmI, false);
             else if (tipo == 2) // o servidor repassando quem está pronto
                 Common.Raid.MenuDaRaid.ReceberPronto(reader, whoAmI, true);
+            else if (tipo == 3) // um contra-ataque acertou o chefe (chega no servidor)
+            {
+                int npc = reader.ReadInt32();
+                if (npc >= 0 && npc < Terraria.Main.maxNPCs && Terraria.Main.npc[npc].ModNPC is Common.Raid.RaidBoss chefe)
+                    chefe.ReceberCounter(whoAmI);
+            }
         }
     }
 }
