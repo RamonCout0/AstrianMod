@@ -88,18 +88,19 @@ namespace AscensaoAstral.Content.Projectiles
             if (!dono.active || dono.dead) { Projectile.Kill(); return; }
             Projectile.Center = dono.Center + new Vector2(Projectile.ai[0] * 55f, 0f);
             Lighting.AddLight(Projectile.Center, 0.3f, 0.6f, 1f);
-        }
 
-        public override void OnHitNPC(NPC target, NPC.HitInfo hit, int damageDone)
-        {
-            if (Projectile.owner != Main.myPlayer || target.ModNPC is not Common.Raid.RaidBoss chefe || !chefe.JanelaAberta) return;
+            // O counter vale por ENCOSTAR na área certa com a janela aberta (o chefe ou a cabeça do dragão,
+            // que não toma dano). Quem decide é o servidor.
+            if (Projectile.owner != Main.myPlayer || Projectile.localAI[0] != 0f) return;
+            if (Common.Raid.RaidBoss.Ativo is not Common.Raid.RaidBoss chefe || !chefe.JanelaAberta || !chefe.AreaDeCounter.Intersects(Projectile.Hitbox)) return;
+            Projectile.localAI[0] = 1f;
             if (Main.netMode == NetmodeID.SinglePlayer)
                 chefe.ReceberCounter(Projectile.owner);
             else
             {
                 ModPacket p = Mod.GetPacket();
                 p.Write((byte)3);
-                p.Write(target.whoAmI);
+                p.Write(chefe.NPC.whoAmI);
                 p.Send();
             }
         }

@@ -17,7 +17,7 @@ namespace AscensaoAstral.Common.Raid
     /// </summary>
     public static class EterEstrutura
     {
-        public const int ComprimentoPonte = 200;
+        public const int ComprimentoPonte = 320; // o corredor da Travessia (~5.100 px)
         public const int LarguraArena = 150; // 2400 px, como a caixa da Supreme Calamitas
         private const int AlturaLimpa = 90;
         private const int AlturaParede = 84;

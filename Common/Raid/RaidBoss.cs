@@ -500,6 +500,11 @@ namespace AscensaoAstral.Common.Raid
         public bool JanelaAberta => JanelaCounter > 0;
         private int janelaVista, countersVistos, segundaBatida, estouro, estouroForte;
 
+        /// <summary>Onde o brilho e o estouro do counter aparecem (o Astharoth troca para a cabeça do dragão).</summary>
+        public virtual Vector2 OndeBrilhaCounter => NPC.Center;
+        /// <summary>A área que o golpe de Contra-ataque precisa tocar enquanto a janela está aberta.</summary>
+        public virtual Rectangle AreaDeCounter => NPC.Hitbox;
+
         /// <summary>Abre a janela do counter por N ticks (chame no servidor, no tick em que o golpe começa a carregar).</summary>
         protected void AbrirJanelaDeCounter(int ticks)
         {
@@ -521,14 +526,14 @@ namespace AscensaoAstral.Common.Raid
         protected virtual void AoSofrerCounter(int quem) { }
 
         /// <summary>Som do counter: troque soltando Assets/Sons/Counter.ogg no mod (sem arquivo, usa sons do Terraria).</summary>
-        private static void TocarBatida(Vector2 onde, bool segunda)
+        private static void TocarBatida(bool segunda)
         {
             if (ModContent.HasAsset("AscensaoAstral/Assets/Sons/Counter"))
             {
-                if (!segunda) SoundEngine.PlaySound(new SoundStyle("AscensaoAstral/Assets/Sons/Counter"), onde);
+                if (!segunda) SoundEngine.PlaySound(new SoundStyle("AscensaoAstral/Assets/Sons/Counter"));
                 return;
             }
-            SoundEngine.PlaySound((segunda ? SoundID.Item29 with { Pitch = -0.45f, Volume = 1.1f } : SoundID.Item29 with { Pitch = 0.15f, Volume = 0.9f }), onde);
+            SoundEngine.PlaySound(segunda ? SoundID.Item29 with { Pitch = -0.45f, Volume = 1.1f } : SoundID.Item29 with { Pitch = 0.15f, Volume = 0.9f }); // sem posição: ouve-se de qualquer lugar
         }
 
         private void AtualizarCounter()
@@ -541,19 +546,19 @@ namespace AscensaoAstral.Common.Raid
             // abriu: "tu-dun" + estouro azul
             if (JanelaCounter > 0 && janelaVista == 0)
             {
-                TocarBatida(NPC.Center, false);
+                TocarBatida(false);
                 segundaBatida = 9;
                 estouro = 22;
                 for (int i = 0; i < 36; i++)
                 {
                     Vector2 v = (MathHelper.TwoPi * i / 36f).ToRotationVector2() * Main.rand.NextFloat(6f, 9f);
-                    Dust d = Dust.NewDustPerfect(NPC.Center, DustID.IceTorch, v, 0, default, 2f);
+                    Dust d = Dust.NewDustPerfect(OndeBrilhaCounter, DustID.IceTorch, v, 0, default, 2f);
                     d.noGravity = true;
                 }
             }
             janelaVista = JanelaCounter;
             if (segundaBatida > 0 && --segundaBatida == 0)
-                TocarBatida(NPC.Center, true);
+                TocarBatida(true);
             if (estouro > 0) estouro--;
             if (estouroForte > 0) estouroForte--;
 
@@ -563,13 +568,14 @@ namespace AscensaoAstral.Common.Raid
                 if (CountersSofridos > countersVistos)
                 {
                     estouroForte = 30;
-                    SoundEngine.PlaySound(SoundID.Item14 with { Pitch = 0.2f }, NPC.Center);
-                    SoundEngine.PlaySound(SoundID.NPCHit4 with { Pitch = -0.4f }, NPC.Center);
-                    Luminance.Core.Graphics.ScreenShakeSystem.StartShakeAtPoint(NPC.Center, 10f);
-                    CombatText.NewText(NPC.Hitbox, new Color(120, 200, 255), "CONTRA-ATAQUE!", true);
+                    Vector2 onde = OndeBrilhaCounter;
+                    SoundEngine.PlaySound(SoundID.Item14 with { Pitch = 0.2f });
+                    SoundEngine.PlaySound(SoundID.NPCHit4 with { Pitch = -0.4f });
+                    Luminance.Core.Graphics.ScreenShakeSystem.StartShakeAtPoint(onde, 10f);
+                    CombatText.NewText(Utils.CenteredRectangle(onde, new Vector2(80f)), new Color(120, 200, 255), "CONTRA-ATAQUE!", true);
                     for (int i = 0; i < 70; i++)
                     {
-                        Dust d = Dust.NewDustPerfect(NPC.Center, i % 2 == 0 ? DustID.IceTorch : DustID.Electric, Main.rand.NextVector2Circular(14f, 14f), 0, default, 2.2f);
+                        Dust d = Dust.NewDustPerfect(onde, i % 2 == 0 ? DustID.IceTorch : DustID.Electric, Main.rand.NextVector2Circular(14f, 14f), 0, default, 2.2f);
                         d.noGravity = true;
                     }
                 }
@@ -578,24 +584,25 @@ namespace AscensaoAstral.Common.Raid
         }
 
         /// <summary>Brilho azul da janela e os estouros. Chame no começo do PreDraw do chefe.</summary>
-        protected void DesenharCounter()
+        public void DesenharCounter()
         {
+            Vector2 c = OndeBrilhaCounter;
             if (JanelaAberta)
             {
                 float pulso = 0.8f + 0.2f * MathF.Sin(Main.GlobalTimeWrappedHourly * 30f);
-                Content.Projectiles.Desenho.Brilho(NPC.Center, new Color(80, 170, 255) * pulso, 2.2f);
-                Content.Projectiles.Desenho.Brilho(NPC.Center, new Color(200, 235, 255) * 0.6f, 1.1f);
+                Content.Projectiles.Desenho.Brilho(c, new Color(80, 170, 255) * pulso, 2.2f);
+                Content.Projectiles.Desenho.Brilho(c, new Color(200, 235, 255) * 0.6f, 1.1f);
             }
             if (estouro > 0)
             {
                 float t = 1f - estouro / 22f;
-                Content.Projectiles.Desenho.Brilho(NPC.Center, new Color(90, 180, 255) * (1f - t), 1.5f + 5f * t);
+                Content.Projectiles.Desenho.Brilho(c, new Color(90, 180, 255) * (1f - t), 1.5f + 5f * t);
             }
             if (estouroForte > 0)
             {
                 float t = 1f - estouroForte / 30f;
-                Content.Projectiles.Desenho.Brilho(NPC.Center, new Color(220, 245, 255) * (1f - t), 2f + 9f * t);
-                Content.Projectiles.Desenho.Brilho(NPC.Center, new Color(60, 150, 255) * (1f - t), 3f + 6f * t);
+                Content.Projectiles.Desenho.Brilho(c, new Color(220, 245, 255) * (1f - t), 2f + 9f * t);
+                Content.Projectiles.Desenho.Brilho(c, new Color(60, 150, 255) * (1f - t), 3f + 6f * t);
             }
         }
 

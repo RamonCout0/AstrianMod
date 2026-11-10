@@ -44,13 +44,14 @@ namespace AscensaoAstral.Content.Bosses.Astharoth
             ESPIRAL = 12, LAMINAS = 13, FEIXE = 14, CHUVA = 15, // ataques que cobrem o ar (contra quem voa)
             // Etapa final — o ARCANJO tem ataques só dele, de luz
             JULGAMENTO = 16, ASAS = 17, CRUZ_DE_LUZ = 18,
-            GOLPE_PESADO = 19; // golpe com janela de counter (fica azul)
+            GOLPE_PESADO = 19, // golpe com janela de counter (fica azul)
+            MORDIDA_DRAGAO = 20; // etapa 2: o dragão (de fundo) tenta uma mordida, com counter
 
         public override IEnumerable<Common.Raid.Vitrine.Item> AtaquesDaVitrine(bool comMecanicas)
         {
             yield return new(GOLPE_PESADO, 1, "GolpePesado"); yield return new(CORTE, 1, "Corte"); yield return new(RAJADAS, 1, "Rajadas"); yield return new(LAMINAS, 1, "Laminas"); yield return new(CHUVA, 1, "Chuva");
             yield return new(DUELO_CORTE, 2, "DueloCorte"); yield return new(ESPIRAL, 2, "Espiral"); yield return new(PASSO_DO_ETER, 2, "PassoDoEter");
-            yield return new(FEIXE, 2, "Feixe"); yield return new(RASANTE, 2, "Rasante");
+            yield return new(FEIXE, 2, "Feixe"); yield return new(RASANTE, 2, "Rasante"); yield return new(MORDIDA_DRAGAO, 2, "MordidaDoDragao");
             yield return new(JULGAMENTO, 3, "Julgamento"); yield return new(ASAS, 3, "Asas"); yield return new(CRUZ_DE_LUZ, 3, "CruzDeLuz");
             yield return new(FEIXE, 3, "Feixe_F3"); yield return new(CHUVA, 3, "Chuva_F3");
             if (!comMecanicas) yield break;
@@ -78,9 +79,9 @@ namespace AscensaoAstral.Content.Bosses.Astharoth
             new[] { CORTE, GOLPE_PESADO, RAJADAS, LAMINAS, CHUVA },
             new[] { CORTE, GOLPE_PESADO, RAJADAS, LAMINAS, CHUVA });
         private static int[] RotacaoAlma => Dificuldade.Escolher(
-            new[] { DUELO_CORTE, PASSO_DO_ETER, GOLPE_PESADO, FEIXE },
-            new[] { DUELO_CORTE, ESPIRAL, PASSO_DO_ETER, GOLPE_PESADO, FEIXE },
-            new[] { DUELO_CORTE, ESPIRAL, PASSO_DO_ETER, GOLPE_PESADO, FEIXE, RASANTE });
+            new[] { DUELO_CORTE, PASSO_DO_ETER, MORDIDA_DRAGAO, GOLPE_PESADO, FEIXE },
+            new[] { DUELO_CORTE, ESPIRAL, MORDIDA_DRAGAO, PASSO_DO_ETER, GOLPE_PESADO, FEIXE },
+            new[] { DUELO_CORTE, ESPIRAL, MORDIDA_DRAGAO, PASSO_DO_ETER, GOLPE_PESADO, FEIXE, RASANTE });
         private static int[] RotacaoArcanjo => Dificuldade.Escolher(
             new[] { JULGAMENTO, ASAS, GOLPE_PESADO, FEIXE, CRUZ_DE_LUZ, PASSO_DO_ETER },
             new[] { JULGAMENTO, ESPIRAL, ASAS, FEIXE, CRUZ_DE_LUZ, LAMINAS, PASSO_DO_ETER },
@@ -109,7 +110,7 @@ namespace AscensaoAstral.Content.Bosses.Astharoth
             INTRO => "Intro", PAUSA => "Pausa", CORTE => "Corte", RAJADAS => "Rajadas", ATORDOADO => "Atordoado",
             T_ALMA => "T:Alma", DUELO_CORTE => "DueloCorte", PASSO_DO_ETER => "PassoDoEter", RASANTE => "Rasante",
             T_FUSAO => "T:Fusao", DESPEDIDA => "Despedida", ESPIRAL => "Espiral", LAMINAS => "Laminas", FEIXE => "Feixe",
-            CHUVA => "Chuva", JULGAMENTO => "Julgamento", ASAS => "AsasDeLuz", CRUZ_DE_LUZ => "CruzDeLuz", GOLPE_PESADO => "GolpePesado", REINICIANDO => "Reiniciando", _ => Estado.ToString()
+            CHUVA => "Chuva", JULGAMENTO => "Julgamento", ASAS => "AsasDeLuz", CRUZ_DE_LUZ => "CruzDeLuz", GOLPE_PESADO => "GolpePesado", MORDIDA_DRAGAO => "MordidaDoDragao", REINICIANDO => "Reiniciando", _ => Estado.ToString()
         };
 
         // ─── Dados extras ───
@@ -127,6 +128,7 @@ namespace AscensaoAstral.Content.Bosses.Astharoth
             w.Write(new BitsByte(fezAlma, fezFusao, morteLiberada, modoSolo));
             w.Write(mascaraEter); w.Write(simbolo); w.Write(OrbesBoas); w.Write(ladoDragao); w.Write(ladoAtaque); w.Write(sombraX);
             w.Write(foraEsq); w.Write(foraDir); w.Write(foraTopo); w.Write(foraPiso); w.WriteVector2(alvoCorte);
+            w.Write(alvoMordida); w.Write(counterNoCiclo);
         }
 
         protected override void LerExtra(BinaryReader r)
@@ -135,6 +137,7 @@ namespace AscensaoAstral.Content.Bosses.Astharoth
             fezAlma = b[0]; fezFusao = b[1]; morteLiberada = b[2]; modoSolo = b[3];
             mascaraEter = r.ReadInt32(); simbolo = r.ReadInt32(); OrbesBoas = r.ReadInt32(); ladoDragao = r.ReadInt32(); ladoAtaque = r.ReadInt32(); sombraX = r.ReadSingle();
             foraEsq = r.ReadSingle(); foraDir = r.ReadSingle(); foraTopo = r.ReadSingle(); foraPiso = r.ReadSingle(); alvoCorte = r.ReadVector2();
+            alvoMordida = r.ReadInt32(); counterNoCiclo = r.ReadBoolean();
         }
 
         private Vector2 PosNoChao => new(CentroArena.X, ArenaPiso - 64f);
@@ -154,12 +157,17 @@ namespace AscensaoAstral.Content.Bosses.Astharoth
             get
             {
                 if (Estado == DESPEDIDA || Estado == REINICIANDO || Estado == T_FUSAO || Fase >= 3) return -1;
-                if (Estado == T_ALMA) return etapa == 1 ? 0 : etapa >= 2 ? 2 : -1;
-                if (Fase == 2) return Estado == RASANTE ? 1 : Estado == FEIXE || Estado == ESPIRAL ? 2 : 0; // nos ataques grandes ele só ronda
+                if (Estado == T_ALMA) return etapa == 1 ? 3 : -1;   // a Travessia: o dragão gigante, comandado daqui
+                if (Estado == MORDIDA_DRAGAO) return 3;
+                if (Fase == 2) return Estado == RASANTE ? 1 : 2;     // na etapa 2 ele fica DE FUNDO, rondando
                 return -1;
             }
         }
         public bool DragaoNoDuelo => Fase == 2;
+        /// <summary>Tamanho do dragão: gigante na Travessia, grande de fundo na etapa 2.</summary>
+        public float EscalaDoDragao => NaTravessia ? 2.6f : 1.8f;
+        /// <summary>Na etapa 2, rondando, ele é só uma silhueta de fundo (meio transparente).</summary>
+        public bool DragaoDeFundo => Fase == 2 && ModoDragao == 2;
         public int TimerRasante => (int)Timer;
         public int LadoDoDragao => ladoDragao;
 
@@ -331,6 +339,7 @@ namespace AscensaoAstral.Content.Bosses.Astharoth
                 case ASAS: FazerAsas(); break;
                 case CRUZ_DE_LUZ: FazerCruzDeLuz(); break;
                 case GOLPE_PESADO: FazerGolpePesado(); break;
+                case MORDIDA_DRAGAO: FazerMordidaDoDragao(); break;
                 default: IrPara(INTRO); break;
             }
 
@@ -507,8 +516,22 @@ namespace AscensaoAstral.Content.Bosses.Astharoth
                 IrPara(PAUSA);
         }
 
+        private bool CounterNoDragao => (Estado == T_ALMA || Estado == MORDIDA_DRAGAO) && Dragao is not null;
+        public override Vector2 OndeBrilhaCounter => CounterNoDragao ? Dragao.NPC.Center : NPC.Center;
+        public override Rectangle AreaDeCounter => CounterNoDragao
+            ? Utils.CenteredRectangle(Dragao.NPC.Center, new Vector2(54f * EscalaDoDragao + 60f))
+            : NPC.Hitbox;
+
         protected override void AoSofrerCounter(int quem)
         {
+            if (Estado == T_ALMA || Estado == MORDIDA_DRAGAO)
+            {
+                // counter no dragão: ele recua sem dar o golpe. Na etapa 2 o Astharoth fica exposto (quebra quase cheia)
+                counterNoCiclo = true;
+                if (Estado == MORDIDA_DRAGAO)
+                    Stagger = Math.Min(StaggerMax, Stagger + StaggerMax * 0.4f);
+                return;
+            }
             Stagger = 0f;
             stunPendente = false;
             IrPara(ATORDOADO);
@@ -733,13 +756,50 @@ namespace AscensaoAstral.Content.Bosses.Astharoth
         // ═══════════════ TRANSIÇÃO: A SEPARAÇÃO DAS ALMAS ═══════════════
         private bool EstaNaMascara(int quem) => (mascaraEter & (1 << quem)) != 0;
         /// <summary>Para o Bot de Teste: ele foi sorteado para o Éter e a corrida da ponte está acontecendo?</summary>
-        public bool BotFoiParaOEter(Player bot) => Estado == T_ALMA && etapa == 1 && EstaNaMascara(bot.whoAmI);
+        public bool BotFoiParaOEter(Player bot) => NaTravessia; // na Travessia vão todos
 
         private Rectangle Plataforma(int i)
         {
             float x = MathHelper.Lerp(EterEstrutura.Arena.Left + 200f, EterEstrutura.Arena.Right - 200f, i / 2f);
             float chao = EterEstrutura.Y0 * 16f;
             return new Rectangle((int)(x - 60f), (int)(chao - 48f), 120, 48);
+        }
+
+        // ═══════════════ TRANSIÇÃO: A TRAVESSIA DO ÉTER ═══════════════
+        // 70%: ele some numa fenda e o GRUPO TODO vai para o corredor (a ponte do Éter). Atrás de vocês a ponte
+        // DESMORONA; à frente, uma parede de luz segura o grupo — então é andar junto, no ritmo do Éter.
+        // O DRAGÃO GIGANTE acompanha e alterna dois golpes, os dois com janela de COUNTER (fica azul, "tudun"):
+        //   INVESTIDA DE VENTO  sem counter, empurra todo mundo para trás (na direção do desmoronamento)
+        //   MORDIDA             sem counter, morde o jogador marcado e o arremessa para trás
+        // Ninguém voa no corredor. Quem cair da ponte derruba o grupo (WIPE). Todos no fim → ETAPA 2.
+        private const float VelColapso = 1.1f, FolgaDaFrente = 1700f;
+        private const int AtrasoColapso = 180;
+        private const int CicloTrav = 330, TravPrepara = 120, TravJanela = 165, TravGolpe = 210, TravFim = 250;
+        private const int JanelaDoDragao = 45;
+        private const float DanoVento = 0.10f, DanoMordida = 0.30f; // fração da vida máxima
+        private int colunaColapso = -1;  // (só o servidor usa) última coluna da ponte que já caiu
+        private int alvoMordida;
+        private bool counterNoCiclo;
+        private bool estiveNaPonte; // (cliente) já pisei no corredor nesta travessia? quem caiu não volta teleportado
+
+        public bool NaTravessia => Estado == T_ALMA && etapa == 1;
+        /// <summary>Até onde a ponte já caiu (cresce com o tempo; igual em todos os clientes).</summary>
+        public float ColapsoX => Math.Min(EterEstrutura.X0 * 16f + Math.Max(0f, Timer - AtrasoColapso) * VelColapso, EterEstrutura.FimDaPonteX - 16f);
+        /// <summary>A parede de luz à frente do grupo.</summary>
+        public float FrenteX => Math.Min(ColapsoX + FolgaDaFrente, EterEstrutura.Arena.Right - 40f);
+        private int TCiclo => (int)Timer % CicloTrav;
+        private bool CicloEhInvestida => (int)Timer / CicloTrav % 2 == 0;
+
+        private float MediaXDoGrupo(out float maiorX)
+        {
+            float soma = 0f; int n = 0; maiorX = ColapsoX + 600f;
+            foreach (Player p in Main.ActivePlayers)
+                if (!p.dead && EterEstrutura.Dentro(p))
+                {
+                    soma += p.Center.X; n++;
+                    if (n == 1 || p.Center.X > maiorX) maiorX = p.Center.X;
+                }
+            return n > 0 ? soma / n : ColapsoX + 600f;
         }
 
         private void FazerSeparacao()
@@ -749,18 +809,17 @@ namespace AscensaoAstral.Content.Bosses.Astharoth
 
             switch (etapa)
             {
-                case 0: // carrega a espada
+                case 0: // ele abre a fenda e some nela
                     if (Timer == 1)
                     {
                         fezAlma = true;
                         SalvarCheckpoint(T_ALMA, CentroFora);
                         LimparPerigos();
-                        Hud.Fase("TRANSIÇÃO: A Separação das Almas", CorAstharoth);
-                        Dialogo.Falar("Astharoth", "Este mundo é pequeno demais para nós dois. Vou cortar vocês ao meio.", CorAstharoth, 200);
-                        if (JogadoresVivosNaRaid() > 1)
-                            Hud.Aviso("UM À ESQUERDA, OUTRO À DIREITA!", new Color(220, 180, 255), 150);
+                        Hud.Fase("TRANSIÇÃO: A Travessia do Éter", CorAstharoth);
+                        Dialogo.Falar("Astharoth", "Querem me alcançar? Atravessem. O Éter não espera quem fica para trás.", CorAstharoth, 200);
                     }
                     MoverAte(PosNoChao, VelMover);
+                    NPC.Opacity = Math.Max(0f, 1f - Math.Max(0f, Timer - 90f) / 60f);
                     if (Main.rand.NextBool(2))
                         Dust.NewDustPerfect(NPC.Center + Main.rand.NextVector2Circular(60f, 80f), DustID.PurpleTorch, -Vector2.UnitY * 2f, 0, default, 1.6f).noGravity = true;
 
@@ -768,100 +827,26 @@ namespace AscensaoAstral.Content.Bosses.Astharoth
                     {
                         if (Servidor)
                         {
-                            SortearAlmas();
-                            EterEstrutura.Construir(soArena: false); // solo também corre a ponte e resolve os símbolos
+                            if (AstralMundo.EterConstruido) EterEstrutura.Demolir(); // ponte inteira de novo (pode ter caído na tentativa anterior)
+                            EterEstrutura.Construir(soArena: false);
+                            colunaColapso = EterEstrutura.X0 - 1;
                         }
+                        counterNoCiclo = false;
+                        estiveNaPonte = false;
                         Hud.Clarao(0.9f);
                         ScreenShakeSystem.StartShake(18f);
                         SoundEngine.PlaySound(SoundID.Item71 with { Pitch = -0.8f, Volume = 1.2f });
                         Timer = 0;
                         etapa = 1;
+                        NPC.netUpdate = true;
                     }
                     break;
 
-                case 1: // a corrida na ponte
-                    // Teleporte dos escolhidos (cada cliente cuida de si)
-                    if (souCliente && !eu.dead && EstaNaMascara(eu.whoAmI) && !EterEstrutura.Dentro(eu))
-                        RaidJogador.Teleportar(eu, EterEstrutura.InicioDaPonte);
-
-                    // Caiu da ponte: volta para o começo
-                    if (souCliente && EstaNaMascara(eu.whoAmI) && eu.Center.Y > EterEstrutura.Regiao.Bottom)
-                    {
-                        RaidJogador.Teleportar(eu, EterEstrutura.InicioDaPonte);
-                        eu.Hurt(PlayerDeathReason.ByNPC(NPC.whoAmI), 30, 0);
-                    }
-
-                    // Os de fora seguram o chefe
-                    NPC.velocity *= 0.9f;
-                    if (Timer % 90 == 45 && Servidor)
-                    {
-                        Player alvoFora = AlguemDeFora();
-                        if (alvoFora is not null)
-                            Projectile.NewProjectile(NPC.GetSource_FromAI(), NPC.Center, NPC.DirectionTo(alvoFora.Center) * 8f, ModContent.ProjectileType<Rajada>(), 34, 0f, Main.myPlayer, 1f);
-                    }
-
-                    // Obstáculos na ponte
-                    if (Servidor)
-                    {
-                        foreach (Player p in Main.ActivePlayers)
-                        {
-                            if (p.dead || !EterEstrutura.Dentro(p)) continue;
-                            float chao = EterEstrutura.Y0 * 16f;
-                            if (Timer % 70 == 0 && p.Center.X + 260f < EterEstrutura.FimDaPonteX)
-                                RetanguloPerigo.Criar(NPC, new Vector2(p.Center.X + 260f, chao - 180f), new Vector2(60f, 360f), 45, TipoPerigo.Atordoar, 30);
-                            // (as mordidas agora são o próprio DragaoDoEter perseguindo)
-                        }
-
-                        // Na vitrine ninguém corre a ponte: depois de 6 s ela pula para os símbolos sozinha
-                        if (Common.Raid.Vitrine.Ligada && Timer > 360)
-                        {
-                            simbolo = Main.rand.Next(3);
-                            etapa = 2;
-                            Timer = 0;
-                            NPC.netUpdate = true;
-                            break;
-                        }
-
-                        // Alguém chegou ao fim da ponte → sequência de símbolos
-                        foreach (Player p in Main.ActivePlayers)
-                            if (!p.dead && EstaNaMascara(p.whoAmI) && p.Center.X >= EterEstrutura.FimDaPonteX)
-                            {
-                                simbolo = Main.rand.Next(3);
-                                etapa = 2;
-                                Timer = 0;
-                                NPC.netUpdate = true;
-                                break;
-                            }
-                    }
+                case 1:
+                    FazerTravessia(eu, souCliente);
                     break;
 
-                case 2: // a sequência de símbolos
-                    NPC.velocity *= 0.9f;
-                    if (souCliente)
-                    {
-                        bool dentro = EterEstrutura.Dentro(eu);
-                        Hud.SimboloVisivel = !dentro && !eu.dead ? simbolo : -1;
-                        if (Timer == 1)
-                            Hud.Aviso(dentro ? "PERGUNTEM AOS DE FORA QUAL É O SÍMBOLO!" : "DIGA AOS DO ÉTER QUAL É ESTE SÍMBOLO!", new Color(230, 200, 255), 200);
-                    }
-                    if (Timer >= TempoSimbolos)
-                    {
-                        // Errou (ou ficou fora das plataformas): os dois mundos colidem — dói muito, mas a luta segue
-                        if (souCliente && !eu.dead && EterEstrutura.Dentro(eu) && !NaPlataformaCerta(eu))
-                        {
-                            eu.Hurt(PlayerDeathReason.ByNPC(NPC.whoAmI), (int)(eu.statLifeMax2 * Dificuldade.Escolher(0.3f, 0.45f, 0.6f)), 0);
-                            ScreenShakeSystem.StartShake(14f);
-                        }
-                        if (Servidor)
-                        {
-                            etapa = 3;
-                            Timer = 0;
-                            NPC.netUpdate = true;
-                        }
-                    }
-                    break;
-
-                case 3: // todos para dentro do Éter
+                case 3: // todos chegaram: a arena do Éter
                     if (Timer == 1)
                     {
                         Hud.SimboloVisivel = -1;
@@ -869,6 +854,8 @@ namespace AscensaoAstral.Content.Bosses.Astharoth
                         UsarArenaDoEter();
                         NPC.Center = PosNoChao;
                         NPC.velocity = Vector2.Zero;
+                        NPC.Opacity = 1f;
+                        NPC.dontTakeDamage = false;
                         NPC.netUpdate = true;
                     }
                     if (souCliente && !eu.dead && JogadorNaRaid(eu) && !EterEstrutura.Arena.Intersects(eu.Hitbox))
@@ -878,12 +865,280 @@ namespace AscensaoAstral.Content.Bosses.Astharoth
                     {
                         Fase = 2;
                         Hud.Fase("ETAPA 2: O Duelo no Éter", CorAstharoth);
-                        Dialogo.Falar("Astharoth", "Aqui não existe chão para fugir. Só eu, você... e ele.", CorAstharoth, 200);
+                        Dialogo.Falar("Astharoth", "Chegaram inteiros. Agora não existe chão para fugir. Só eu, você... e ele.", CorAstharoth, 200);
                         SalvarCheckpoint(PAUSA, new Vector2(ArenaEsq + 160f, ArenaPiso - 60f));
                         IrPara(PAUSA);
                     }
                     break;
+
+                default: // (a antiga sequência de símbolos não existe mais)
+                    etapa = 3;
+                    Timer = 0;
+                    break;
             }
+        }
+
+        private void FazerTravessia(Player eu, bool souCliente)
+        {
+            // O Astharoth espera no fim do corredor, fora de alcance
+            NPC.velocity = Vector2.Zero;
+            NPC.Center = EterEstrutura.CentroDaArena;
+            NPC.Opacity = 0f;
+            NPC.dontTakeDamage = true;
+
+            float chao = EterEstrutura.Y0 * 16f;
+            int tc = TCiclo;
+            bool investida = CicloEhInvestida;
+            if (tc == TravPrepara)
+                counterNoCiclo = false;
+
+            if (Servidor)
+            {
+                // A ponte desmorona atrás do grupo
+                if (colunaColapso < EterEstrutura.X0 - 1) colunaColapso = EterEstrutura.X0 - 1;
+                int ate = (int)(ColapsoX / 16f) - 1;
+                ushort ponte = (ushort)ModContent.TileType<Tiles.PonteEterea>();
+                while (colunaColapso < ate)
+                {
+                    colunaColapso++;
+                    for (int y = EterEstrutura.Y0 - 90; y <= EterEstrutura.Y0 + 1; y++)
+                    {
+                        Tile t = Framing.GetTileSafely(colunaColapso, y);
+                        if (t.HasTile && t.TileType == ponte)
+                        {
+                            t.HasTile = false; // (KillTile é barrado pelo CanKillTile da ponte)
+                            WorldGen.SquareTileFrame(colunaColapso, y);
+                        }
+                    }
+                    if (Main.netMode == NetmodeID.Server)
+                        NetMessage.SendTileSquare(-1, colunaColapso, EterEstrutura.Y0 - 90, 1, 92);
+                }
+
+                // Raios de atordoar à frente de quem anda (só entre os golpes do dragão)
+                if (tc < TravPrepara && Timer % 140 == 70)
+                    foreach (Player p in Main.ActivePlayers)
+                        if (!p.dead && EterEstrutura.Dentro(p) && p.Center.X + 260f < FrenteX)
+                            RetanguloPerigo.Criar(NPC, new Vector2(p.Center.X + 260f, chao - 180f), new Vector2(60f, 360f), 45, TipoPerigo.Atordoar, 30);
+
+                // O dragão escolhe quem morder, abre a janela e trava a mordida
+                if (tc == TravPrepara && !investida)
+                {
+                    List<int> candidatos = new();
+                    foreach (Player p in Main.ActivePlayers)
+                        if (!p.dead && EterEstrutura.Dentro(p)) candidatos.Add(p.whoAmI);
+                    alvoMordida = candidatos.Count > 0 ? candidatos[Main.rand.Next(candidatos.Count)] : Alvo.whoAmI;
+                    NPC.netUpdate = true;
+                }
+                if (tc == TravJanela)
+                    AbrirJanelaDeCounter(JanelaDoDragao);
+                if (tc == TravGolpe - 10 && !investida)
+                {
+                    alvoCorte = Main.player[alvoMordida].Center;
+                    NPC.netUpdate = true;
+                }
+
+                // Caiu da ponte = wipe. Todos no fim = etapa 2.
+                bool alguem = false, todosChegaram = true;
+                foreach (Player p in Main.ActivePlayers)
+                {
+                    if (p.dead || !JogadorNaRaid(p)) continue;
+                    alguem = true;
+                    bool debaixoDaPonte = p.Center.X > EterEstrutura.X0 * 16f - 100f && p.Center.X < EterEstrutura.Arena.Right
+                        && p.Center.Y > chao + 320f && p.Center.Y < chao + 1600f;
+                    if (Timer > 60 && debaixoDaPonte)
+                    {
+                        WipeGlobal();
+                        return;
+                    }
+                    if (p.Center.X < EterEstrutura.FimDaPonteX + 40f) todosChegaram = false;
+                }
+                if (alguem && todosChegaram)
+                {
+                    etapa = 3;
+                    Timer = 0;
+                    NPC.netUpdate = true;
+                    return;
+                }
+            }
+
+            if (!souCliente)
+                return;
+
+            // A beirada que desmorona
+            if (Timer > AtrasoColapso && Main.rand.NextBool(2))
+                Dust.NewDustPerfect(new Vector2(ColapsoX + Main.rand.NextFloat(-12f, 12f), chao + Main.rand.NextFloat(0f, 24f)), DustID.PurpleTorch, new Vector2(Main.rand.NextFloat(-1f, 1f), Main.rand.NextFloat(2f, 5f)), 0, default, 1.5f);
+
+            if (eu.dead || !JogadorNaRaid(eu))
+                return;
+
+            // Quem ainda não entrou vai para a ponte, à frente do desmoronamento (quem caiu dela, não)
+            if (EterEstrutura.Dentro(eu) && eu.Center.Y < chao + 40f)
+                estiveNaPonte = true;
+            if (!estiveNaPonte && !EterEstrutura.Dentro(eu))
+            {
+                RaidJogador.Teleportar(eu, new Vector2(ColapsoX + 260f, chao - 40f));
+                return;
+            }
+
+            // Ninguém voa no corredor; a parede de luz segura quem corre na frente
+            eu.wingTime = 0f;
+            eu.rocketTime = 0;
+            if (eu.mount.Active && eu.mount.CanFly())
+                eu.mount.Dismount(eu);
+            if (eu.Right.X > FrenteX)
+                eu.velocity.X = Math.Min(eu.velocity.X, 0f) - 1.6f;
+
+            if (counterNoCiclo)
+                return;
+
+            if (investida)
+            {
+                // Investida de vento: empurra todo mundo para trás
+                if (tc >= TravGolpe && tc < TravFim && EterEstrutura.Dentro(eu))
+                {
+                    float forca = 1f - (tc - TravGolpe) / (float)(TravFim - TravGolpe);
+                    eu.velocity.X = Math.Min(eu.velocity.X, -11f * forca);
+                    if (tc == TravGolpe)
+                    {
+                        CastigoLocal(eu, DanoVento);
+                        ScreenShakeSystem.StartShake(10f);
+                        SoundEngine.PlaySound(SoundID.DD2_BetsyWindAttack with { Volume = 1.2f, Pitch = -0.4f });
+                    }
+                    if (Main.rand.NextBool(2))
+                        Dust.NewDustPerfect(eu.Center + new Vector2(Main.rand.NextFloat(-300f, 300f), Main.rand.NextFloat(-120f, 40f)), DustID.PurpleTorch, new Vector2(-12f, 0f), 0, default, 1.3f).noGravity = true;
+                }
+            }
+            else
+                MorderSeEstiverPerto(eu, tc == TravGolpe + 4);
+        }
+
+        /// <summary>A mordida (Travessia e etapa 2): quem estiver perto do ponto travado leva o golpe e é arremessado.</summary>
+        private void MorderSeEstiverPerto(Player eu, bool agora)
+        {
+            if (!agora || eu.dead || Vector2.Distance(eu.Center, alvoCorte) > 170f) return;
+            CastigoLocal(eu, DanoMordida);
+            float lado = Dragao is DragaoDoEter d && eu.Center.X < d.NPC.Center.X ? -1f : 1f;
+            eu.velocity = new Vector2(NaTravessia ? -17f : lado * 14f, -8f);
+            ScreenShakeSystem.StartShake(12f);
+            SoundEngine.PlaySound(SoundID.DD2_BetsyScream with { Pitch = 0.4f });
+        }
+
+        // ─── Etapa 2: o dragão (de fundo) tenta uma mordida ───
+        private const int MordJanela = 45, MordGolpe = 90, MordFim = 140;
+        private void FazerMordidaDoDragao()
+        {
+            MoverAte(new Vector2(MathHelper.Clamp(NPC.Center.X, ArenaEsq + 200f, ArenaDir - 200f), ArenaPiso - 64f), VelMover * 0.5f);
+            if (Timer == 1)
+            {
+                counterNoCiclo = false;
+                SoundEngine.PlaySound(SoundID.DD2_BetsyScream with { Pitch = 0.2f, Volume = 0.8f });
+                if (Servidor)
+                {
+                    alvoMordida = Alvo.whoAmI;
+                    NPC.netUpdate = true;
+                }
+            }
+            if (Timer == MordJanela && Servidor)
+                AbrirJanelaDeCounter(JanelaDoDragao);
+            if (Timer == MordGolpe - 10 && Servidor)
+            {
+                alvoCorte = Main.player[alvoMordida].Center;
+                NPC.netUpdate = true;
+            }
+            if (Main.netMode != NetmodeID.Server && !counterNoCiclo)
+                MorderSeEstiverPerto(Main.LocalPlayer, Timer == MordGolpe + 4);
+            if (Timer >= MordFim)
+                IrPara(PAUSA);
+        }
+
+        /// <summary>
+        /// Para onde o dragão vai (Travessia e mordida da etapa 2). Calculado igual em todos os clientes a partir do
+        /// estado sincronizado. false = ele fica só rondando.
+        /// </summary>
+        public bool ComandoDoDragao(Vector2 cabeca, out Vector2 destino, out float vel, out float suave)
+        {
+            destino = cabeca; vel = 0f; suave = 0.1f;
+            float chao = EterEstrutura.Y0 * 16f;
+            Player mordido = Main.player[Math.Clamp(alvoMordida, 0, Main.maxPlayers - 1)];
+
+            if (NaTravessia)
+            {
+                int tc = TCiclo;
+                float media = MediaXDoGrupo(out float maiorX);
+                if (tc < TravPrepara || tc >= TravFim)
+                {
+                    destino = new Vector2(media + 520f, chao - 430f + MathF.Sin(Timer * 0.03f) * 60f);
+                    vel = 16f; suave = 0.06f;
+                    return true;
+                }
+                if (counterNoCiclo && tc >= TravJanela)
+                {
+                    destino = cabeca + new Vector2(260f, -380f); // levou o counter: recua
+                    vel = 10f; suave = 0.08f;
+                    return true;
+                }
+                if (tc < TravGolpe)
+                {
+                    // fica AO ALCANCE do counter: na frente do grupo (vento) ou ao lado de quem vai morder
+                    destino = CicloEhInvestida ? new Vector2(maiorX + 260f, chao - 110f) : mordido.Center + new Vector2(220f, -120f);
+                    vel = tc < TravJanela ? 22f : 3f; suave = 0.12f;
+                    return true;
+                }
+                destino = CicloEhInvestida ? new Vector2(cabeca.X - 2400f, chao - 150f) : alvoCorte;
+                vel = CicloEhInvestida ? 34f : 30f; suave = 0.3f;
+                return true;
+            }
+
+            if (Estado == MORDIDA_DRAGAO)
+            {
+                if (counterNoCiclo && Timer >= MordJanela)
+                {
+                    destino = cabeca + new Vector2(0f, -420f);
+                    vel = 10f; suave = 0.08f;
+                    return true;
+                }
+                if (Timer < MordGolpe)
+                {
+                    float lado = cabeca.X >= mordido.Center.X ? 1f : -1f;
+                    destino = mordido.Center + new Vector2(lado * 240f, -140f);
+                    vel = Timer < MordJanela ? 24f : 3f; suave = 0.12f;
+                    return true;
+                }
+                if (Timer < MordGolpe + 20)
+                {
+                    destino = alvoCorte; vel = 30f; suave = 0.3f;
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        /// <summary>Visual da Travessia (desmoronamento, parede de luz, marca da mordida) e do counter no dragão.
+        /// Chamado pelo dragão, que está sempre na tela.</summary>
+        public void DesenharTravessia()
+        {
+            float pulso = 0.5f + 0.5f * MathF.Sin(Main.GlobalTimeWrappedHourly * 6f);
+            if (NaTravessia)
+            {
+                float chao = EterEstrutura.Y0 * 16f;
+                for (int i = 0; i < 6; i++)
+                    Desenho.Brilho(new Vector2(ColapsoX - 40f, chao - 40f - i * 110f), new Color(120, 60, 200) * 0.6f, 2.4f);
+                Desenho.Faixa(new Vector2(FrenteX, chao - 700f), new Vector2(FrenteX, chao + 20f), 10f + 6f * pulso, new Color(190, 150, 255) * 0.35f, new Color(240, 220, 255));
+            }
+
+            // Marca de quem vai ser mordido
+            bool marcando = NaTravessia ? !CicloEhInvestida && TCiclo >= TravPrepara && TCiclo < TravGolpe
+                                        : Estado == MORDIDA_DRAGAO && Timer < MordGolpe;
+            if (marcando && !counterNoCiclo)
+            {
+                Vector2 alvo = Main.player[Math.Clamp(alvoMordida, 0, Main.maxPlayers - 1)].Center;
+                Desenho.Brilho(alvo, new Color(255, 90, 160) * (0.5f + 0.4f * pulso), 1.3f);
+                if (Dragao is DragaoDoEter d)
+                    Desenho.Faixa(d.NPC.Center, alvo, 3f + 4f * pulso, new Color(255, 90, 160) * 0.35f, new Color(255, 190, 220));
+            }
+
+            if (CounterNoDragao)
+                DesenharCounter();
         }
 
         private void SortearAlmas()
@@ -1228,7 +1483,7 @@ namespace AscensaoAstral.Content.Bosses.Astharoth
         public override bool PreDraw(SpriteBatch sb, Vector2 screenPos, Color drawColor)
         {
             DesenharMecanicas();
-            DesenharCounter();
+            if (!CounterNoDragao) DesenharCounter(); // no dragão, quem desenha é o próprio dragão (ele está sempre na tela)
 
             Texture2D tex = TextureAssets.Npc[Type].Value;
             bool orbitando = Estado == T_FUSAO && etapa == 1;
@@ -1290,12 +1545,6 @@ namespace AscensaoAstral.Content.Bosses.Astharoth
                 }
             }
 
-            // Marcadores esquerda/direita da separação
-            if (Estado == T_ALMA && etapa == 0)
-            {
-                Desenho.Brilho(new Vector2(foraEsq + 120f, foraPiso - 40f), new Color(190, 140, 255), 1.4f + pulso * 0.3f);
-                Desenho.Brilho(new Vector2(foraDir - 120f, foraPiso - 40f), new Color(190, 140, 255), 1.4f + pulso * 0.3f);
-            }
 
             // Plataformas dos símbolos (dentro do Éter)
             if (Estado == T_ALMA && etapa == 2)

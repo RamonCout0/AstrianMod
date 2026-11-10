@@ -17,7 +17,8 @@ namespace AscensaoAstral.Content.Bosses.Astharoth
     /// Quem manda nele é o Astharoth (ai[0] = índice do chefe), pelo <see cref="Astharoth.ModoDragao"/>:
     ///   0 PERSEGUIR  vai atrás do alvo virando aos poucos; a cada 4 s pisca, para, mira e dá um BOTE em linha reta
     ///   1 RASANTE    se posiciona de um lado do alvo e atravessa a tela (a mecânica de "olhe para o dragão")
-    ///   2 RONDAR     fica circulando no alto, sem atacar (na hora dos símbolos)
+    ///   2 RONDAR     fica circulando no alto, sem atacar (na etapa 2 ele fica assim, DE FUNDO)
+    ///  3 COMANDADO  o Astharoth diz para onde ir (a Travessia, gigante; e a mordida da etapa 2)
     ///  -1            some (fusão, despedida, chefe morto)
     ///
     /// PLACEHOLDER: desenha os sprites do Dragão Fantasma do Cultista pintados de éter. Troque por sprites seus
@@ -95,10 +96,12 @@ namespace AscensaoAstral.Content.Bosses.Astharoth
             {
                 case 0: Perseguir(alvo, chefe); break;
                 case 1: Rasante(chefe); break;
+                case 3: Comandado(chefe); break;
                 default: Rondar(chefe); break;
             }
 
-            NPC.rotation = NPC.velocity.ToRotation() + MathHelper.PiOver2;
+            if (NPC.velocity.LengthSquared() > 0.25f) // parado (esperando o counter), mantém a direção
+                NPC.rotation = NPC.velocity.ToRotation() + MathHelper.PiOver2;
             AtualizarCorpo();
             if (modo == 0) ColisaoDoCorpo();
 
@@ -162,6 +165,20 @@ namespace AscensaoAstral.Content.Bosses.Astharoth
                 NPC.velocity = new Vector2(-lado * 30f, 0f);
         }
 
+        private void Comandado(Astharoth chefe)
+        {
+            if (!chefe.ComandoDoDragao(NPC.Center, out Vector2 destino, out float vel, out float suave))
+            {
+                Rondar(chefe);
+                return;
+            }
+            Vector2 para = destino - NPC.Center;
+            float v = Math.Min(vel, para.Length() * 0.15f);
+            NPC.velocity = Vector2.Lerp(NPC.velocity, para.SafeNormalize(Vector2.Zero) * v, suave);
+        }
+
+        private float Escala => ChefeOuNulo?.EscalaDoDragao ?? 1f;
+
         private void Rondar(Astharoth chefe)
         {
             CicloTimer++;
@@ -175,8 +192,9 @@ namespace AscensaoAstral.Content.Bosses.Astharoth
             for (int i = 0; i < Segmentos; i++)
             {
                 Vector2 d = corpo[i] - anterior;
-                if (d.Length() > Distancia || d == Vector2.Zero)
-                    corpo[i] = anterior + d.SafeNormalize(Vector2.UnitY) * Distancia;
+                float dist = Distancia * Escala;
+                if (d.Length() > dist || d == Vector2.Zero)
+                    corpo[i] = anterior + d.SafeNormalize(Vector2.UnitY) * dist;
                 anterior = corpo[i];
             }
         }
@@ -189,7 +207,8 @@ namespace AscensaoAstral.Content.Bosses.Astharoth
             Rectangle hb = eu.Hitbox;
             for (int i = 0; i < Segmentos; i++)
             {
-                Rectangle seg = new((int)corpo[i].X - 20, (int)corpo[i].Y - 20, 40, 40);
+                int r = (int)(20 * Escala);
+                Rectangle seg = new((int)corpo[i].X - r, (int)corpo[i].Y - r, 2 * r, 2 * r);
                 if (seg.Intersects(hb))
                 {
                     eu.Hurt(PlayerDeathReason.ByNPC(NPC.whoAmI), 50, Math.Sign(eu.Center.X - corpo[i].X));
@@ -212,7 +231,7 @@ namespace AscensaoAstral.Content.Bosses.Astharoth
         }
 
         /// <summary>Boca do dragão (de onde saem as bolas de fogo do duelo).</summary>
-        public Vector2 Boca => NPC.Center + (NPC.rotation - MathHelper.PiOver2).ToRotationVector2() * 30f;
+        public Vector2 Boca => NPC.Center + (NPC.rotation - MathHelper.PiOver2).ToRotationVector2() * 30f * Escala;
 
         public bool Mirando => ultimoModo == 0 && CicloTimer >= InicioMira && CicloTimer < InicioBote;
 
@@ -240,13 +259,17 @@ namespace AscensaoAstral.Content.Bosses.Astharoth
         {
             if (!corpoIniciado) return false;
 
-            Color tinta = new(235, 215, 255);                 // quase branco: o sprite do Cultista já é escuro
+            Astharoth chefe = ChefeOuNulo;
+            float esc = Escala;
+            float alfa = chefe?.DragaoDeFundo == true ? 0.5f : 1f; // de fundo: uma silhueta
+            Color tinta = new Color(235, 215, 255) * alfa;      // quase branco: o sprite do Cultista já é escuro
             Color brilho = new Color(170, 110, 255) with { A = 0 };
+            brilho *= alfa;
             float pulso = 0.5f + 0.5f * MathF.Sin(Main.GlobalTimeWrappedHourly * 5f);
 
             // Aura (aditiva) por trás do corpo inteiro
             for (int i = Segmentos - 1; i >= 0; i -= 2)
-                Desenho.Brilho(corpo[i], brilho * 0.6f, 1.1f);
+                Desenho.Brilho(corpo[i], brilho * 0.6f, 1.1f * esc);
 
             // Corpo, da cauda para a cabeça
             for (int i = Segmentos - 1; i >= 0; i--)
@@ -254,14 +277,15 @@ namespace AscensaoAstral.Content.Bosses.Astharoth
                 Vector2 frente = i == 0 ? NPC.Center : corpo[i - 1];
                 float rot = (frente - corpo[i]).ToRotation() + MathHelper.PiOver2;
                 Texture2D t = Tex(TexturaDoSegmento(i), out Rectangle q);
-                sb.Draw(t, corpo[i] - screenPos, q, tinta * 0.95f, rot, q.Size() / 2f, 1.1f, SpriteEffects.None, 0f);
-                sb.Draw(t, corpo[i] - screenPos, q, brilho * 0.55f, rot, q.Size() / 2f, 1.22f, SpriteEffects.None, 0f);
+                sb.Draw(t, corpo[i] - screenPos, q, tinta * 0.95f, rot, q.Size() / 2f, 1.1f * esc, SpriteEffects.None, 0f);
+                sb.Draw(t, corpo[i] - screenPos, q, brilho * 0.55f, rot, q.Size() / 2f, 1.22f * esc, SpriteEffects.None, 0f);
             }
 
             // Cabeça
             Texture2D cab = Tex(NPCID.CultistDragonHead, out Rectangle qc);
-            sb.Draw(cab, NPC.Center - screenPos, qc, tinta, NPC.rotation, qc.Size() / 2f, 1.15f, SpriteEffects.None, 0f);
-            sb.Draw(cab, NPC.Center - screenPos, qc, brilho * 0.6f, NPC.rotation, qc.Size() / 2f, 1.3f, SpriteEffects.None, 0f);
+            Color tintaCabeca = chefe?.JanelaAberta == true ? Color.Lerp(tinta, new Color(110, 190, 255), 0.7f) : tinta; // azul no counter
+            sb.Draw(cab, NPC.Center - screenPos, qc, tintaCabeca, NPC.rotation, qc.Size() / 2f, 1.15f * esc, SpriteEffects.None, 0f);
+            sb.Draw(cab, NPC.Center - screenPos, qc, brilho * 0.6f, NPC.rotation, qc.Size() / 2f, 1.3f * esc, SpriteEffects.None, 0f);
 
             // Olhos acesos; quando vai dar o bote, brilham forte + linha de mira
             Desenho.Brilho(Boca, new Color(255, 120, 255), Mirando ? 1.2f + pulso * 0.5f : 0.35f);
@@ -270,6 +294,8 @@ namespace AscensaoAstral.Content.Bosses.Astharoth
                 Vector2 dir = NPC.DirectionTo(alvo.Center);
                 Desenho.Faixa(NPC.Center, NPC.Center + dir * 1400f, 4f + pulso * 6f, new Color(200, 90, 255) * 0.5f, new Color(255, 180, 255));
             }
+
+            chefe?.DesenharTravessia(); // desmoronamento, parede de luz, marca da mordida, brilho do counter
             return false;
         }
     }
