@@ -17,6 +17,10 @@ Mods: {
 					Use no bioma da neve, depois da Queen Slime
 					'''
 			}
+			InvocadorDeTeste: {
+				DisplayName: Test Summoner
+				Tooltip: "[TEST] Summons the Sentinel, the guide's boss. Not consumed"
+			}
 			FerramentaDeTeste: {
 				DisplayName: Ferramenta de Teste
 				Tooltip: "[DEBUG] Cada uso avança a história: 1º libera a Astrânia, 2º cria a cratera ao seu lado, depois te leva até ela"
@@ -146,6 +150,7 @@ Mods: {
 
 		NPCs: {
 			EcoEstelar.DisplayName: Eco Estelar
+			SentinelaDeTeste.DisplayName: Test Sentinel
 			RaidSilvanna.DisplayName: Armotheus
 			EstatuaViva.DisplayName: Estátua Viva
 			Astharoth.DisplayName: Astharoth, o Guerreiro Errante
@@ -154,6 +159,7 @@ Mods: {
 		}
 
 		Projectiles: {
+			SentinelaProjetil.DisplayName: Sentinel Projectile
 			PilarSolar.DisplayName: Solar Pillar
 			PenaDeLuz.DisplayName: Light Feather
 			RastroDeLuz.DisplayName: Light Streak
